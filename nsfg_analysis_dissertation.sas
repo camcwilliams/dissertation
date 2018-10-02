@@ -8,20 +8,10 @@ libname library "U:\Dissertation";
 proc format library=library; run;
 data work.a; set library.nsfg_females_2011_2015; run;
 
-	/*test to make sure the formats got pulled in;
-	proc freq data = work.a; tables PARTS1YR; run;*/
-
-	/*checking that weights were applied correctly;
-	proc contents data=a; run;
-	proc means data = a; var weightvar; run;
-	proc contents data = library.fem4yrwgt; run;
-	proc print data = library.fem4yrwgt (obs=5); run;
-	proc print data = a; where caseid = 50013; var caseid weightvar; run;
-	proc freq data = a; tables caseid; run;
-	*looks like my merge didn't work...;*/
-
-	/*when ready: how to handle multiple permanent format files: 
-	https://support.sas.com/resources/papers/proceedings12/048-2012.pdf*/
+	* McWilliams-created formats and labels;
+	%include "U:\Dissertation\nsfg_CMcWFormats.sas";
+	*there will be errors saying the variables are uninitialized, the formats will
+	still work when they are applied later;
 
 *RESTRICTING TO JUST MY VARIABLES OF INTEREST;
 data work.a; set work.a; 
@@ -124,10 +114,6 @@ proc contents data = a; run;
 	*Distributions of education by yes/no to contraception really aren't very different. 
 	If education is playing a role, perhaps it's by method or use and non-use need 
 	to be defined more granularly;
-			
-
-	* McWilliams-created formats and labels;
-	%include "U:\2 Dissertation Research\nsfg_CMcWFormats.sas";
 
 
 *---- REMOVING CASES ACCORDING TO STANDARD PRACTICE 
