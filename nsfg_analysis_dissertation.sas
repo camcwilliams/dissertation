@@ -81,6 +81,7 @@ proc contents data = a; run;
 		run;
 	*/
 
+	/*commenting out here since i added this to variable treatment program;
 	* created my own education variable;
 	proc freq; tables hieduc; run;
 	*there are some extra categories here, one of which (2) includes 5434 people;
@@ -98,6 +99,7 @@ proc contents data = a; run;
 		if hieduc = 14 then edu = 6;
 		if hieduc = 15 then edu = 6;
 		run;
+	*/
 
 	data a; set a;
 		if agebaby1 < 2500 then agebabycat = 1;
