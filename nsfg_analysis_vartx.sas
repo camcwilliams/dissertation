@@ -61,7 +61,7 @@ not include code to pull in the datasets and formats, those can happen from
 
 *** Race;
 
-
+	proc freq; tables race rrace_01; run;
 
 
 		
