@@ -23,16 +23,7 @@ proc contents data = a; run;
 	
 *---- CREATING NEW VARIABLES ----*;
 
-	* breaking up into age groups;
-	data a; set a;
-		if rscrage>14 and rscrage<20 then agecat = 1 ;
-		if rscrage>19 and rscrage<25 then agecat = 2 ;
-		if rscrage>24 and rscrage<30 then agecat = 3 ;
-		if rscrage>29 and rscrage<35 then agecat = 4 ;
-		if rscrage>34 and rscrage<40 then agecat = 5 ;
-		if rscrage>39 and rscrage<45 then agecat = 6 ;
-		label agecat="5yr age categories, 1=15-19, 6=40-44";
-		run;
+
 
 	* creating a new constraceptive variable to remove people not at risk of unintended pregnancy;
 	data a; set a;
