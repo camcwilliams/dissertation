@@ -61,7 +61,35 @@ not include code to pull in the datasets and formats, those can happen from
 
 *** Race;
 
-	proc freq; tables race rrace_01; run;
+	proc freq; tables race; run;
+		*it appears the raw variables used to create this are not available, which 
+		won't work because i would like to have more granularity...;
+		*Recode specs here: https://www.icpsr.umich.edu/icpsradmin/nsfg/variable/recode_spec/cycle8.1/fem/RACE.pdf;
+		*they do have a separate hispanic origin variable;
+		*Recode specs here: https://www.icpsr.umich.edu/icpsradmin/nsfg/variable/recode_spec/cycle8.1/fem/HISPANIC.pdf;
+
+	proc freq; tables race*hispanic; run;
+		*hispanic folks fall into all three of the race categories, the greatest percent
+		being 'other';
+
+	proc sgplot;
+		scatter x=poverty y=race;
+		run;
+
+	proc sgplot;
+		hbox poverty / category=race;
+		run;
+
+	proc sgplot;
+		hbox poverty / category=hispanic;
+		run;
+
+	*still not sure about this. will need to figure out if there is any way to handle race better.
+	i'm worried about misclassification problems because the 'other' category will be so 
+	heterogeneous;
+
+*** 
+			
 
 
 		
