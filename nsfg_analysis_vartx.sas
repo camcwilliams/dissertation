@@ -9,6 +9,20 @@ have a command from the main program to run this at the beginning. Therefore, th
 not include code to pull in the datasets and formats, those can happen from 
 "U:\Dissertation\nsfg_analysis_dissertation.sas";
 
+*** Age;
+
+	* breaking up into age groups first;
+	data a; set a;
+		if rscrage>14 and rscrage<20 then agecat = 1 ;
+		if rscrage>19 and rscrage<25 then agecat = 2 ;
+		if rscrage>24 and rscrage<30 then agecat = 3 ;
+		if rscrage>29 and rscrage<35 then agecat = 4 ;
+		if rscrage>34 and rscrage<40 then agecat = 5 ;
+		if rscrage>39 and rscrage<45 then agecat = 6 ;
+		label agecat="5yr age categories, 1=15-19, 6=40-44";
+		run;	
+		
+
 *** Subfecundity;
 
 	proc freq data=a; tables fecund; run;
@@ -88,7 +102,26 @@ not include code to pull in the datasets and formats, those can happen from
 	i'm worried about misclassification problems because the 'other' category will be so 
 	heterogeneous;
 
-*** 
+*** Birth Desires, Intention, Ambivalence - INCLUDES INDIVIDUAL AND JOINT WITH PARTNER;
+
+	proc freq;
+		tables
+			rwant
+			probwant
+			pwant
+			jintend
+			jsureint
+			jintendn
+			jexpectl
+			jexpects
+			jintnext
+			intend
+			sureint
+			intendn
+			expectl
+			expects
+			intnext;
+		run;
 			
 
 
