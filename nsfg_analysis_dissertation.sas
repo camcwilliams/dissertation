@@ -23,27 +23,6 @@ proc contents data = a; run;
 	
 *---- CREATING NEW VARIABLES ----*;
 
-
-
-	* creating a new constraceptive variable to remove people not at risk of unintended pregnancy;
-	data a; set a;
-		bc = constat1;
-		if constat1>28 and constat1<=41 then bc=.;
-		run;
-
-	* making a dichotomous variable for using bc or not;
-	data a; set a;
-		nouse = bc;
-		if bc = 42 then nouse = 1;
-		if bc < 42 and bc > 0 then nouse = 0;
-		if nouse = 1 then bcyes = 0;
-		if nouse = 0 then bcyes = 1;
-		run;
-	/*proc freq; tables nouse; run;
-	proc sort; by agecat; run;
-	proc freq; tables nouse; by agecat; run;*/
-
-
 	* poverty level categories;
 	data a; set a;
 		povlev = .;
@@ -54,43 +33,6 @@ proc contents data = a; run;
 		if poverty < 500 and poverty > 399 then povlev = 5;
 		if poverty >= 500 then povlev = 6;
 		run;
-
-	* sterilized, contracepting, not contracepting;
-	data a; set a;
-		if bc = 1 or bc = 2 or bc = 35 or bc = 36 or bc = 33 or bc = 34 or bc = 38
-		then ster = 1;
-		if bc ne 1 and bc ne 2 and bc ne 35 and bc ne 36 and bc ne 33 and bc ne 34 
-		and bc ne 38 then ster =2;
-		if bc = 42 then ster = 3;
-		run;
-
-	/* among not sterilized, using an effective method;
-	data a; set a;
-		effmeth = bc;
-		if bc=1 or bc=2 or bc then effmeth = 1;
-		if bc=42 then effmeth = .;
-		run;
-	*/
-
-	/*commenting out here since i added this to variable treatment program;
-	* created my own education variable;
-	proc freq; tables hieduc; run;
-	*there are some extra categories here, one of which (2) includes 5434 people;
-	data a; set a;
-		edu = hieduc;
-		if hieduc = 5 then edu = 1;
-		if hieduc = 6 then edu = 1;
-		if hieduc = 7 then edu = 1;
-		if hieduc = 8 then edu = 1;
-		if hieduc = 9 then edu = 2;
-		if hieduc = 10 then edu = 3;
-		if hieduc = 11 then edu = 4;
-		if hieduc = 12 then edu = 5;
-		if hieduc = 13 then edu = 6;
-		if hieduc = 14 then edu = 6;
-		if hieduc = 15 then edu = 6;
-		run;
-	*/
 
 	data a; set a;
 		if agebaby1 < 2500 then agebabycat = 1;
