@@ -24,7 +24,7 @@ not include code to pull in the datasets and formats, those can happen from
 
 *** Contraceptive Use;
 
-	proc freq data=a; tables constat1; run;
+	/*proc freq data=a; tables constat1; run;*/
 
 	* creating a new constraceptive variable (bc) that is the same as constat1
 	but sets people not at risk of unintended pregnancy to missing;
@@ -76,7 +76,7 @@ not include code to pull in the datasets and formats, those can happen from
 
 *** Subfecundity;
 
-	proc freq data=a; tables fecund; run;
+	/*proc freq data=a; tables fecund; run;
 		*Recode specs and description of groups: 
 		https://www.icpsr.umich.edu/icpsradmin/nsfg/variable/recode_spec/cycle8.1/fem/FECUND.pdf;
 		*May be difficult to use because fecund = 1 will be fully collinear with sterilization
