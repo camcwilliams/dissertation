@@ -31,6 +31,7 @@ not include code to pull in the datasets and formats, those can happen from
 	data a; set a;
 		bc = constat1;
 		if constat1>29 and constat1<=41 then bc=.;
+		label bc "bc method with not at risk if UIP set to missing";
 		run;
 		*note that postpartum is in this group, but is restricted to women less than
 		2 months postpartum;
@@ -44,6 +45,8 @@ not include code to pull in the datasets and formats, those can happen from
 		if bc < 42 and bc > 0 then nouse = 0;
 		if nouse = 1 then bcyes = 0;
 		if nouse = 0 then bcyes = 1;
+		label nouse "at risk of UIP but not using contr = 1 (opposite of bcyes)";
+		label bcyes "at risk of UIP and using any method = 1 (opposite of nouse)";
 		run;
 	
 	* ster: sterilized, using non-sterilization contraception, not contracepting;
@@ -53,15 +56,23 @@ not include code to pull in the datasets and formats, those can happen from
 		if bc ne 1 and bc ne 2 and bc ne 35 and bc ne 36 and bc ne 33 and bc ne 34 
 		and bc ne 38 then ster =2;
 		if bc = 42 then ster = 3;
+		label ster "sterilized, using non-sterilization contraception, not contracepting";
 		run;
 
-	/* among not sterilized, using an effective method;
+
+	* creating conceptually appropriate method groups;
 	data a; set a;
 		effmeth = bc;
-		if bc=1 or bc=2 or bc then effmeth = 1;
-		if bc=42 then effmeth = .;
+		if ster=1 then effmeth = 1;
+		if bc=3 or bc=10 then effmeth = 2;
+		if bc=5 or bc=6 or bc=7 or bc=8 then effmeth = 3;
+		if bc=11 or bc=12 or bc=14 or bc=17 or bc=18 then effmeth = 4;
+		if bc=19 or bc=20 then effmeth = 6;
+		if bc=21 then effmeth = 7;
+		if bc=9 or bc=22 then effmeth = .;
+		if ster=3 then effmeth = 8;
+		label effmeth "conceptually appropriate method groups";
 		run;
-	*/
 
 *** Subfecundity;
 
