@@ -24,13 +24,20 @@ not include code to pull in the datasets and formats, those can happen from
 
 *** Contraceptive Use;
 
-	* creating a new constraceptive variable to remove people not at risk of unintended pregnancy;
+	proc freq data=a; tables constat1; run;
+
+	* creating a new constraceptive variable (bc) that is the same as constat1
+	but sets people not at risk of unintended pregnancy to missing;
 	data a; set a;
 		bc = constat1;
-		if constat1>28 and constat1<=41 then bc=.;
+		if constat1>29 and constat1<=41 then bc=.;
 		run;
+		*note that postpartum is in this group, but is restricted to women less than
+		2 months postpartum;
 
-	* making a dichotomous variable for using bc or not;
+		proc freq; tables bc; run;
+
+	* making a dichotomous variable for using bc or not, making two versions (nouse, bcyes) so 1/0 is logical;
 	data a; set a;
 		nouse = bc;
 		if bc = 42 then nouse = 1;
@@ -38,11 +45,8 @@ not include code to pull in the datasets and formats, those can happen from
 		if nouse = 1 then bcyes = 0;
 		if nouse = 0 then bcyes = 1;
 		run;
-	/*proc freq; tables nouse; run;
-	proc sort; by agecat; run;
-	proc freq; tables nouse; by agecat; run;*/
 	
-	* sterilized, contracepting, not contracepting;
+	* ster: sterilized, using non-sterilization contraception, not contracepting;
 	data a; set a;
 		if bc = 1 or bc = 2 or bc = 35 or bc = 36 or bc = 33 or bc = 34 or bc = 38
 		then ster = 1;
