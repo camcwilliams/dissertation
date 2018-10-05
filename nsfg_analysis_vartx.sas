@@ -9,6 +9,8 @@ have a command from the main program to run this at the beginning. Therefore, th
 not include code to pull in the datasets and formats, those can happen from 
 "U:\Dissertation\nsfg_analysis_dissertation.sas";
 
+*Lower-case labels are mine, upper-case labels are from NCHS;
+
 *** Age;
 
 	* breaking up into age groups first;
@@ -100,6 +102,7 @@ not include code to pull in the datasets and formats, those can happen from
 		*commenting this out and making a nice data set for posterity;*/
 			data a; set a;
 				agefirst = (datbaby1-cmbirth)/12;
+				label "continuous age at first birth";
 				run; 
 
 *** Education;
@@ -122,7 +125,10 @@ not include code to pull in the datasets and formats, those can happen from
 				if hieduc = 13 then edu = 6;
 				if hieduc = 14 then edu = 6;
 				if hieduc = 15 then edu = 6;
+				label edu "education categories";
 				run;
+
+			proc freq; tables edu; run;
 
 *** Race;
 
