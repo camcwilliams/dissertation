@@ -41,15 +41,15 @@ proc format;
 		1="sterilized"
 		2="IUD, implant"
 		3="injection, pill, patch, ring"
-		4="condom, diaphragm, foam, insert, jelly"
+		4="condom, diaphragm, sponge, foam, insert, jelly"
 		6="periodic abstinence"
 		7="withdrawal"
 		8="not using contraception";
-	value all
+	value allrepro
 		1="sterilized"
 		2="IUD, implant"
 		3="injection, pill, patch, ring"
-		4="condom, diaphragm, foam, insert, jelly"
+		4="condom, diaphragm, sponge, foam, insert, jelly"
 		6="periodic abstinence"
 		7="withdrawal"
 		8="not using contraception"
@@ -74,5 +74,5 @@ data a; set a;
 			bcyes bcyes.
 			edu edu.
 			ster ster.
-			all all.
+			allrepro allrepro.
 ;run;

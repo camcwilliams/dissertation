@@ -33,12 +33,12 @@ not include code to pull in the datasets and formats, those can happen from
 	data a; set a;
 		bc = constat1;
 		if constat1>29 and constat1<=41 then bc=.;
-		label bc "bc method with not at risk if UIP set to missing";
+		label bc="bc method with not at risk if UIP set to missing";
 		run;
 		*note that postpartum is in this group, but is restricted to women less than
 		2 months postpartum;
 
-		proc freq; tables bc; run;
+		/*proc freq; tables bc; run;*/
 
 	* making a dichotomous variable for using bc or not, making two versions (nouse, bcyes) so 1/0 is logical;
 	data a; set a;
@@ -47,8 +47,8 @@ not include code to pull in the datasets and formats, those can happen from
 		if bc < 42 and bc > 0 then nouse = 0;
 		if nouse = 1 then bcyes = 0;
 		if nouse = 0 then bcyes = 1;
-		label nouse "at risk of UIP but not using contr = 1 (opposite of bcyes)";
-		label bcyes "at risk of UIP and using any method = 1 (opposite of nouse)";
+		label nouse="at risk of UIP but not using contr = 1 (opposite of bcyes)";
+		label bcyes="at risk of UIP and using any method = 1 (opposite of nouse)";
 		run;
 	
 	* ster: sterilized, using non-sterilization contraception, not contracepting;
@@ -58,7 +58,7 @@ not include code to pull in the datasets and formats, those can happen from
 		if bc ne 1 and bc ne 2 and bc ne 35 and bc ne 36 and bc ne 33 and bc ne 34 
 		and bc ne 38 then ster =2;
 		if bc = 42 then ster = 3;
-		label ster "sterilized, using non-sterilization contraception, not contracepting";
+		label ster="sterilized, using non-sterilization contraception, not contracepting";
 		run;
 
 
@@ -68,13 +68,34 @@ not include code to pull in the datasets and formats, those can happen from
 		if ster=1 then effmeth = 1;
 		if bc=3 or bc=10 then effmeth = 2;
 		if bc=5 or bc=6 or bc=7 or bc=8 then effmeth = 3;
-		if bc=11 or bc=12 or bc=14 or bc=17 or bc=18 then effmeth = 4;
+		if bc=11 or bc=12 or bc=14 or bc=16 or bc=17 or bc=18 then effmeth = 4;
 		if bc=19 or bc=20 then effmeth = 6;
 		if bc=21 then effmeth = 7;
 		if bc=9 or bc=22 then effmeth = .;
 		if ster=3 then effmeth = 8;
-		label effmeth "conceptually appropriate method groups";
+		label effmeth="conceptually appropriate method groups";
 		run;
+
+	* creating a var with method groups and non-iup groups;
+	data a; set a;
+		allrepro = bc;
+		if ster=1 then allrepro = 1;
+		if bc=3 or bc=10 then allrepro = 2;
+		if bc=5 or bc=6 or bc=7 or bc=8 then allrepro = 3;
+		if bc=11 or bc=12 or bc=14 or bc=16 or bc=17 or bc=18 then allrepro = 4;
+		if bc=19 or bc=20 then allrepro = 6;
+		if bc=21 then allrepro = 7;
+		if bc=9 or bc=22 then allrepro = .;
+		if ster=3 then allrepro = 8;
+		if constat1=30 then allrepro = 9;
+		if constat1=31 then allrepro = 10;
+		if constat1=32 then allrepro = 11;
+		if constat1=33 or constat1=34 or constat1=35 or constat1=36 then allrepro = 12;
+		if constat1=40 then allrepro = 13;
+		if constat1=41 then allrepro = 14;
+		label allrepro="all possible contracept or repro groups";
+		run;
+
 
 *** Subfecundity;
 
@@ -128,8 +149,6 @@ not include code to pull in the datasets and formats, those can happen from
 				label edu "education categories";
 				run;
 
-			proc freq; tables edu; run;
-
 *** Race;
 
 	proc freq; tables race; run;
@@ -179,7 +198,29 @@ not include code to pull in the datasets and formats, those can happen from
 			expects
 			intnext;
 		run;
-			
+
+
+
+****************************************
+*** Age as continuous vs categorical ***
+****************************************;
+
+* Age and non-use;
+	proc freq; tables nouse*rscrage / nofreq norow nopercent; run;
+
+* Age and sterilization;
+	proc freq; tables rscrage*ster / nofreq nocol nopercent; run;
+
+* Age and conceptually appropriate contraceptive groups;
+
+	proc freq; tables rscrage*effmeth / nofreq nocol nopercent; run;
+
+* Age and all contraceptive/reproductive status groups;
+	* Could be used for stacked bar charts;
+
+	proc freq; tables rscrage*allrepro / nofreq nocol nopercent; run;
+
+	proc freq; tables agecat*allrepro / nofreq nocol nopercent; run;
 
 
 		
