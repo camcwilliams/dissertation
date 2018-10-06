@@ -45,7 +45,20 @@ proc format;
 		6="periodic abstinence"
 		7="withdrawal"
 		8="not using contraception";
-
+	value all
+		1="sterilized"
+		2="IUD, implant"
+		3="injection, pill, patch, ring"
+		4="condom, diaphragm, foam, insert, jelly"
+		6="periodic abstinence"
+		7="withdrawal"
+		8="not using contraception"
+		9="pregnant"
+		10="seeking pregnancy"
+		11="< 2 months postpartum"
+		12="noncontraceptive sterile"
+		13="never had intercourse since first period"
+		14="no intercourse in 3 months b4 interview";
 
 
 	
@@ -61,4 +74,5 @@ data a; set a;
 			bcyes bcyes.
 			edu edu.
 			ster ster.
+			all all.
 ;run;
