@@ -211,7 +211,30 @@ not include code to pull in the datasets and formats, those can happen from
 	whether to include it as a continuous or categorical. If considering it categorical
 	with it's original groups, many of the groups get pretty small, 3 or 4 respondents;
 
-*** 
+	* poverty level categories;
+	data a; set a;
+		povlev = .;
+		if poverty < 100 and poverty > 0 then povlev = 1;
+		if poverty < 200 and poverty > 99 then povlev = 2;
+		if poverty < 300 and poverty > 199 then povlev = 3;
+		if poverty < 400 and poverty > 299 then povlev = 4;
+		if poverty < 500 and poverty > 399 then povlev = 5;
+		if poverty >= 500 then povlev = 6;
+		label povlev = "poverty level categories";
+		run;
+
+
+*** Health Insurance;
+	* going to use the existing variable, although it's not quite as precise as
+	I would like;
+
+	proc freq; tables curr_ins; run;
+
+	/*SAS Macros: https://support.sas.com/resources/papers/proceedings10/028-2010.pdf,
+	https://stats.idre.ucla.edu/sas/seminars/sas-macros-introduction/;
+	%let categorical = povlev edu;
+
+	proc freq; tables &categorical; run;*/
 
 
 ****************************************
