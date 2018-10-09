@@ -121,10 +121,19 @@ not include code to pull in the datasets and formats, those can happen from
 		*Recode specs:
 		https://www.icpsr.umich.edu/icpsradmin/nsfg/variable/recode_spec/cycle8.1/fem/AGEBABY1.pdf;
 		*commenting this out and making a nice data set for posterity;*/
+
+			*agebaby1 to real years;
 			data a; set a;
-				agefirst = (datbaby1-cmbirth)/12;
-				label "continuous age at first birth";
-				run; 
+				agefirstbirth = agebaby1/100;
+				label agefirstbirth="real years at first birth (agebaby1/100)";
+				run;
+
+			data a; set a;
+				if agebaby1 < 2500 then agebabycat = 1;
+				if agebaby1 >= 2500 then agebabycat = 2;
+				label agebabycat = "categorical age at first birth, 25+ = 2";
+				run;
+
 
 *** Education;
 

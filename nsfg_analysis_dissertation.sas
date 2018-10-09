@@ -23,16 +23,6 @@ proc contents data = a; run;
 	
 *---- CREATING NEW VARIABLES ----*;
 
-	* poverty level categories;
-	data a; set a;
-		povlev = .;
-		if poverty < 100 and poverty > 0 then povlev = 1;
-		if poverty < 200 and poverty > 99 then povlev = 2;
-		if poverty < 300 and poverty > 199 then povlev = 3;
-		if poverty < 400 and poverty > 299 then povlev = 4;
-		if poverty < 500 and poverty > 399 then povlev = 5;
-		if poverty >= 500 then povlev = 6;
-		run;
 
 	data a; set a;
 		if agebaby1 < 2500 then agebabycat = 1;
