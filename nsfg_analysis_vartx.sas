@@ -146,7 +146,7 @@ not include code to pull in the datasets and formats, those can happen from
 				if hieduc = 13 then edu = 6;
 				if hieduc = 14 then edu = 6;
 				if hieduc = 15 then edu = 6;
-				label edu "education categories";
+				label edu = "education categories";
 				run;
 
 *** Race;
@@ -199,6 +199,19 @@ not include code to pull in the datasets and formats, those can happen from
 			intnext;
 		run;
 
+*** Income;
+
+	/*proc freq; tables poverty; run;
+	proc means; var poverty; run;
+	proc sgplot; histogram poverty; run;
+	proc print data=a (obs=20); var caseid poverty poverty_i totinc; format _all_ ; run;
+	proc freq; tables poverty*agecat; run;
+	proc freq; tables poverty; format _all_; run;*/
+	*For now, poverty will need to be the variable. Need to talk to Ron about 
+	whether to include it as a continuous or categorical. If considering it categorical
+	with it's original groups, many of the groups get pretty small, 3 or 4 respondents;
+
+*** 
 
 
 ****************************************
