@@ -20,25 +20,7 @@ data work.a; set work.a;
 	nchildhh whynousing1 race dipged degrees hieduc agebaby1; run;
 
 proc contents data = a; run;	
-	
-*---- CREATING NEW VARIABLES ----*;
 
-
-	data a; set a;
-		if agebaby1 < 2500 then agebabycat = 1;
-		if agebaby1 >= 2500 then agebabycat = 2;
-		run;
-
-	*agebaby1 to real years;
-	data a; set a;
-		agefirstbirth = agebaby1/100;
-		label agefirstbirth="real years at first birth (agebaby1/100)";
-		run;
-
-	proc means; var agefirstbirth; run;
-	*Distributions of education by yes/no to contraception really aren't very different. 
-	If education is playing a role, perhaps it's by method or use and non-use need 
-	to be defined more granularly;
 
 
 *---- REMOVING CASES ACCORDING TO STANDARD PRACTICE 
