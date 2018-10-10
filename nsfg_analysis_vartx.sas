@@ -33,7 +33,7 @@ not include code to pull in the datasets and formats, those can happen from
 	data a; set a;
 		bc = constat1;
 		if constat1>29 and constat1<=41 then bc=.;
-		label bc="bc method with not at risk if UIP set to missing";
+		label bc="bc method with not at risk of UIP set to missing";
 		run;
 		*note that postpartum is in this group, but is restricted to women less than
 		2 months postpartum;
@@ -134,6 +134,8 @@ not include code to pull in the datasets and formats, those can happen from
 				label agebabycat = "categorical age at first birth, 25+ = 2";
 				run;
 
+			proc freq; tables agebaby1*nouse / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
+			proc freq; tables agebaby1*ster / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
 
 *** Education;
 
@@ -157,6 +159,9 @@ not include code to pull in the datasets and formats, those can happen from
 				if hieduc = 15 then edu = 6;
 				label edu = "education categories";
 				run;
+
+			proc freq; tables edu*nouse / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
+			proc freq; tables edu*ster / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
 
 *** Race;
 
@@ -236,7 +241,6 @@ not include code to pull in the datasets and formats, those can happen from
 *** Health Insurance;
 	* going to use the existing variable, although it's not quite as precise as
 	I would like;
-
 	proc freq; tables curr_ins; run;
 
 	/*SAS Macros: https://support.sas.com/resources/papers/proceedings10/028-2010.pdf,
