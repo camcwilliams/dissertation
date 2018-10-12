@@ -24,6 +24,27 @@ not include code to pull in the datasets and formats, those can happen from
 		label agecat="5yr age categories, 1=15-19, 6=40-44";
 		run;	
 
+		/****************************************
+		*** Age as continuous vs categorical ***
+		****************************************;
+
+		* Age and non-use;
+			proc freq; tables nouse*rscrage / nofreq norow nopercent; run;
+
+		* Age and sterilization;
+			proc freq; tables rscrage*ster / nofreq nocol nopercent; run;
+
+		* Age and conceptually appropriate contraceptive groups;
+
+			proc freq; tables rscrage*effmeth / nofreq nocol nopercent; run;
+
+		* Age and all contraceptive/reproductive status groups;
+			* Could be used for stacked bar charts;
+			proc freq; tables rscrage*allrepro / nofreq nocol nopercent; run;
+
+			proc freq; tables agecat*allrepro / nofreq nocol nopercent; run;
+		*/
+
 *** Contraceptive Use;
 
 	/*proc freq data=a; tables constat1; run;*/
@@ -129,14 +150,22 @@ not include code to pull in the datasets and formats, those can happen from
 				run;
 
 			data a; set a;
-				if agebaby1 < 2500 then agebabycat = 1;
-				if agebaby1 >= 2500 then agebabycat = 2;
-				label agebabycat = "categorical age at first birth, 25+ = 2";
+				if agebaby1 < 2500 then agebabydichot = 1;
+				if agebaby1 >= 2500 then agebabydichot = 2;
+				label agebabydichot = "categorical age at first birth, 25+ = 2";
 				run;
 
-			proc freq; tables agebaby1*nouse / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
-			proc freq; tables agebaby1*ster / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
-
+			data a; set a;
+				if agefirstbirth < 20 then agebabycat = 1;
+				if agefirstbirth < 25 and agebaby1 >= 20 then agebabycat = 2;
+				if agefirstbirth < 30 and agebaby1 >= 25 then agebabycat = 3;
+				if agefirstbirth < 35 and agebaby1 >= 30 then agebabycat = 4;
+				if agefirstbirth < 40 and agebaby1 >= 35 then agebabycat = 5;
+				if agefirstbirth < 45 and agebaby1 >= 40 then agebabycat = 6;
+				label agebabycat = "age at first birth, 1=<20, 6=40-44";
+				run;
+			
+			
 *** Education;
 
 	/*proc freq data=a; tables dipged degrees hieduc; run;*/
@@ -160,12 +189,9 @@ not include code to pull in the datasets and formats, those can happen from
 				label edu = "education categories";
 				run;
 
-			proc freq; tables edu*nouse / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
-			proc freq; tables edu*ster / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
-
 *** Race;
 
-	proc freq; tables race; run;
+	/*proc freq; tables race; run;
 		*it appears the raw variables used to create this are not available, which 
 		won't work because i would like to have more granularity...;
 		*Recode specs here: https://www.icpsr.umich.edu/icpsradmin/nsfg/variable/recode_spec/cycle8.1/fem/RACE.pdf;
@@ -188,13 +214,15 @@ not include code to pull in the datasets and formats, those can happen from
 		hbox poverty / category=hispanic;
 		run;
 
+	*/
+
 	*still not sure about this. will need to figure out if there is any way to handle race better.
 	i'm worried about misclassification problems because the 'other' category will be so 
 	heterogeneous;
 
 *** Birth Desires, Intention, Ambivalence - INCLUDES INDIVIDUAL AND JOINT WITH PARTNER;
 
-	proc freq;
+	/*proc freq;
 		tables
 			rwant
 			probwant
@@ -212,6 +240,7 @@ not include code to pull in the datasets and formats, those can happen from
 			expects
 			intnext;
 		run;
+	*/
 
 *** Income;
 
@@ -241,7 +270,7 @@ not include code to pull in the datasets and formats, those can happen from
 *** Health Insurance;
 	* going to use the existing variable, although it's not quite as precise as
 	I would like;
-	proc freq; tables curr_ins; run;
+	/*proc freq; tables curr_ins; run;*/
 
 	/*SAS Macros: https://support.sas.com/resources/papers/proceedings10/028-2010.pdf,
 	https://stats.idre.ucla.edu/sas/seminars/sas-macros-introduction/;
@@ -250,26 +279,6 @@ not include code to pull in the datasets and formats, those can happen from
 	proc freq; tables &categorical; run;*/
 
 
-****************************************
-*** Age as continuous vs categorical ***
-****************************************;
-
-* Age and non-use;
-	proc freq; tables nouse*rscrage / nofreq norow nopercent; run;
-
-* Age and sterilization;
-	proc freq; tables rscrage*ster / nofreq nocol nopercent; run;
-
-* Age and conceptually appropriate contraceptive groups;
-
-	proc freq; tables rscrage*effmeth / nofreq nocol nopercent; run;
-
-* Age and all contraceptive/reproductive status groups;
-	* Could be used for stacked bar charts;
-
-	proc freq; tables rscrage*allrepro / nofreq nocol nopercent; run;
-
-	proc freq; tables agecat*allrepro / nofreq nocol nopercent; run;
 
 
 		
