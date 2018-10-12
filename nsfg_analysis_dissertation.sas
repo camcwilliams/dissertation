@@ -15,9 +15,7 @@ data work.a; set library.nsfg_females_2011_2015; run;
 
 *RESTRICTING TO JUST MY VARIABLES OF INTEREST;
 data work.a; set work.a; 
-	keep caseid rscrage constat1 constat2 constat3 constat4 mainnouse
-	currmeth1 currmeth2 currmeth3 currmeth4 educat poverty nbabes_s
-	nchildhh whynousing1 race dipged degrees hieduc agebaby1; run;
+	keep ; run;
 
 proc contents data = a; run;	
 
