@@ -205,23 +205,26 @@ not include code to pull in the datasets and formats, those can happen from
 		*hispanic folks fall into all three of the race categories, the greatest percent
 		being 'other';
 
-	proc sgplot;
-		scatter x=poverty y=race;
+	*I see that there are additional race variables I didn't see originally,
+	working on them here:;
+
+	proc freq; tables race hispanic rscrrace hisprace; run;
+		*error from SAS saying nraced and hisprace2f not found, after more
+		investigation I see they are formats, which subsequently helped me 
+		find more race vars;
+		*race is just black, white, other;
+		*hispanic is just hispanic origin, doesn't include race;
+		*rscrrace is R's race as reported in screener;
+		*hisprace is race and hispanic origin - hispanic, 
+		NH white, NH black, NH other;
+
+	*some additional variables I found;
+	proc freq; 
+		tables hisprace2 hsbnrace1 curcohnrace coh1nrace fsexnrace p1ynrace1; 
 		run;
-
-	proc sgplot;
-		hbox poverty / category=race;
-		run;
-
-	proc sgplot;
-		hbox poverty / category=hispanic;
-		run;
-
-	*/
-
-	*still not sure about this. will need to figure out if there is any way to handle race better.
-	i'm worried about misclassification problems because the 'other' category will be so 
-	heterogeneous;
+		*hisprace2 is same as hisprace but using 1997 OMB standards;
+		*the rest are hisprace-like vars for various partners;	
+	*/	
 
 *** Birth Desires, Intention, Ambivalence - INCLUDES INDIVIDUAL AND JOINT WITH PARTNER;
 
@@ -281,6 +284,42 @@ not include code to pull in the datasets and formats, those can happen from
 
 	proc freq; tables &categorical; run;*/
 
+
+*****************************************
+Including all relevant variables in the dataset
+******************************************;
+
+/*%let varlist =
+caseid
+rscrage
+agecat
+constat1
+constat2
+constat3
+constat4
+mainnouse
+currmeth1
+currmeth2
+currmeth3
+currmeth4
+bc
+nouse
+bcyes
+ster
+effmeth
+allrepro
+fecund
+educat
+poverty
+nbabes_s
+nchildhh
+whynousing1
+race
+dipged
+degrees
+hieduc
+agebaby1
+*/
 
 
 
