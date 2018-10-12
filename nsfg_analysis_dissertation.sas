@@ -173,7 +173,21 @@ proc freq data = work.a; tables agecat; run;
 		run;
 
 
-	
+		/*Descriptives for PHS 820 pres on 10/10/18;
+		proc freq; tables agebabycat*(nouse ster); run;
+		proc freq; tables agebaby1; run;
+
+		proc freq; tables agebabycat*nouse / nofreq nocol nopercent; weight weightvar; run;
+		proc freq; tables agebabycat*ster / nofreq nocol nopercent; weight weightvar; run;
+
+		proc freq; tables agebaby1*nouse / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
+		proc freq; tables agebaby1*ster / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
+
+		proc freq; tables edu*nouse / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
+		proc freq; tables edu*ster / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
+
+		*/
+
 
 *---- REGRESSION ----*;
 
