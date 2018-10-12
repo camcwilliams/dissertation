@@ -128,14 +128,7 @@ not include code to pull in the datasets and formats, those can happen from
 
 *** Age at first birth;
 
-	/*proc freq data=a; tables agebaby1; run;
-		*agebaby1 is categorical - trying to recreate the continuous below;
-		proc means; var datbaby1 cmbirth; run;
-		
-		data a; set a; 
-			agefirst = ((datbaby1-cmbirth)/12)*100; 
-			run;
-		
+	/*
 		proc means; var agefirst; run;
 		proc print data = a (obs=15); var caseid agefirst agebaby1; run;
 		*that worked, agefirst is the continuous var;
@@ -156,16 +149,26 @@ not include code to pull in the datasets and formats, those can happen from
 				run;
 
 			data a; set a;
-				if agefirstbirth < 20 then agebabycat = 1;
-				if agefirstbirth < 25 and agebaby1 >= 20 then agebabycat = 2;
-				if agefirstbirth < 30 and agebaby1 >= 25 then agebabycat = 3;
-				if agefirstbirth < 35 and agebaby1 >= 30 then agebabycat = 4;
-				if agefirstbirth < 40 and agebaby1 >= 35 then agebabycat = 5;
-				if agefirstbirth < 45 and agebaby1 >= 40 then agebabycat = 6;
+				agebabycat = agefirstbirth;
+				if agefirstbirth < 20 and agefirstbirth >= 8 then agebabycat = 1;
+				if agefirstbirth < 25 and agefirstbirth >= 20 then agebabycat = 2;
+				if agefirstbirth < 30 and agefirstbirth >= 25 then agebabycat = 3;
+				if agefirstbirth < 35 and agefirstbirth >= 30 then agebabycat = 4;
+				if agefirstbirth < 40 and agefirstbirth >= 35 then agebabycat = 5;
+				if agefirstbirth < 45 and agefirstbirth >= 40 then agebabycat = 6;
 				label agebabycat = "age at first birth, 1=<20, 6=40-44";
 				run;
 			
-			
+			/* trying to figure out why agebabycat wasn't working, of course it was
+			because i made a stupid coding mistake. glad the troubleshooting worked!;
+			proc print data = a (obs=20); var agefirstbirth; run;
+			proc freq; tables agebabycat; run;
+			proc means; var agefirstbirth; run;
+
+			proc means; var agebaby1; run;
+			proc freq; tables agebaby1; run;
+			proc freq; tables agefirstbirth; run;*/
+
 *** Education;
 
 	/*proc freq data=a; tables dipged degrees hieduc; run;*/
