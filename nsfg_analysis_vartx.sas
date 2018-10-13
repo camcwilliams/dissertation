@@ -124,7 +124,32 @@ not include code to pull in the datasets and formats, those can happen from
 		*Recode specs and description of groups: 
 		https://www.icpsr.umich.edu/icpsradmin/nsfg/variable/recode_spec/cycle8.1/fem/FECUND.pdf;
 		*May be difficult to use because fecund = 1 will be fully collinear with sterilization
-		as contraceptive use;
+		as contraceptive use;*/
+
+		*Looking at diagnosed infertility;
+
+		proc freq; tables infert; run;
+		proc freq; tables infert*fecund; run;
+		proc freq; tables fecund; run;
+		proc print data=a;
+		var caseid fecund infert POSIBLPG REASIMPR REASIMPP 
+		constat1 strloper;
+		where fecund=3 and infert=3;
+		run;
+
+		*I can't figure out what's going on with fecund=3 and
+		infert=3, there are people who are considered "fecund" in
+		the infertility variable that are considered "nonsurgically
+		sterile" in the fecundity variable. Probably should just
+		use the fecund variable when considering 
+		infertility/fecundity. I think maybe the issue is that the
+		infert variable erred on the side of caution with nonsurgical
+		sterilization;
+
+		*I don't think there is a variable about perceived subfecundity
+		except in the motivation questions after reporting non-use,
+		need to investigate further;
+
 
 *** Age at first birth;
 
@@ -223,7 +248,9 @@ not include code to pull in the datasets and formats, those can happen from
 		tables hisprace2 hsbnrace1 curcohnrace coh1nrace fsexnrace p1ynrace1; 
 		run;
 		*hisprace2 is same as hisprace but using 1997 OMB standards;
-		*the rest are hisprace-like vars for various partners;	
+		*the rest are hisprace-like vars for various partners;
+
+	proc freq; tables hisprace2; run;	
 	*/	
 
 *** Birth Desires, Intention, Ambivalence - INCLUDES INDIVIDUAL AND JOINT WITH PARTNER;
@@ -246,7 +273,7 @@ not include code to pull in the datasets and formats, those can happen from
 			expects
 			intnext;
 		run;
-	*/
+		*/
 
 *** Income;
 
@@ -274,6 +301,7 @@ not include code to pull in the datasets and formats, those can happen from
 
 
 *** Health Insurance;
+
 	* going to use the existing variable, although it's not quite as precise as
 	I would like;
 	/*proc freq; tables curr_ins; run;*/
@@ -283,6 +311,19 @@ not include code to pull in the datasets and formats, those can happen from
 	%let categorical = povlev edu;
 
 	proc freq; tables &categorical; run;*/
+
+*** Relationship History;
+
+	proc freq; tables marstat; run;
+	proc freq; tables prevcohb; run;
+
+*** Parenting History;
+
+	proc freq; tables nchildhh; run;
+	proc freq; tables nbabes_s; run;
+	proc freq; tables numbabes*parity nbabes_s*parity; run;
+
+	proc freq; tables reactslf numkdhh numfmhh; run;
 
 
 *****************************************
@@ -319,6 +360,9 @@ dipged
 degrees
 hieduc
 agebaby1
+agefirstbirth
+marstat
+prevcohb
 */
 
 
