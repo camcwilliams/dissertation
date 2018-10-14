@@ -1,5 +1,6 @@
 *******************************************
 ************** DISSERTATION ***************
+*********** VARIABLE TREATMENT ************
 ************* NSFG 2011-2015 **************
 ******************************************;
 
@@ -126,7 +127,7 @@ not include code to pull in the datasets and formats, those can happen from
 		*May be difficult to use because fecund = 1 will be fully collinear with sterilization
 		as contraceptive use;*/
 
-		*Looking at diagnosed infertility;
+		/*Looking at diagnosed infertility;
 
 		proc freq; tables infert; run;
 		proc freq; tables infert*fecund; run;
@@ -144,7 +145,7 @@ not include code to pull in the datasets and formats, those can happen from
 		use the fecund variable when considering 
 		infertility/fecundity. I think maybe the issue is that the
 		infert variable erred on the side of caution with nonsurgical
-		sterilization;
+		sterilization;*/
 
 		*I don't think there is a variable about perceived subfecundity
 		except in the motivation questions after reporting non-use,
@@ -314,17 +315,19 @@ not include code to pull in the datasets and formats, those can happen from
 
 *** Relationship History;
 
+	/*
 	proc freq; tables marstat; run;
-	proc freq; tables prevcohb; run;
+	proc freq; tables prevcohb; run;*/
 
-*** Parenting History;
+*** Live Birth and Parenting History;
 
+	/*
 	proc freq; tables nchildhh; run;
 	proc freq; tables nbabes_s; run;
 	proc freq; tables numbabes*parity nbabes_s*parity; run;
 
 	proc freq; tables reactslf numkdhh numfmhh; run;
-
+	*/
 
 *****************************************
 Including all relevant variables in the dataset
