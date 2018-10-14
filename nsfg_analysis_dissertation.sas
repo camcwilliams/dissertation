@@ -14,10 +14,10 @@ data work.a; set library.nsfg_females_2011_2015; run;
 	still work when they are applied later;
 
 *RESTRICTING TO JUST MY VARIABLES OF INTEREST;
-data work.a; set work.a; 
+/*data work.a; set work.a; 
 	keep ; run;
 
-proc contents data = a; run;	
+proc contents data = a; run;*/	
 
 
 
@@ -185,6 +185,25 @@ proc freq data = work.a; tables agecat; run;
 		proc freq; tables edu*ster / nofreq nocol nopercent; where rscrage > 21; weight weightvar; run;
 
 		*/
+
+	*Descriptives for lab meeting;
+	proc sort; by edu; run;
+	proc freq; tables edu*ster / nofreq nopercent nocol; where agecat > 4; run;
+	proc freq; tables edu*ster;
+		where agecat > 4 and agefirstbirth < 30;
+		run;
+	proc freq; tables edu*ster / nofreq nopercent nocol;
+		where agecat > 4 and agefirstbirth < 30;
+		run;
+	title "Women 35+, first birth before 25";
+	proc freq; tables edu*ster / nofreq nopercent nocol;
+		where agecat > 4 and agefirstbirth < 25;
+		run;
+	title "Women 35+, first birth after 30";
+	proc freq; tables edu*ster / nofreq nopercent nocol;
+		where agecat > 4 and agefirstbirth > 30;
+		run;
+	title;
 
 
 *---- REGRESSION ----*;
