@@ -9,58 +9,34 @@ proc format library=library; run;
 data work.a; set library.nsfg_females_2011_2015; run;
 
 	
-	%include "U:\Dissertation\nsfg_CMcWFormats.sas";
-		*McWilliams-created formats and labels;
-		*ignore error, formats will still work;
+%include "U:\Dissertation\nsfg_CMcWFormats.sas";
+	*McWilliams-created formats and labels;
+	*ignore error, formats will still work;
 
-	%include "U:\Dissertation\nsfg_analysis_vartx.sas";
-		*runs variable treatment program;
 
-*---- REMOVING CASES ACCORDING TO STANDARD PRACTICE 
-	  (MAY WANT TO INCLUDE LATER OR RUN BOTH WAYS);
+%include "U:\Dissertation\nsfg_analysis_vartx.sas";
+	*runs variable treatment program;
 
-	* removing individuals who are currently pregnant;
+
+*######### WORKING ON SAMPLE #########;
+
+* Flag for eligible cases (according to standard practice);
+
+data a; set a;
+	elig = 1;
+	run;
+
 	data a; set a;
-		if constat1 = 30 then delete;
+		if constat1 = 30 then elig = 0; *currently pregnant;
+		if constat1 = 31 then elig = 0; *seeking pregnancy;
+		if constat1 = 33 or 
+		constat1 = 34 or
+		constat1 = 35 or
+		constat1 = 36 then elig = 0; *noncontraceptive sterility;
+		if constat1 = 38 then elig = 0; *sterile--unknown reasons -male;
+		if constat1 = 40 then elig = 0; *no intercourse since menarche;
+		if constat1 = 41 then elig = 0; *no intercourse in last 3 months;
 		run;
-		*5450;
-
-	* removing individuals who are seeking pregnancy;
-	data a; set a;
-		if constat1 = 31 then delete;
-		run;
-		*5205;
-
-	* removing individuals who are sterile for noncontraceptive reasons
-	(includes surgical and nonsurgical);
-	data a; set a;
-		if constat1 = 33 then delete;
-		if constat1 = 34 then delete;
-		if constat1 = 35 then delete;
-		if constat1 = 36 then delete;
-		run;
-		*5004;
-
-	* removing "sterile--unknown reasons -male";
-	data a; set a;
-		if constat1 = 38 then delete;
-		run;
-		*5004;
-
-	* removing never had intercourse since 1st period;	
-	data a; set a;
-		if constat1 = 40 then delete;
-		run;
-		*4308;
-
-	* removing hasn't had intercourse in last 3 months;
-	data a; set a;
-		if constat1 = 41 then delete;
-		run;
-		*3812;
-
-proc freq data = work.a; tables agecat; run;
-	*women over 34 = 1225;
 
 *----------------------*
 *---- DESCRIPTIVES ----*
