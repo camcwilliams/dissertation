@@ -8,18 +8,13 @@ libname library "U:\Dissertation";
 proc format library=library; run;
 data work.a; set library.nsfg_females_2011_2015; run;
 
-	* McWilliams-created formats and labels;
+	
 	%include "U:\Dissertation\nsfg_CMcWFormats.sas";
-	*there will be errors saying the variables are uninitialized, the formats will
-	still work when they are applied later;
+		*McWilliams-created formats and labels;
+		*ignore error, formats will still work;
 
-*RESTRICTING TO JUST MY VARIABLES OF INTEREST;
-/*data work.a; set work.a; 
-	keep ; run;
-
-proc contents data = a; run;*/	
-
-
+	%include "U:\Dissertation\nsfg_analysis_vartx.sas";
+		*runs variable treatment program;
 
 *---- REMOVING CASES ACCORDING TO STANDARD PRACTICE 
 	  (MAY WANT TO INCLUDE LATER OR RUN BOTH WAYS);
