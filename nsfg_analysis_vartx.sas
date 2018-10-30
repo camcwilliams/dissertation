@@ -251,8 +251,10 @@ not include code to pull in the datasets and formats, those can happen from
 		*hisprace2 is same as hisprace but using 1997 OMB standards;
 		*the rest are hisprace-like vars for various partners;
 
+	proc freq; tables numrace; run;
+
 	proc freq; tables hisprace2; run;	
-	*/	
+	*/
 
 *** Birth Desires, Intention, Ambivalence - INCLUDES INDIVIDUAL AND JOINT WITH PARTNER;
 
@@ -333,7 +335,7 @@ not include code to pull in the datasets and formats, those can happen from
 Including all relevant variables in the dataset
 ******************************************;
 
-/*%let varlist =
+%let varlist =
 caseid
 rscrage
 agecat
@@ -365,8 +367,15 @@ hieduc
 agebaby1
 agefirstbirth
 marstat
-prevcohb
-*/
+prevcohb;
+
+data b; set a;
+	keep &varlist;
+	run;
+
+proc contents data = b; title "variables of interest"; run;
+
+title;
 
 
 
