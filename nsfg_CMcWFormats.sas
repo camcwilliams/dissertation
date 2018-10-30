@@ -59,7 +59,9 @@ proc format;
 		12="noncontraceptive sterile"
 		13="never had intercourse since first period"
 		14="no intercourse in 3 months b4 interview";
-
+	value elig
+		1="at risk of UIP"
+		0="not at risk of UIP";
 
 	
 
@@ -75,4 +77,5 @@ data a; set a;
 			edu edu.
 			ster ster.
 			allrepro allrepro.
+			elig elig.;
 ;run;
