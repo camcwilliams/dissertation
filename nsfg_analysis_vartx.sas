@@ -377,6 +377,19 @@ proc contents data = b; title "variables of interest"; run;
 
 title;
 
+%let implist =
+constat1_i
+constat2_i
+constat3_i
+constat4_i
+fecund_i
+educat_i
+poverty_i
+nchildhh_i
+race_i
+hieduc_i
+agebaby1_i;
+
 
 
 		
