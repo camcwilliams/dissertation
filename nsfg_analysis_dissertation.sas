@@ -36,7 +36,31 @@ data a; set a;
 		if constat1 = 38 then elig = 0; *sterile--unknown reasons -male;
 		if constat1 = 40 then elig = 0; *no intercourse since menarche;
 		if constat1 = 41 then elig = 0; *no intercourse in last 3 months;
+		label elig="at risk of UIP, according to standard practice";
 		run;
+
+
+*########### ASSESS MISSINGNESS ###########;
+*########### CHECK RECODES ###########;
+
+proc freq; tables &implist; run;
+proc freq; tables &varlist; run;
+	*note there are some continuous vars on varlist (caseid, agebaby1, etc);
+
+
+*########### DISTRIBUTION ###########;
+
+proc sgplot data = a;
+	histogram poverty;
+	run;
+
+proc sgplot data = a;
+	histogram agebaby1;
+	run;
+
+proc sgplot data = a;
+	vbar agecat;
+	run;
 
 *----------------------*
 *---- DESCRIPTIVES ----*
