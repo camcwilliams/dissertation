@@ -332,9 +332,10 @@ not include code to pull in the datasets and formats, those can happen from
 	*/
 
 *****************************************
-Including all relevant variables in the dataset
+Creating macros
 ******************************************;
 
+* Full list of variables of interest;
 %let varlist =
 caseid
 rscrage
@@ -377,6 +378,7 @@ proc contents data = b; title "variables of interest"; run;
 
 title;
 
+* Full list of variables of interest with imputed values;
 %let implist =
 constat1_i
 constat2_i
@@ -390,7 +392,47 @@ race_i
 hieduc_i
 agebaby1_i;
 
+* Full list of variables that are or can be used as categorical;
+%let catlist =
+agecat
+constat1
+constat2
+constat3
+constat4
+mainnouse
+currmeth1
+currmeth2
+currmeth3
+currmeth4
+bc
+nouse
+bcyes
+ster
+effmeth
+allrepro
+fecund
+educat
+poverty
+nbabes_s
+nchildhh
+whynousing1
+race
+dipged
+degrees
+hieduc
+agebaby1
+agefirstbirth
+marstat
+prevcohb;
 
-
-		
-		
+* Full list of variables that are or can be used as continuous;
+%let contlist =
+caseid
+rscrage
+fecund
+poverty		
+nbabes_s
+nchildhh
+agebaby1
+agefirstbirth
+prevcohb;	
