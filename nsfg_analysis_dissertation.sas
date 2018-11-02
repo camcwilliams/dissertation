@@ -39,6 +39,12 @@ data a; set a;
 		label elig="at risk of UIP, according to standard practice";
 		run;
 
+* Removing case where age was not ascertained;
+
+data a; set a;
+	if rscrage = 97 then delete;
+	run;
+
 
 *########### ASSESS MISSINGNESS ###########;
 *########### CHECK RECODES ###########;
@@ -53,6 +59,19 @@ proc freq; tables &varlist; run;
 proc sgplot data = a;
 	histogram poverty;
 	run;
+
+	title 'poverty level distribution for Rs with imputed poverty';
+	proc sgplot data = a;
+	histogram poverty;
+	where poverty_i = 1;
+	run;
+	title;
+
+	title 'are missing poverty values due to missing income values?';
+	proc freq;
+		tables poverty_i*totincr_i;
+		run;
+	title;
 
 proc sgplot data = a;
 	histogram agebaby1;
