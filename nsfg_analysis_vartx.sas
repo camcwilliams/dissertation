@@ -87,8 +87,6 @@ not include code to pull in the datasets and formats, those can happen from
 		label ster="sterilized, using non-sterilization contraception, not contracepting";
 		run;
 
-		proc freq; tables ster; run;
-
 	* creating conceptually appropriate method groups;
 	data a; set a;
 		effmeth = bc;
@@ -103,7 +101,7 @@ not include code to pull in the datasets and formats, those can happen from
 		label effmeth="conceptually appropriate method groups";
 		run;
 
-	* creating a var with method groups and non-iup groups;
+	* creating a var with method groups and non-uip groups;
 	data a; set a;
 		allrepro = bc;
 		if ster=1 then allrepro = 1;
@@ -117,11 +115,16 @@ not include code to pull in the datasets and formats, those can happen from
 		if constat1=30 then allrepro = 9;
 		if constat1=31 then allrepro = 10;
 		if constat1=32 then allrepro = 11;
-		if constat1=33 or constat1=34 or constat1=35 or constat1=36 then allrepro = 12;
+		if constat1=33 or constat1=34 or constat1=35 or constat1=36 or constat1=39 
+		then allrepro = 12;
 		if constat1=40 then allrepro = 13;
 		if constat1=41 then allrepro = 14;
 		label allrepro="all possible contracept or repro groups";
 		run;
+
+		/*proc sort; by allrepro; run;
+		proc freq; tables bc; by allrepro; run;
+		proc freq; tables constat1; where allrepro = .; run;*/
 
 
 *** Subfecundity;
@@ -178,6 +181,8 @@ not include code to pull in the datasets and formats, those can happen from
 				if agebaby1 >= 2500 then agebabydichot = 2;
 				label agebabydichot = "categorical age at first birth, 25+ = 2";
 				run;
+
+			proc freq; tables agebaby1; run;
 
 			data a; set a;
 				agebabycat = agefirstbirth;
@@ -372,8 +377,9 @@ degrees
 hieduc
 agebaby1
 agefirstbirth
-marstat
-prevcohb;
+rmarital
+prevcohb
+timescoh;
 
 data b; set a;
 	keep &varlist;
@@ -426,8 +432,9 @@ dipged
 degrees
 hieduc
 agebaby1
-marstat
-prevcohb;
+rmarital
+prevcohb
+timescoh;
 
 * Full list of variables that are or can be used as continuous;
 %let contlist =
@@ -439,4 +446,5 @@ nbabes_s
 nchildhh
 agebaby1
 agefirstbirth
-prevcohb;	
+prevcohb
+timescoh;	
