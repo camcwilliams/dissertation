@@ -50,9 +50,9 @@ data a; set a;
 *########### CHECK RECODES ###########;
 
 proc freq; tables &implist; run;
-proc freq; tables &varlist; run;
-	*note there are some continuous vars on varlist (caseid, agebaby1, etc);
 
+proc freq; tables &catlist; run;
+proc means; var &contlist; run;
 
 *########### DISTRIBUTION ###########;
 
@@ -81,9 +81,18 @@ proc sgplot data = a;
 	vbar agecat;
 	run;
 
-*----------------------*
-*---- DESCRIPTIVES ----*
-*----------------------*;
+
+*######################*
+*#### DESCRIPTIVES ####*
+*######################*;
+
+
+*########### CORRELATION ###########;
+
+proc corr data = a outp=CorrOutp; var &varlist; run;
+proc print data=CorrOutp; run;
+proc export data=CorrOutp outfile='outcorr' dbms=xlsx;
+	run;
 
 	******************* FOR SAMPLE SIZE CALCULATIONS ********************;
 
