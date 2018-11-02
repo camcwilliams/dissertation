@@ -288,6 +288,11 @@ not include code to pull in the datasets and formats, those can happen from
 		run;
 		*/
 
+	* Quick fix on a recode I think nchs missed;
+	data a; set a;
+		if jintendn = 98 then jintendn = .;
+		run;
+
 *** Income;
 
 	/*proc freq; tables poverty; run;
@@ -379,7 +384,27 @@ agebaby1
 agefirstbirth
 rmarital
 prevcohb
-timescoh;
+timescoh
+parity
+everpreg
+pregnum
+hisprace2
+religion
+curr_ins
+numkdhh
+numfmhh
+rwant
+probwant
+pwant
+jintend 
+jsureint
+jintendn
+jintnext
+intend
+sureint 
+intnext 
+reactslf
+;
 
 data b; set a;
 	keep &varlist;
@@ -401,7 +426,16 @@ poverty_i
 nchildhh_i
 race_i
 hieduc_i
-agebaby1_i;
+agebaby1_i
+rmarital_i
+timescoh_i
+parity_i
+pregnum_i
+hisprace2_i
+religion_i
+curr_ins_i
+numkdhh_i
+numfmhh_i;
 
 * Full list of variables that are or can be used as categorical;
 %let catlist =
@@ -434,7 +468,27 @@ hieduc
 agebaby1
 rmarital
 prevcohb
-timescoh;
+timescoh
+parity
+everpreg
+pregnum
+hisprace2
+religion
+curr_ins
+numkdhh
+numfmhh
+rwant
+probwant
+pwant
+jintend 
+jsureint
+jintendn
+jintnext
+intend
+sureint 
+intnext 
+reactslf
+;
 
 * Full list of variables that are or can be used as continuous;
 %let contlist =
@@ -447,4 +501,10 @@ nchildhh
 agebaby1
 agefirstbirth
 prevcohb
-timescoh;	
+timescoh
+parity
+pregnum
+numkdhh
+numfmhh
+jintendn
+;	
