@@ -60,7 +60,11 @@ not include code to pull in the datasets and formats, those can happen from
 		*note that postpartum is in this group, but is restricted to women less than
 		2 months postpartum;
 
-		/*proc freq; tables bc; run;*/
+		/*proc freq; tables bc; run;
+		proc sort; by elig; run;
+		proc freq; tables bc; by elig; run;
+		proc freq; tables elig; run;
+		proc freq; tables bc*constat1; run;*/
 
 	* making a dichotomous variable for using bc or not, making two versions (nouse, bcyes) so 1/0 is logical;
 	data a; set a;
@@ -75,14 +79,15 @@ not include code to pull in the datasets and formats, those can happen from
 	
 	* ster: sterilized, using non-sterilization contraception, not contracepting;
 	data a; set a;
-		if bc = 1 or bc = 2 or bc = 35 or bc = 36 or bc = 33 or bc = 34 or bc = 38
-		then ster = 1;
+		ster = bc;
+		if bc = 1 or bc = 2 then ster = 1;
 		if bc ne 1 and bc ne 2 and bc ne 35 and bc ne 36 and bc ne 33 and bc ne 34 
-		and bc ne 38 then ster =2;
+		and bc ne 38 and bc ne . then ster =2;
 		if bc = 42 then ster = 3;
 		label ster="sterilized, using non-sterilization contraception, not contracepting";
 		run;
 
+		proc freq; tables ster; run;
 
 	* creating conceptually appropriate method groups;
 	data a; set a;
@@ -421,7 +426,6 @@ dipged
 degrees
 hieduc
 agebaby1
-agefirstbirth
 marstat
 prevcohb;
 
