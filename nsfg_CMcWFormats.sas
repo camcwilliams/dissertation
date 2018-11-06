@@ -42,9 +42,11 @@ proc format;
 		2="IUD, implant"
 		3="injection, pill, patch, ring"
 		4="condom, diaphragm, sponge, foam, insert, jelly"
+		5="emergency contraception"
 		6="periodic abstinence"
 		7="withdrawal"
-		8="not using contraception";
+		8="other"
+		9="not using contraception";
 	value allrepro
 		1="sterilized"
 		2="IUD, implant"
@@ -52,13 +54,15 @@ proc format;
 		4="condom, diaphragm, sponge, foam, insert, jelly"
 		6="periodic abstinence"
 		7="withdrawal"
-		8="not using contraception"
-		9="pregnant"
-		10="seeking pregnancy"
-		11="< 2 months postpartum"
-		12="noncontraceptive sterile"
-		13="never had intercourse since first period"
-		14="no intercourse in 3 months b4 interview";
+		8="emergency contraception"
+		9="other"
+		10="not using contraception"
+		11="pregnant"
+		12="seeking pregnancy"
+		13="<2 months postpartum"
+		14="noncontraceptive sterile"
+		15="never had intercourse since first period"
+		16="no intercourse in 3 months b4 interview";
 	value elig
 		1="at risk of UIP"
 		0="not at risk of UIP";

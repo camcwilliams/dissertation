@@ -94,10 +94,11 @@ not include code to pull in the datasets and formats, those can happen from
 		if bc=3 or bc=10 then effmeth = 2;
 		if bc=5 or bc=6 or bc=7 or bc=8 then effmeth = 3;
 		if bc=11 or bc=12 or bc=14 or bc=16 or bc=17 or bc=18 then effmeth = 4;
+		if bc=9 then effmeth = 5;
 		if bc=19 or bc=20 then effmeth = 6;
 		if bc=21 then effmeth = 7;
-		if bc=9 or bc=22 then effmeth = .;
-		if ster=3 then effmeth = 8;
+		if bc=22 then effmeth = 8;
+		if ster=3 then effmeth = 9;
 		label effmeth="conceptually appropriate method groups";
 		run;
 
@@ -110,15 +111,16 @@ not include code to pull in the datasets and formats, those can happen from
 		if bc=11 or bc=12 or bc=14 or bc=16 or bc=17 or bc=18 then allrepro = 4;
 		if bc=19 or bc=20 then allrepro = 6;
 		if bc=21 then allrepro = 7;
-		if bc=9 or bc=22 then allrepro = .;
-		if ster=3 then allrepro = 8;
-		if constat1=30 then allrepro = 9;
-		if constat1=31 then allrepro = 10;
-		if constat1=32 then allrepro = 11;
+		if bc=9 then allrepro = 8; 
+		if bc=22 then allrepro = 9;
+		if ster=3 then allrepro = 10;
+		if constat1=30 then allrepro = 11;
+		if constat1=31 then allrepro = 12;
+		if constat1=32 then allrepro = 13;
 		if constat1=33 or constat1=34 or constat1=35 or constat1=36 or constat1=39 
-		then allrepro = 12;
-		if constat1=40 then allrepro = 13;
-		if constat1=41 then allrepro = 14;
+		then allrepro = 14;
+		if constat1=40 then allrepro = 15;
+		if constat1=41 then allrepro = 16;
 		label allrepro="all possible contracept or repro groups";
 		run;
 
@@ -404,6 +406,7 @@ intend
 sureint 
 intnext 
 reactslf
+edu
 ;
 
 data b; set a;
@@ -488,6 +491,7 @@ intend
 sureint 
 intnext 
 reactslf
+edu
 ;
 
 * Full list of variables that are or can be used as continuous;
