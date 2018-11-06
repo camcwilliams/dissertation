@@ -57,6 +57,52 @@ data a; set a;
 		run;*/
 
 
+*########### TABLE 1 ###########;
+
+proc sort; by ster; run;
+
+proc freq data=a;
+	tables (agecat poverty edu)*ster / missing nofreq nopercent nocol; 
+	run;
+
+	/*tried to output the table for easier manipulation but abandoned it;
+	proc freq data=a; 
+		tables agecat poverty edu / missing out=table1; by ster;
+		run;
+
+	proc print data=table1; run;*/
+
+*########### OTHER DESCRIPTIVES ###########;
+
+	title 'crude contraceptive use by imputed poverty';
+	proc freq data=a;
+		tables poverty_i*ster / missing;
+		run;
+	proc freq data=a;
+		tables poverty_i*bcyes / missing;
+		run;
+	proc freq data=a;
+		tables poverty_i*ster;
+		run;
+	proc freq data=a;
+		tables poverty_i*bcyes;
+		run;
+
+
+	title 'detailed contraceptive use by imputed poverty';
+	proc freq data=a;
+		tables poverty_i*bc / missing;
+		run;
+	proc freq data=a;
+		tables poverty_i*bc;
+		run;
+
+	title 'all repro options by age';
+	proc freq data=a;
+		tables rscrage*allrepro;
+		run;
+
+
 		/*Descriptives for PHS 820 pres on 10/10/18;
 		proc freq; tables agebabycat*(nouse ster); run;
 		proc freq; tables agebaby1; run;
