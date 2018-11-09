@@ -74,6 +74,8 @@ proc freq data=a;
 
 *########### OTHER DESCRIPTIVES ###########;
 
+	*WILL IMPUTED POVERTY BIAS RESULTS?;
+
 	title 'crude contraceptive use by imputed poverty';
 	proc freq data=a;
 		tables poverty_i*ster / missing;
@@ -97,11 +99,44 @@ proc freq data=a;
 		tables poverty_i*bc;
 		run;
 
+
+	*WHAT DO REPRODUCTIVE HEALTH BEHAVIORS LOOK LIKE GENERALLY
+	BY AGE?;
+
 	title 'all repro options by age';
 	proc freq data=a;
-		tables rscrage*allrepro;
+		tables rscrage*allrepro / nofreq nopercent nocol;
 		run;
 
+	title 'all repro options by age categories';
+	proc freq data=a;
+		tables agecat*allrepro / nofreq nopercent nocol;
+		run;
+
+
+	*HOW DOES A CRUDE MEASURE OF CONTRACEPTIVE CHOICE DIFFER
+	BY AGE?;
+	title 'crude contraceptive categories by age';
+	proc freq data=a;
+		tables rscrage*ster / nofreq nopercent nocol;
+		run;
+
+	*p.s. making a stacked bar chart in sas is WAY more painful
+	than it should be, i tried 2 things:
+	https://blogs.sas.com/content/graphicallyspeaking
+	/2013/09/20/stacked-bar-chart-with-segment-labels/
+	https://blogs.sas.com/content/iml/2014/04/08/construct-a-stacked-
+	bar-chart-in-sas-where-each-bar-equals-100.html.
+	the second linke was helpful but if i have to make
+	an output dataset, it's more work than just doing it in
+	excel. so i'm just copying and pasting these in
+	excel;
+
+	/*title 'figuring out 1 missing respondent';
+	proc print data=a;
+		var caseid constat1; where allrepro=.; run;
+		*allrepro was missing a recode for the respondent who was categorized
+		as steril-unknown reasons-male. fixed this in vartx;*/
 
 		/*Descriptives for PHS 820 pres on 10/10/18;
 		proc freq; tables agebabycat*(nouse ster); run;
