@@ -121,16 +121,30 @@ proc freq data=a;
 		tables rscrage*ster / nofreq nopercent nocol;
 		run;
 
-	*p.s. making a stacked bar chart in sas is WAY more painful
-	than it should be, i tried 2 things:
-	https://blogs.sas.com/content/graphicallyspeaking
-	/2013/09/20/stacked-bar-chart-with-segment-labels/
-	https://blogs.sas.com/content/iml/2014/04/08/construct-a-stacked-
-	bar-chart-in-sas-where-each-bar-equals-100.html.
-	the second linke was helpful but if i have to make
-	an output dataset, it's more work than just doing it in
-	excel. so i'm just copying and pasting these in
-	excel;
+		*p.s. making a stacked bar chart in sas is WAY more painful
+		than it should be, i tried 2 things:
+		https://blogs.sas.com/content/graphicallyspeaking
+		/2013/09/20/stacked-bar-chart-with-segment-labels/
+		https://blogs.sas.com/content/iml/2014/04/08/construct-a-stacked-
+		bar-chart-in-sas-where-each-bar-equals-100.html.
+		the second linke was helpful but if i have to make
+		an output dataset, it's more work than just doing it in
+		excel. so i'm just copying and pasting these in
+		excel;
+
+	*HOW DOES METHOD USE DIFFER BY AGE WHEN RESTRICTING TO WOMEN
+	AT RISK OF UNINTENDED PREGNANCY?;
+
+	title 'detailed method categories by age';
+	proc freq data=a;
+		tables rscrage*bc / nofreq nopercent nocol;
+		run;
+
+
+
+
+
+
 
 	/*title 'figuring out 1 missing respondent';
 	proc print data=a;
