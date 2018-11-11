@@ -13,6 +13,14 @@ proc format;
 		4="30-34"
 		5="35-39"
 		6="40-44";
+	value aged
+		1="15-19"
+		2="20-22"
+		3="23-25"
+		4="26-29"
+		5="30-34"
+		6="35-39"
+		7="40-44";
 	value povlev
 		1="<100% PL"
 		2="100-199% PL"
@@ -73,6 +81,7 @@ run;
 
 data a; set a;
 	format 	agecat agecat.
+			aged aged.
 			bc constatf.
 			povlev povlev.
 			nouse nouse.

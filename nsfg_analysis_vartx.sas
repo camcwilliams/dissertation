@@ -23,7 +23,20 @@ not include code to pull in the datasets and formats, those can happen from
 		if rscrage>34 and rscrage<40 then agecat = 5 ;
 		if rscrage>39 and rscrage<45 then agecat = 6 ;
 		label agecat="5yr age categories, 1=15-19, 6=40-44";
-		run;	
+		run;
+
+	* creating a new age variable for dealing with education;
+	data a; set a;
+		if rscrage>14 and rscrage<20 then aged = 1 ;
+		if rscrage>19 and rscrage<23 then aged = 2 ;
+		if rscrage>22 and rscrage<25 then aged = 3 ;
+		if rscrage>24 and rscrage<30 then aged = 4 ;
+		if rscrage>29 and rscrage<35 then aged = 5 ;
+		if rscrage>34 and rscrage<40 then aged = 6 ;
+		if rscrage>39 and rscrage<45 then aged = 7 ;
+		label aged="age categories for dealing with education";
+		run;
+	
 
 		/****************************************
 		*** Age as continuous vs categorical ***
@@ -117,7 +130,7 @@ not include code to pull in the datasets and formats, those can happen from
 		if constat1=30 then allrepro = 11;
 		if constat1=31 then allrepro = 12;
 		if constat1=32 then allrepro = 13;
-		if constat1=33 or constat1=34 or constat1=35 or constat1=36 or constat1=39 
+		if constat1=33 or constat1=34 or constat1=35 or constat1=36 or constat1=38 or constat1=39 
 		then allrepro = 14;
 		if constat1=40 then allrepro = 15;
 		if constat1=41 then allrepro = 16;
@@ -357,6 +370,7 @@ Creating macros
 caseid
 rscrage
 agecat
+aged
 constat1
 constat2
 constat3
@@ -443,6 +457,7 @@ numfmhh_i;
 * Full list of variables that are or can be used as categorical;
 %let catlist =
 agecat
+aged
 constat1
 constat2
 constat3
