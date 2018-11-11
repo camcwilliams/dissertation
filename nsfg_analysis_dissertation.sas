@@ -8,6 +8,10 @@ libname library "U:\Dissertation";
 proc format library=library; run;
 data work.a; set library.nsfg_females_2011_2015; run;
 
+proc contents data=library.nsfg_females_2011_2015; run;
+
+proc freq data=library.nsfg_females_2011_2015; tables abnpap3; run;
+
 	
 %include "U:\Dissertation\nsfg_CMcWFormats.sas";
 	*McWilliams-created formats and labels;
@@ -55,6 +59,10 @@ data a; set a;
 	proc print data=CorrOutp; run;
 	proc export data=CorrOutp outfile='outcorr' dbms=xlsx;
 		run;*/
+
+	proc corr data=a;
+		var poverty rscrage edu hisprace2;
+		run;
 
 
 *########### TABLE 1 ###########;
@@ -141,10 +149,54 @@ proc freq data=a;
 		run;
 
 
+	*LOOKING AT SUSPECTED CONFOUNDERS;
+	title 'differences in education by age';
+	proc freq data=a;
+		tables rscrage*edu;
+		run;
+		*each age group is around 300 people;
 
+	proc freq data=a;
+		tables rscrage*edu / nofreq nopercent nocol;
+		run;
+		*after 22 they even out;
 
+	proc freq data=a;
+		tables agecat*edu / nofreq nopercent nocol;
+		run;
 
+	title 'differences in HH income by age';
+	proc sort; by agecat; run;
+	proc means data=a;
+		var poverty; by agecat;
+		run;
+		*increases around 15 or 20 points each age group;
 
+	title 'age and method choice, stratified by education';
+	proc sort; by edu; run;
+	proc freq data=a;
+		tables aged*ster;
+		by edu;
+		run;
+		*cell sizes are pretty good, some zeros that will need to be dealt with;
+
+	proc freq data=a;
+		tables ster*aged / missing nofreq nopercent nocol chisq;
+		by edu;
+		run;
+
+	title 'age and method choice, stratified by poverty';
+	proc freq data=a;
+		tables poverty*aged;
+		by edu;
+		run;
+		*cell sizes are ok, many of the 15-19 group have 0's above 200%;
+
+	proc sort; by poverty; run;
+	proc freq data=a;
+		tables ster*aged / missing nofreq nopercent nocol chisq;
+		by poverty;
+		run;
 
 	/*title 'figuring out 1 missing respondent';
 	proc print data=a;
