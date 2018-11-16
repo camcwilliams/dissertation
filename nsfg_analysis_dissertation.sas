@@ -7,11 +7,6 @@
 libname library "U:\Dissertation";
 proc format library=library; run;
 data work.a; set library.nsfg_females_2011_2015; run;
-
-proc contents data=library.nsfg_females_2011_2015; run;
-
-proc freq data=library.nsfg_females_2011_2015; tables abnpap3; run;
-
 	
 %include "U:\Dissertation\nsfg_CMcWFormats.sas";
 	*McWilliams-created formats and labels;
@@ -69,6 +64,7 @@ data a; set a;
 
 proc sort; by ster; run;
 
+title 'table 1, no weights';
 proc freq data=a;
 	tables (agecat poverty edu)*ster / missing nofreq nopercent nocol; 
 	run;
@@ -79,6 +75,12 @@ proc freq data=a;
 		run;
 
 	proc print data=table1; run;*/
+
+title 'table 1, weighted';
+proc freq data=a;
+	tables (agecat poverty edu)*ster / missing nopercent nocol;
+	weight weightvar; 
+	run;
 
 *########### OTHER DESCRIPTIVES ###########;
 
@@ -239,46 +241,9 @@ proc freq data=a;
 	title;
 
 
-*---- REGRESSION ----*;
-
-	*i'm putting this together just to explore, there appear to be some problems
-	with the model converging, so it definitely needs a lot more work;
-	proc logistic;
-		class ster (ref="sterilized") edu (ref="bachelor's") agecat (ref="35-39");
-		model ster = edu agecat agebaby1;
-		where agecat = 5 or agecat = 6 or ster = 1 or ster = 2;
-		run;
-	*but, interestingly, even after putting age at first baby in the model,
-	there's definitely still something going on with education;
-/*
-	*screw it, i'm going to do a regression;
-	proc surveyreg data=a;
-		class bc whynousing1 educat poverty;
-		model rscrage = bc whynousing1 nbabes_s educat poverty / solution;
-		run;
-		*i forgot surveyreg doesn't output anything;
-
-	proc freq data = a;
-		tables race*nouse povlev*nouse nbabes_s*nouse;
-		where agecat>4;
-		run;
-
-	proc logistic data=a;
-		class educat povlev agecat nbabes_s;
-		model nouse = agecat educat povlev nbabes_s;
-		where agecat > 4;
-		run;
+*######################*
+*##### REGRESSION #####*
+*######################*;
 
 
-	proc logistic data=a;
-		class educat povlev agecat nbabes_s;
-		model nouse = agecat educat povlev nbabes_s;
-		run;
-
-	proc logistic data=a;
-		class educat povlev agecat nbabes_s race;
-		model ster = agecat educat povlev nbabes_s race;
-		run;
-
-*/
 
