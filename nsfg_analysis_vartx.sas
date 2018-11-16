@@ -361,6 +361,38 @@ not include code to pull in the datasets and formats, those can happen from
 	proc freq; tables reactslf numkdhh numfmhh; run;
 	*/
 
+
+*****************************************
+Creating dummy outcome variables for regression outcomes
+******************************************;
+
+data a; set a;
+	if effmeth = 1 then effmeth_1 = 1;
+	if effmeth = 0 then effmeth_1 = 0;
+	else effmeth_1 = .;
+	run;
+
+%macro do_loop;
+
+data c;
+set a;
+
+%do i = 1 %to 9;
+	if effmeth = &i. then effmeth_&i. = 1;
+	if effmeth = . then effmeth_&i. = .;
+	else effmeth_&i. = 0;
+%end;
+
+run;
+
+%mend do_loop;
+
+%do_loop;
+
+proc freq data=c;
+	tables effmeth_:*effmeth;
+	run;
+
 *****************************************
 Creating macros
 ******************************************;
