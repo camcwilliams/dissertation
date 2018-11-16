@@ -245,5 +245,12 @@ proc freq data=a;
 *##### REGRESSION #####*
 *######################*;
 
+proc surveylogistic;
+	model effmeth = rscrage;
+	run;
 
+proc surveylogistic;
+	model effmeth = age;
+	weight weightvar;
+	run;
 
