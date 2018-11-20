@@ -91,10 +91,27 @@ proc freq data=a;
 		tables poverty_i*ster / missing;
 		run;
 	proc freq data=a;
-		tables poverty_i*bcyes / missing;
+		tables poverty_i*ster;
 		run;
 	proc freq data=a;
 		tables poverty_i*ster;
+		weight weightvar;
+		run;
+	proc freq data=a;
+		weight weightvar;
+		tables poverty_i*ster / missing out=freqcnt sparse;
+		run;
+
+	proc print data=freqcnt; run;
+	proc export data=freqcnt
+		dbms=xlsx
+		outfile="U:\Dissertation\xls_graphs\freqcnt.xlsx"
+		replace;
+		run;
+
+
+	proc freq data=a;
+		tables poverty_i*bcyes / missing;
 		run;
 	proc freq data=a;
 		tables poverty_i*bcyes;
