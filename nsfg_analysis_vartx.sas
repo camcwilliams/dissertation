@@ -366,32 +366,45 @@ not include code to pull in the datasets and formats, those can happen from
 Creating dummy outcome variables for regression outcomes
 ******************************************;
 
-data a; set a;
-	if effmeth = 1 then effmeth_1 = 1;
-	if effmeth = 0 then effmeth_1 = 0;
-	else effmeth_1 = .;
+*macro based on this;
+	/*data a; set a;
+	if effmeth=1 then effmeth_1=1;
+	if effmeth = . then effmeth_1=.;
+	if effmeth ne . and effmeth ne 1 then effmeth_1=0;
+	run;*/
+
+	%macro do_loop;
+
+	data a;
+	set a;
+
+	%do i = 1 %to 9;
+		if effmeth = &i. then effmeth_&i. = 1;
+		if effmeth = . then effmeth_&i. = .;
+		if effmeth ne . and effmeth ne &i. then effmeth_&i. = 0;
+	%end;
+
 	run;
 
-%macro do_loop;
+	%mend do_loop;
 
-data c;
-set a;
+	%do_loop;
 
-%do i = 1 %to 9;
-	if effmeth = &i. then effmeth_&i. = 1;
-	if effmeth = . then effmeth_&i. = .;
-	else effmeth_&i. = 0;
-%end;
-
-run;
-
-%mend do_loop;
-
-%do_loop;
-
-proc freq data=c;
-	tables effmeth_:*effmeth;
+	data a;
+	set a;
+	label effmeth_1 = "sterilized";
+	label effmeth_2 = "IUD, implant";
+	label effmeth_3 = "injection, pill, patch, ring";
+	label effmeth_4 = "condom, diaphragm, sponge, foam, insert, jelly";
+	label effmeth_5 = "emergency contraception";
+	label effmeth_6 = "periodic abstinence";
+	label effmeth_7 = "withdrawal";
+	label effmeth_8 = "other";
+	label effmeth_9 = "not using contraception";
 	run;
+
+
+	/*proc freq data=a; tables effmeth*effmeth_:; run;*/
 
 *****************************************
 Creating macros
