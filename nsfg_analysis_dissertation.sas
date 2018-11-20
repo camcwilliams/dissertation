@@ -97,17 +97,6 @@ proc freq data=a;
 		tables poverty_i*ster;
 		weight weightvar;
 		run;
-	proc freq data=a;
-		weight weightvar;
-		tables poverty_i*ster / missing out=freqcnt sparse;
-		run;
-
-	proc print data=freqcnt; run;
-	proc export data=freqcnt
-		dbms=xlsx
-		outfile="U:\Dissertation\xls_graphs\freqcnt.xlsx"
-		replace;
-		run;
 
 
 	proc freq data=a;
@@ -115,6 +104,10 @@ proc freq data=a;
 		run;
 	proc freq data=a;
 		tables poverty_i*bcyes;
+		run;
+	proc freq data=a;
+		tables poverty_i*bcyes;
+		weight weightvar;
 		run;
 
 
@@ -125,6 +118,10 @@ proc freq data=a;
 	proc freq data=a;
 		tables poverty_i*bc;
 		run;
+	proc freq data=a;
+		tables poverty_i*bc;
+		weight weightvar;
+		run;
 
 
 	*WHAT DO REPRODUCTIVE HEALTH BEHAVIORS LOOK LIKE GENERALLY
@@ -133,11 +130,13 @@ proc freq data=a;
 	title 'all repro options by age';
 	proc freq data=a;
 		tables rscrage*allrepro / nofreq nopercent nocol;
+		weight weightvar;
 		run;
 
 	title 'all repro options by age categories';
 	proc freq data=a;
 		tables agecat*allrepro / nofreq nopercent nocol;
+		weight weightvar;
 		run;
 
 
@@ -146,6 +145,7 @@ proc freq data=a;
 	title 'crude contraceptive categories by age';
 	proc freq data=a;
 		tables rscrage*ster / nofreq nopercent nocol;
+		weight weightvar;
 		run;
 
 		*p.s. making a stacked bar chart in sas is WAY more painful
@@ -165,6 +165,7 @@ proc freq data=a;
 	title 'detailed method categories by age';
 	proc freq data=a;
 		tables rscrage*bc / nofreq nopercent nocol;
+		weight weightvar;
 		run;
 
 
@@ -172,11 +173,13 @@ proc freq data=a;
 	title 'differences in education by age';
 	proc freq data=a;
 		tables rscrage*edu;
+		weight weightvar;
 		run;
 		*each age group is around 300 people;
 
 	proc freq data=a;
 		tables rscrage*edu / nofreq nopercent nocol;
+		weight weightvar;
 		run;
 		*after 22 they even out;
 
@@ -263,11 +266,30 @@ proc freq data=a;
 *######################*;
 
 proc surveylogistic;
-	model effmeth = rscrage;
-	run;
-
-proc surveylogistic;
-	model effmeth = age;
+	model effmeth_1 = rscrage;
 	weight weightvar;
 	run;
 
+proc surveylogistic;
+	class effmeth_1 / ref=first;
+	weight weightvar;	
+	model effmeth_1 = rscrage;
+	run;
+
+proc surveylogistic;
+	class 
+		effmeth_1 (ref=first) 
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+		povlev (ref="<100% PL")
+		edu (ref="hs degree or ged");
+	weight weightvar;
+	model effmeth_1 = rscrage hisprace2 povlev edu;
+	run; 
+
+proc surveylogistic;
+	class
+		effmeth_1 (ref=first) 
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+		povlev (ref="<100% PL")
+		fecund
+		edu
