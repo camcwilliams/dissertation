@@ -291,5 +291,131 @@ proc surveylogistic;
 		effmeth_1 (ref=first) 
 		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
 		povlev (ref="<100% PL")
-		fecund
-		edu
+		edu (ref="hs degree or ged")
+		fecund 
+		intend
+		rmarital (ref="CURRENTLY MARRIED TO A PERSON OF THE OPPOSITE SEX")
+		curr_ins
+		religion;
+	weight weightvar;
+	model effmeth_1 = rscrage hisprace2 povlev edu fecund intend rmarital
+		curr_ins religion;
+	run;
+
+	*this model has quasi-complete separation, investigating:;
+
+	proc freq; tables rmarital*effmeth_1; run;
+	*that doesn't seem to be the problem;
+	proc freq; tables intend*effmeth_1; run;
+	*it could be intend, obviously there are very small numbers of
+	women who have been sterilized but intend to have another baby.
+	removing it from the model;
+
+	*it also appears povlev and edu are wonky;
+	proc sort; by effmeth_1; run;
+	proc freq; tables povlev*edu / out=freqcnt; by effmeth_1; run;
+
+		/*keeping this in just in case;
+		proc print data=freqcnt; run;
+		proc export data=freqcnt
+			dbms=xlsx
+			outfile="U:\Dissertation\xls_graphs\freqcnt.xlsx"
+			replace;
+			run;
+		*/
+
+	proc freq data=a; tables edu*povlev; run;
+	proc freq data=a; tables edu*effmeth_1; run;
+	proc freq data=a; tables povlev*effmeth_1; run;
+
+*maybe the problem is age. taking teenagers out here:;
+proc surveylogistic data=a;
+	class
+		effmeth_1 (ref=first) 
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+		povlev (ref="<100% PL")
+		edu (ref="hs degree or ged")
+		fecund 
+		rmarital (ref=first)
+		curr_ins
+		religion;
+	weight weightvar;
+	where rscrage >= 20;
+	model effmeth_1 = rscrage hisprace2 povlev edu fecund intend rmarital
+		curr_ins religion;
+	run;
+	*that did not help;
+
+	*GOING TO TRY ALTERNATELY REMOVING EDUCATION AND POVERTY;
+	title 'full model, no poverty';
+	proc surveylogistic data=a;
+	class
+		effmeth_1 (ref=first) 
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+		edu (ref="hs degree or ged")
+		fecund 
+		rmarital (ref=first)
+		curr_ins
+		religion;
+	weight weightvar;
+	where rscrage >= 20;
+	model effmeth_1 = rscrage hisprace2 edu fecund intend rmarital
+		curr_ins religion;
+	run;
+
+	title 'full model, no education';
+	proc surveylogistic data=a;
+	class
+		effmeth_1 (ref=first) 
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+		povlev (ref="<100% PL")
+		fecund 
+		rmarital (ref=first)
+		curr_ins
+		religion;
+	weight weightvar;
+	where rscrage >= 20;
+	model effmeth_1 = rscrage hisprace2 povlev fecund intend rmarital
+		curr_ins religion;
+	run;
+
+	*that also did not help;
+
+	*TRYING BIVARIATE ASSOCIATIONS FOR ALL COVARIATES;
+	proc surveylogistic data=a;
+	class edu (ref="hs degree or ged");
+	weight weightvar;
+	model effmeth_1 = edu;
+	run;
+
+	proc surveylogistic data=a;
+	class povlev (ref="<100% PL");
+	weight weightvar;
+	model effmeth_1 = povlev;
+	run;
+
+
+	%macro aim1ha;
+
+	
+	%do i = 1 %to 9;
+	proc surveylogistic data=a;
+	class
+		effmeth_&i. (ref=first) 
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+		povlev (ref="<100% PL")
+		edu (ref="hs degree or ged")
+		fecund 
+		rmarital (ref=first)
+		curr_ins
+		religion;
+	weight weightvar;
+	model effmeth_&i. = rscrage hisprace2 povlev edu fecund intend rmarital
+		curr_ins religion;
+	run;
+	%end;
+
+	%mend aim1ha;
+
+	%aim1ha;
+
