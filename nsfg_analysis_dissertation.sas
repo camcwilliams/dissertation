@@ -151,6 +151,8 @@ proc freq data=a;
 		run;
 
 
+*########### REPRODUCTIVE CATEGORIES BY AGE ###########;
+
 	*WHAT DO REPRODUCTIVE HEALTH BEHAVIORS LOOK LIKE GENERALLY
 	BY AGE?;
 
@@ -215,6 +217,19 @@ proc freq data=a;
 		run;
 
 	title 'differences in HH income by age';
+	proc sort; by rscrage; run;
+	proc means data=a;
+		var poverty; by rscrage;
+		weight weightvar;
+		output out=pov_age;
+		run;
+	proc contents data=pov_age; run;
+	proc print data=pov_age; run;
+	proc print data=pov_age;
+		where _stat_="MEAN";
+		format _all_;
+		run;
+
 	proc sort; by agecat; run;
 	proc means data=a;
 		var poverty; by agecat;
@@ -222,29 +237,39 @@ proc freq data=a;
 		*increases around 15 or 20 points each age group;
 
 	title 'age and method choice, stratified by education';
-	proc sort; by edu; run;
+	/* these output datasets are cute but copying and pasting the individual
+	tables is actually a little easier;
+	proc sort data=a; by edu; run;
 	proc freq data=a;
-		tables aged*ster;
+		tables aged*ster / out=aged_ster;
 		by edu;
+		weight weightvar;
 		run;
 		*cell sizes are pretty good, some zeros that will need to be dealt with;
 
+	proc print data=aged_ster; run;*/
+
+	proc sort data=a; by edu;
 	proc freq data=a;
 		tables ster*aged / missing nofreq nopercent nocol chisq;
+		weight weightvar;
 		by edu;
 		run;
 
-	title 'age and method choice, stratified by poverty';
+	/*title 'age and method choice, stratified by poverty';
 	proc freq data=a;
-		tables poverty*aged;
+		tables poverty*aged / out=aged_ster_pov;
 		by edu;
+		weight weightvar;
 		run;
-		*cell sizes are ok, many of the 15-19 group have 0's above 200%;
+		*cell sizes are ok, many of the 15-19 group have 0's above 200%;*/
 
-	proc sort; by poverty; run;
+	proc sort data=a; by poverty; run;
+	title 'age and method choice, stratified by poverty';
 	proc freq data=a;
 		tables ster*aged / missing nofreq nopercent nocol chisq;
 		by poverty;
+		weight weightvar;
 		run;
 
 	/*title 'figuring out 1 missing respondent';
@@ -292,10 +317,61 @@ proc freq data=a;
 *##### REGRESSION #####*
 *######################*;
 
-proc surveylogistic;
-	model effmeth_1 = rscrage;
+
+*LOG ODDS OF OUTCOMES BY AGE;
+proc surveylogistic data=a;
+	model effmeth_1=rscrage;
 	weight weightvar;
+	output out=logodds_1 p=predprob_1 xbeta=logodds_1;
 	run;
+
+	title;
+	proc contents data=logodds_1; run;
+
+	data logodds_1; set logodds_1;
+		keep caseid logodds_1 predprob_1 &varlist;
+	run;
+
+	proc sgplot data=logodds_1;
+		scatter x=rscrage y=logodds_1;
+		run;
+
+	proc sgplot data=logodds_1;
+		scatter x=rscrage y=predprob_1;
+		run;
+
+proc surveylogistic data=a;
+	model effmeth_4=rscrage;
+	weight weightvar;
+	output out=logodds_4 p=predprob_4 xbeta=logodds_4;
+	run;
+
+	data logodds_4; set logodds_4;
+		keep &varlist logodds_4 predprob_4;
+		run;
+
+	proc sgplot data=logodds_4;
+		scatter x=rscrage y=logodds_4;
+		run;
+
+	proc sgplot data=logodds_4;
+		scatter x=rscrage y=predprob_4;
+		run;
+
+	proc print data=logodds_4 (obs=30); run;
+
+	proc means data=logodds_4; var logodds_4 predprob_4; run;
+	proc means data=logodds_1; var logodds_1 predprob_1; run;
+
+
+	/*%macro logodds;
+
+	%do i = 1 %to 9;
+	proc surveylogistic data=a;
+	effmeth_&i. = rscrage;
+	weight weightvar;
+	output out=logodds_&i. p=*/
+
 
 proc surveylogistic;
 	class effmeth_1 / ref=first;
