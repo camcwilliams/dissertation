@@ -82,9 +82,36 @@ proc freq data=a;
 	weight weightvar; 
 	run;
 
-*########### OTHER DESCRIPTIVES ###########;
 
-	*WILL IMPUTED POVERTY BIAS RESULTS?;
+*########### SAMPLING WEIGHTS ###########;
+
+	proc means data=a median;
+		var weightvar;
+		run;
+
+	title "Sampling Weights NSFG 2011-2015";
+	proc sgplot data=a;
+		histogram weightvar / binwidth=1000 binstart=0 showbins;
+		density weightvar;
+		run;
+	title;
+
+
+*########### IMPUTED POVERTY ###########;
+
+	proc means; var poverty; run;
+
+	title 'poverty histogram, all values';
+	proc sgplot;
+		histogram poverty;
+		run;
+
+	title 'poverty histogram';
+	proc sort data=a; by poverty_i;
+	proc sgplot;
+		histogram poverty;
+		by poverty_i;
+		run;
 
 	title 'crude contraceptive use by imputed poverty';
 	proc freq data=a;
