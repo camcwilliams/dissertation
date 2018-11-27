@@ -376,50 +376,50 @@ proc freq data=a;
 *######################*;
 
 
-*LOG ODDS OF OUTCOMES BY AGE;
-proc surveylogistic data=a;
-	model effmeth_1=rscrage;
-	weight weightvar;
-	output out=logodds_1 p=predprob_1 xbeta=logodds_1;
-	run;
-
-	title;
-	proc contents data=logodds_1; run;
-
-	data logodds_1; set logodds_1;
-		keep caseid logodds_1 predprob_1 &varlist;
-	run;
-
-	proc sgplot data=logodds_1;
-		scatter x=rscrage y=logodds_1;
+	*LOG ODDS OF OUTCOMES BY AGE;
+	proc surveylogistic data=a;
+		model effmeth_1=rscrage;
+		weight weightvar;
+		output out=logodds_1 p=predprob_1 xbeta=logodds_1;
 		run;
 
-	proc sgplot data=logodds_1;
-		scatter x=rscrage y=predprob_1;
+		title;
+		proc contents data=logodds_1; run;
+
+		data logodds_1; set logodds_1;
+			keep caseid logodds_1 predprob_1 &varlist;
 		run;
 
-proc surveylogistic data=a;
-	model effmeth_4=rscrage;
-	weight weightvar;
-	output out=logodds_4 p=predprob_4 xbeta=logodds_4;
-	run;
+		proc sgplot data=logodds_1;
+			scatter x=rscrage y=logodds_1;
+			run;
 
-	data logodds_4; set logodds_4;
-		keep &varlist logodds_4 predprob_4;
+		proc sgplot data=logodds_1;
+			scatter x=rscrage y=predprob_1;
+			run;
+
+	proc surveylogistic data=a;
+		model effmeth_4=rscrage;
+		weight weightvar;
+		output out=logodds_4 p=predprob_4 xbeta=logodds_4;
 		run;
 
-	proc sgplot data=logodds_4;
-		scatter x=rscrage y=logodds_4;
-		run;
+		data logodds_4; set logodds_4;
+			keep &varlist logodds_4 predprob_4;
+			run;
 
-	proc sgplot data=logodds_4;
-		scatter x=rscrage y=predprob_4;
-		run;
+		proc sgplot data=logodds_4;
+			scatter x=rscrage y=logodds_4;
+			run;
 
-	proc print data=logodds_4 (obs=30); run;
+		proc sgplot data=logodds_4;
+			scatter x=rscrage y=predprob_4;
+			run;
 
-	proc means data=logodds_4; var logodds_4 predprob_4; run;
-	proc means data=logodds_1; var logodds_1 predprob_1; run;
+		proc print data=logodds_4 (obs=30); run;
+
+		proc means data=logodds_4; var logodds_4 predprob_4; run;
+		proc means data=logodds_1; var logodds_1 predprob_1; run;
 
 
 	/*%macro logodds;
@@ -430,13 +430,15 @@ proc surveylogistic data=a;
 	weight weightvar;
 	output out=logodds_&i. p=*/
 
-
+* REGRESSION MODELS SELECTED AFTER INVESTIGATION OF QUASI-COMPLETE SEPARATION;
+* Bivariate;
 proc surveylogistic data=a;
 	class effmeth_1 / ref=first;
 	weight weightvar;	
 	model effmeth_1 = rscrage;
 	run;
 
+* Only the big-3 SES;
 proc surveylogistic data=a;
 	class 
 		effmeth_1 (ref=first) 
@@ -447,6 +449,7 @@ proc surveylogistic data=a;
 	model effmeth_1 = rscrage hisprace2 povlev edu;
 	run; 
 
+* Full model, includes new marital status variable;
 proc surveylogistic data=a;
 	class
 		effmeth_1 (ref=first) 
@@ -454,157 +457,13 @@ proc surveylogistic data=a;
 		povlev (ref="<100% PL")
 		edu (ref="hs degree or ged")
 		fecund 
-		intend
-		rmarital (ref=first)
+		mard (ref=first)
 		curr_ins
 		religion;
 	weight weightvar;
-	model effmeth_1 = rscrage hisprace2 povlev edu fecund intend rmarital
+	model effmeth_1 = rscrage hisprace2 povlev edu fecund rwant mard
 		curr_ins religion;
 	run;
-
-	*this model has quasi-complete separation, investigating;
-	*it also deleted 9015 observations due to missing data, but i've checked
-	all of the variables and non have missing values other than 
-	sterilization, which has intentional missingness;
-
-	proc freq; tables rmarital*effmeth_1; run;
-	*that doesn't seem to be the problem;
-	proc freq; tables intend*effmeth_1; run;
-	*it could be intend, obviously there are very small numbers of
-	women who have been sterilized but intend to have another baby.
-	removing it from the model;
-
-	*it also appears povlev and edu are wonky;
-	proc sort; by effmeth_1; run;
-	proc freq; tables povlev*edu / out=freqcnt; by effmeth_1; run;
-
-		/*keeping this in just in case;
-		proc print data=freqcnt; run;
-		proc export data=freqcnt
-			dbms=xlsx
-			outfile="U:\Dissertation\xls_graphs\freqcnt.xlsx"
-			replace;
-			run;
-		*/
-
-	proc freq data=a; tables edu*povlev; run;
-	proc freq data=a; tables edu*effmeth_1; run;
-	proc freq data=a; tables povlev*effmeth_1; run;
-
-*maybe the problem is age. taking teenagers out here:;
-proc surveylogistic data=a;
-	class
-		effmeth_1 (ref=first) 
-		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
-		povlev (ref="<100% PL")
-		edu (ref="hs degree or ged")
-		fecund 
-		rmarital (ref=first)
-		curr_ins
-		religion;
-	weight weightvar;
-	where rscrage >= 20;
-	model effmeth_1 = rscrage hisprace2 povlev edu fecund intend rmarital
-		curr_ins religion;
-	run;
-	*that did not help;
-
-	*GOING TO TRY ALTERNATELY REMOVING EDUCATION AND POVERTY;
-	title 'full model, no poverty';
-	proc surveylogistic data=a;
-	class
-		effmeth_1 (ref=first) 
-		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
-		edu (ref="hs degree or ged")
-		fecund 
-		rmarital (ref=first)
-		curr_ins
-		religion;
-	weight weightvar;
-	where rscrage >= 20;
-	model effmeth_1 = rscrage hisprace2 edu fecund intend rmarital
-		curr_ins religion;
-	run;
-
-	title 'full model, no education';
-	proc surveylogistic data=a;
-	class
-		effmeth_1 (ref=first) 
-		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
-		povlev (ref="<100% PL")
-		fecund 
-		rmarital (ref=first)
-		curr_ins
-		religion;
-	weight weightvar;
-	where rscrage >= 20;
-	model effmeth_1 = rscrage hisprace2 povlev fecund intend rmarital
-		curr_ins religion;
-	run;
-
-	*that also did not help;
-
-	*now removing fecund;
-	proc surveylogistic data=a;
-	class
-		effmeth_1 (ref=first) 
-		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
-		povlev (ref="<100% PL")
-		edu (ref="hs degree or ged") 
-		rmarital (ref=first)
-		curr_ins
-		religion;
-	weight weightvar;
-	model effmeth_1 = rscrage hisprace2 povlev edu fecund intend rmarital
-		curr_ins religion;
-	run;
-
-	*now removing rmarital;
-	proc surveylogistic data=a;
-	class
-		effmeth_1 (ref=first) 
-		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
-		povlev (ref="<100% PL")
-		edu (ref="hs degree or ged")
-		fecund 
-		curr_ins
-		religion;
-	weight weightvar;
-	model effmeth_1 = rscrage hisprace2 povlev edu fecund intend rmarital
-		curr_ins religion;
-	run;
-
-	*maybe the problem is still age, taking out individuals less than 22;
-		proc surveylogistic data=a;
-			class
-				effmeth_1 (ref=first) 
-				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
-				povlev (ref="<100% PL")
-				edu (ref="hs degree or ged")
-				fecund 
-				rmarital (ref=first)
-				curr_ins
-				religion;
-			weight weightvar;
-			where rscrage >= 22;
-			model effmeth_1 = rscrage hisprace2 povlev edu fecund intend rmarital
-				curr_ins religion;
-			run;
-
-	/*TRYING BIVARIATE ASSOCIATIONS FOR ALL COVARIATES;
-	proc surveylogistic data=a;
-	class edu (ref="hs degree or ged");
-	weight weightvar;
-	model effmeth_1 = edu;
-	run;
-
-	proc surveylogistic data=a;
-	class povlev (ref="<100% PL");
-	weight weightvar;
-	model effmeth_1 = povlev;
-	run;*/
-
 
 	%macro aim1ha;
 
