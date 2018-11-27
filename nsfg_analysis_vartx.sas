@@ -358,6 +358,14 @@ not include code to pull in the datasets and formats, those can happen from
 	proc freq; tables marstat; run;
 	proc freq; tables prevcohb; run;*/
 
+	*widowed is a very small group, creating a new variable here to see if that's what's
+	causing the model separation;
+	data a; set a;
+		mard = rmarital;
+		if rmarital = 3 then mard = 4;
+		run;
+
+
 *** Live Birth and Parenting History;
 
 	/*
@@ -473,6 +481,8 @@ sureint
 intnext 
 reactslf
 edu
+agefirstbirth_all
+mard
 ;
 
 data b; set a;
@@ -559,6 +569,7 @@ sureint
 intnext 
 reactslf
 edu
+mard
 ;
 
 * Full list of variables that are or can be used as continuous;
@@ -578,4 +589,5 @@ pregnum
 numkdhh
 numfmhh
 jintendn
+agefirstbirth_all;
 ;	
