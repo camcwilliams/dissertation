@@ -82,6 +82,13 @@ proc format;
 		4="30-34"
 		5="35-39"
 		6="40-44";
+	value mard
+		1 = "currently married to a person of the opposite sex"
+        2 = "not married but living with opp sex partner"
+        4 = "divorced or annulled or widowed"
+        5 = "separated for reasons of marital discord"
+        6 = "never been married";
+
 
 run;
 
@@ -97,5 +104,6 @@ data a; set a;
 			ster ster.
 			allrepro allrepro.
 			elig elig.
-			agebabycat agebabycat.;
+			agebabycat agebabycat.
+			mard mard.;
 ;run;
