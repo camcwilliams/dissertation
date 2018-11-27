@@ -59,6 +59,29 @@ data a; set a;
 		var poverty rscrage edu hisprace2;
 		run;
 
+	proc corr data = a outp=CorrOutp2;
+		var 
+			rscrage
+			agebaby1
+			allrepro
+			bc
+			curr_ins
+			edu
+			fecund
+			intend
+			jintend
+			parity
+			poverty
+			prevcohb
+			rmarital
+			religion
+			nchildhh
+		; 
+		run;
+	proc print data=CorrOutp2; run;
+	proc export data=CorrOutp2 outfile='outcorr2' dbms=xlsx;
+		run;
+
 
 *########### TABLE 1 ###########;
 
@@ -86,6 +109,10 @@ proc freq data=a;
 *########### SAMPLING WEIGHTS ###########;
 
 	proc means data=a median;
+		var weightvar;
+		run;
+
+	proc means data=a;
 		var weightvar;
 		run;
 
@@ -313,6 +340,37 @@ proc freq data=a;
 	title;
 
 
+	*Cross-tabs for all covariates of interest;
+	proc freq data=a; 
+		tables 
+		effmeth_1
+		hisprace2
+		povlev
+		edu
+		fecund 
+		rmarital
+		curr_ins
+		religion
+		;
+		weight weightvar;
+		run;
+
+	proc freq data=a;
+		tables effmeth_1;
+		run;
+
+	proc freq data=a;
+		tables effmeth_1*(
+		hisprace2
+		povlev
+		edu
+		fecund 
+		rmarital
+		curr_ins
+		religion);
+		run;
+
+
 *######################*
 *##### REGRESSION #####*
 *######################*;
@@ -373,13 +431,13 @@ proc surveylogistic data=a;
 	output out=logodds_&i. p=*/
 
 
-proc surveylogistic;
+proc surveylogistic data=a;
 	class effmeth_1 / ref=first;
 	weight weightvar;	
 	model effmeth_1 = rscrage;
 	run;
 
-proc surveylogistic;
+proc surveylogistic data=a;
 	class 
 		effmeth_1 (ref=first) 
 		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
@@ -389,7 +447,7 @@ proc surveylogistic;
 	model effmeth_1 = rscrage hisprace2 povlev edu;
 	run; 
 
-proc surveylogistic;
+proc surveylogistic data=a;
 	class
 		effmeth_1 (ref=first) 
 		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
@@ -397,7 +455,7 @@ proc surveylogistic;
 		edu (ref="hs degree or ged")
 		fecund 
 		intend
-		rmarital (ref="CURRENTLY MARRIED TO A PERSON OF THE OPPOSITE SEX")
+		rmarital (ref=first)
 		curr_ins
 		religion;
 	weight weightvar;
@@ -405,7 +463,10 @@ proc surveylogistic;
 		curr_ins religion;
 	run;
 
-	*this model has quasi-complete separation, investigating:;
+	*this model has quasi-complete separation, investigating;
+	*it also deleted 9015 observations due to missing data, but i've checked
+	all of the variables and non have missing values other than 
+	sterilization, which has intentional missingness;
 
 	proc freq; tables rmarital*effmeth_1; run;
 	*that doesn't seem to be the problem;
@@ -484,7 +545,54 @@ proc surveylogistic data=a;
 
 	*that also did not help;
 
-	*TRYING BIVARIATE ASSOCIATIONS FOR ALL COVARIATES;
+	*now removing fecund;
+	proc surveylogistic data=a;
+	class
+		effmeth_1 (ref=first) 
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+		povlev (ref="<100% PL")
+		edu (ref="hs degree or ged") 
+		rmarital (ref=first)
+		curr_ins
+		religion;
+	weight weightvar;
+	model effmeth_1 = rscrage hisprace2 povlev edu fecund intend rmarital
+		curr_ins religion;
+	run;
+
+	*now removing rmarital;
+	proc surveylogistic data=a;
+	class
+		effmeth_1 (ref=first) 
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+		povlev (ref="<100% PL")
+		edu (ref="hs degree or ged")
+		fecund 
+		curr_ins
+		religion;
+	weight weightvar;
+	model effmeth_1 = rscrage hisprace2 povlev edu fecund intend rmarital
+		curr_ins religion;
+	run;
+
+	*maybe the problem is still age, taking out individuals less than 22;
+		proc surveylogistic data=a;
+			class
+				effmeth_1 (ref=first) 
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+				povlev (ref="<100% PL")
+				edu (ref="hs degree or ged")
+				fecund 
+				rmarital (ref=first)
+				curr_ins
+				religion;
+			weight weightvar;
+			where rscrage >= 22;
+			model effmeth_1 = rscrage hisprace2 povlev edu fecund intend rmarital
+				curr_ins religion;
+			run;
+
+	/*TRYING BIVARIATE ASSOCIATIONS FOR ALL COVARIATES;
 	proc surveylogistic data=a;
 	class edu (ref="hs degree or ged");
 	weight weightvar;
@@ -495,7 +603,7 @@ proc surveylogistic data=a;
 	class povlev (ref="<100% PL");
 	weight weightvar;
 	model effmeth_1 = povlev;
-	run;
+	run;*/
 
 
 	%macro aim1ha;
