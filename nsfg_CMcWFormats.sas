@@ -74,8 +74,14 @@ proc format;
 	value elig
 		1="at risk of UIP"
 		0="not at risk of UIP";
-
-	
+	value agebabycat
+		0="no births"
+		1="15-19"
+		2="20-24"
+		3="25-29"
+		4="30-34"
+		5="35-39"
+		6="40-44";
 
 run;
 
@@ -90,5 +96,6 @@ data a; set a;
 			edu edu.
 			ster ster.
 			allrepro allrepro.
-			elig elig.;
+			elig elig.
+			agebabycat agebabycat.;
 ;run;
