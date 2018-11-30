@@ -225,7 +225,41 @@ proc freq data=a;
 		run;
 
 
-	*LOOKING AT SUSPECTED CONFOUNDERS;
+*########### PROBING CONFOUNDERS ###########;
+
+	*SIMPLE FREQS AND CROSS TABS;
+
+
+	proc freq data=a;
+		table
+			allrepro
+			bc
+			curr_ins
+			edu
+			fecund
+			intend
+			jintend
+			parity
+			poverty
+			prevcohb
+			rmarital
+			religion
+			nchildhh;
+		weight weightvar;
+		run;
+
+	proc print data=confounders; run;
+
+	proc means data=a;
+		var
+			agebaby1;
+		weight weightvar;
+		run;
+
+
+
+	*MORE DETAIL ON EDUCATION, POVERTY;
+
 	title 'differences in education by age';
 	proc freq data=a;
 		tables rscrage*edu;
@@ -371,6 +405,8 @@ proc freq data=a;
 		run;
 
 
+
+
 *######################*
 *##### REGRESSION #####*
 *######################*;
@@ -431,6 +467,8 @@ proc freq data=a;
 	output out=logodds_&i. p=*/
 
 * REGRESSION MODELS SELECTED AFTER INVESTIGATION OF QUASI-COMPLETE SEPARATION;
+		* Code from investigation can be found here: 
+		   "U:\Dissertation\nsfg_separation_investigation.sas";
 * Bivariate;
 proc surveylogistic data=a;
 	class effmeth_1 / ref=first;
@@ -449,21 +487,38 @@ proc surveylogistic data=a;
 	model effmeth_1 = rscrage hisprace2 povlev edu;
 	run; 
 
-* Full model, includes new marital status variable;
+* Full model, includes new marital status variable, fecund is removed;
 proc surveylogistic data=a;
 	class
 		effmeth_1 (ref=first) 
 		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
 		povlev (ref="<100% PL")
 		edu (ref="hs degree or ged")
-		fecund 
+		rwant
 		mard (ref=first)
 		curr_ins
 		religion;
 	weight weightvar;
-	model effmeth_1 = rscrage hisprace2 povlev edu fecund rwant mard
+	model effmeth_1 = rscrage hisprace2 povlev edu rwant mard
 		curr_ins religion;
 	run;
+
+* Full model, includes new marital status variable, fecund is removed,
+	parity is included;
+	proc surveylogistic data=a;
+		class
+			effmeth_1 (ref=first) 
+			hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+			povlev (ref="<100% PL")
+			edu (ref="hs degree or ged")
+			rwant
+			mard (ref=first)
+			curr_ins
+			religion;
+		weight weightvar;
+		model effmeth_1 = rscrage hisprace2 povlev edu rwant mard
+			curr_ins religion parity;
+		run;
 
 	%macro aim1ha;
 
