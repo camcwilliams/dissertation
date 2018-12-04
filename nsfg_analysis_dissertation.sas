@@ -99,11 +99,38 @@ proc freq data=a;
 
 	proc print data=table1; run;*/
 
+	/*changing lengths because the scientific notation is messing up
+		my denominators;
+	data a; set a;
+		length agecat 8 poverty 8 edu 8 ster 8 hisprace2 8;
+		run;
+	*that didn't work;*/
+
 title 'table 1, weighted';
 proc freq data=a;
 	tables (agecat poverty edu)*ster / missing nopercent nocol;
 	weight weightvar; 
 	run;
+
+title 'table 1, weighted, adding race, then need to check out dataset for full-digit counts';
+proc freq data=a;
+	tables ster*hisprace2 / missing norow nopercent nocol out=hisprace2;
+	weight weightvar;
+	run;
+
+	proc print data=hisprace2; run;
+
+title 'checking totals with out dataset';
+proc freq data=a;
+	tables ster / missing norow nopercent nocol out=ster;
+	weight weightvar;
+	run;
+
+	proc print data=ster; run;
+
+	title;
+
+
 
 
 *########### SAMPLING WEIGHTS ###########;
@@ -239,7 +266,7 @@ proc freq data=a;
 			fecund
 			intend
 			jintend
-			parity
+			parityrkingworking
 			poverty
 			prevcohb
 			rmarital
