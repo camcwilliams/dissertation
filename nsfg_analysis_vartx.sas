@@ -489,7 +489,7 @@ data b; set a;
 	keep &varlist;
 	run;
 
-proc contents data = b; title "variables of interest"; run;
+proc contents data = b; title "VARIABLES OF INTEREST (varlist)"; run;
 
 title;
 
@@ -515,6 +515,15 @@ religion_i
 curr_ins_i
 numkdhh_i
 numfmhh_i;
+
+data b; set a;
+	keep &implist;
+	run;
+
+proc contents data = b; title "IMPUTED VARIABLES OF INTEREST (implist)"; run;
+
+title;
+
 
 * Full list of variables that are or can be used as categorical;
 %let catlist =
@@ -572,6 +581,14 @@ edu
 mard
 ;
 
+data b; set a;
+	keep &catlist;
+	run;
+
+proc contents data = b; title "CATEGORICAL VARIABLES OF INTEREST (catlist)"; run;
+
+title;
+
 * Full list of variables that are or can be used as continuous;
 %let contlist =
 caseid
@@ -590,4 +607,14 @@ numkdhh
 numfmhh
 jintendn
 agefirstbirth_all;
-;	
+;
+
+data b; set a;
+	keep &contlist;
+	run;
+
+proc contents data = b; title "CONTINUOUS VARIABLES OF INTEREST (contlist)"; run;
+
+title;
+
+data a; set a; run;
