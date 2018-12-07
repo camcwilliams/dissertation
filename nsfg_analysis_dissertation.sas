@@ -266,7 +266,7 @@ proc freq data=a;
 			fecund
 			intend
 			jintend
-			parityrkingworking
+			parity
 			poverty
 			prevcohb
 			rmarital
@@ -496,42 +496,26 @@ proc freq data=a;
 * REGRESSION MODELS SELECTED AFTER INVESTIGATION OF QUASI-COMPLETE SEPARATION;
 		* Code from investigation can be found here: 
 		   "U:\Dissertation\nsfg_separation_investigation.sas";
-* Bivariate;
-proc surveylogistic data=a;
-	class effmeth_1 / ref=first;
-	weight weightvar;	
-	model effmeth_1 = rscrage;
-	run;
 
-* Only the big-3 SES;
-proc surveylogistic data=a;
-	class 
-		effmeth_1 (ref=first) 
-		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
-		povlev (ref="<100% PL")
-		edu (ref="hs degree or ged");
-	weight weightvar;
-	model effmeth_1 = rscrage hisprace2 povlev edu;
-	run; 
+	* Bivariate;
+	proc surveylogistic data=a;
+		class effmeth_1 / ref=first;
+		weight weightvar;	
+		model effmeth_1 = rscrage;
+		run;
 
-* Full model, includes new marital status variable, fecund is removed;
-proc surveylogistic data=a;
-	class
-		effmeth_1 (ref=first) 
-		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
-		povlev (ref="<100% PL")
-		edu (ref="hs degree or ged")
-		rwant
-		mard (ref=first)
-		curr_ins
-		religion;
-	weight weightvar;
-	model effmeth_1 = rscrage hisprace2 povlev edu rwant mard
-		curr_ins religion;
-	run;
+	* Only the big-3 SES;
+	proc surveylogistic data=a;
+		class 
+			effmeth_1 (ref=first) 
+			hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+			povlev (ref="<100% PL")
+			edu (ref="hs degree or ged");
+		weight weightvar;
+		model effmeth_1 = rscrage hisprace2 povlev edu;
+		run; 
 
-* Full model, includes new marital status variable, fecund is removed,
-	parity is included;
+	* Full model, includes new marital status variable, fecund is removed;
 	proc surveylogistic data=a;
 		class
 			effmeth_1 (ref=first) 
@@ -544,30 +528,312 @@ proc surveylogistic data=a;
 			religion;
 		weight weightvar;
 		model effmeth_1 = rscrage hisprace2 povlev edu rwant mard
-			curr_ins religion parity;
+			curr_ins religion;
 		run;
 
-	%macro aim1ha;
+	* Full model, includes new marital status variable, fecund is removed,
+		parity is included;
+		proc surveylogistic data=a;
+			class
+				effmeth_1 (ref=first) 
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+				povlev (ref="<100% PL")
+				edu (ref="hs degree or ged")
+				rwant
+				mard (ref=first)
+				curr_ins
+				religion;
+			weight weightvar;
+			model effmeth_1 = rscrage hisprace2 povlev edu rwant mard
+				curr_ins religion parity;
+			run;
 
+		%macro aim1ha;
+
+		
+		%do i = 1 %to 9;
+		proc surveylogistic data=a;
+		class
+			effmeth_&i. (ref=first) 
+			hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+			povlev (ref="<100% PL")
+			edu (ref="hs degree or ged")
+			fecund 
+			rmarital (ref=first)
+			curr_ins
+			religion;
+		weight weightvar;
+		model effmeth_&i. = rscrage hisprace2 povlev edu fecund intend rmarital
+			curr_ins religion;
+		run;
+		%end;
+
+		%mend aim1ha;
+
+		%aim1ha;
+
+
+	*** Working on splines;
+
+	* Using final full model from above;
+	proc logistic data=a;
+		class
+			effmeth_1 (ref=first) 
+			hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+			povlev (ref="<100% PL")
+			edu (ref="hs degree or ged")
+			rwant
+			mard (ref=first)
+			curr_ins
+			religion;
+		weight weightvar;
+		model effmeth_1 = rscrage hisprace2 povlev edu rwant mard
+			curr_ins religion parity;
+		effectplot;
+		run;
+		* Got an error that the variable configuration is not supported
+		by effectplot, i see the problem is you have to specify which
+		plot because the command can't select the right plot if you have
+		both categorical and continuous variables, so i'm trying slicefit
+		below;
+
+
+	proc logistic data=a;
+		class
+			effmeth_1 (ref=first) 
+			hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+			povlev (ref="<100% PL")
+			edu (ref="hs degree or ged")
+			rwant
+			mard (ref=first)
+			curr_ins
+			religion;
+		weight weightvar;
+		model effmeth_1 = rscrage hisprace2 povlev edu rwant mard
+			curr_ins religion parity;
+		effectplot slicefit;
+		run;
+
+
+	* now trying effect statement to use a cubic spline;
+	proc logistic data=a;
+		class
+			effmeth_1 (ref=first) 
+			hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+			povlev (ref="<100% PL")
+			edu (ref="hs degree or ged")
+			rwant
+			mard (ref=first)
+			curr_ins
+			religion;
+		weight weightvar;
+		effect spl=spline(rscrage);
+		model effmeth_1 = rscrage hisprace2 povlev edu rwant mard
+			curr_ins religion parity;
+		run;
+		* it ran but i have no idea what it means;
+
+	* going back to just trying to plot;
+
+	*first no covariates;
+	proc logistic data=a;
+		class
+			effmeth_1 (ref=first) ;
+		weight weightvar;
+		model effmeth_1 = rscrage;
+		output out=logodds_1 p=predprob_1 xbeta=logodds_1;
+		run;
+
+		data logodds_1; set logodds_1;
+			keep caseid logodds_1 predprob_1 &varlist;
+		run;
+
+		proc sgplot data=logodds_1;
+			scatter x=rscrage y=logodds_1;
+			run;
+
+		proc sgplot data=logodds_1;
+			scatter x=rscrage y=predprob_1;
+			run;
+		
+
+	*now with covariates;
+	proc logistic data=a;
+		class
+			effmeth_1 (ref=first) 
+			hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+			povlev (ref="<100% PL")
+			edu (ref="hs degree or ged")
+			rwant
+			mard (ref=first)
+			curr_ins
+			religion;
+		weight weightvar;
+		model effmeth_1 = rscrage hisprace2 povlev edu rwant mard
+			curr_ins religion parity;
+		output out=logodds_1 p=predprob_1 xbeta=logodds_1;
+		run;
+
+		data logodds_1; set logodds_1;
+			keep caseid logodds_1 predprob_1 &varlist;
+		run;
+
+		proc sgplot data=logodds_1;
+			scatter x=rscrage y=logodds_1;
+			run;
+
+		proc sgplot data=logodds_1;
+			scatter x=rscrage y=predprob_1;
+			run;
+
+* trying condoms now since the increase in sterilization by age looks too
+perfect;
 	
-	%do i = 1 %to 9;
+	proc logistic data=a;
+		class
+			effmeth_4 (ref=first) ;
+		weight weightvar;
+		model effmeth_4 = rscrage;
+		output out=logodds_4 p=predprob_4 xbeta=logodds_4;
+		run;
+
+		data logodds_4; set logodds_4;
+			keep caseid logodds_4 predprob_4 &varlist;
+		run;
+
+		proc sgplot data=logodds_4;
+			scatter x=rscrage y=logodds_4;
+			run;
+
+		proc sgplot data=logodds_4;
+			scatter x=rscrage y=predprob_4;
+			run;
+		
+
+	*now with covariates;
+	proc logistic data=a;
+		class
+			effmeth_4 (ref=first) 
+			hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+			povlev (ref="<100% PL")
+			edu (ref="hs degree or ged")
+			rwant
+			mard (ref=first)
+			curr_ins
+			religion;
+		weight weightvar;
+		effect spl=spline(rscrage / knotmethod=percentiles(5));
+		model effmeth_4 = rscrage hisprace2 povlev edu rwant mard
+			curr_ins religion parity;
+		output out=logodds_4 p=predprob_4 xbeta=logodds_4;
+		run;
+
+		data logodds_4; set logodds_4;
+			keep caseid logodds_4 predprob_4 &varlist;
+		run;
+
+		proc sgplot data=logodds_4;
+			scatter x=rscrage y=logodds_4;
+			run;
+
+		proc sgplot data=logodds_4;
+			scatter x=rscrage y=predprob_4;
+			run;
+
+	*now messing around more with splines. ugh.;
+	proc logistic data=a;
+		class
+			effmeth_4 (ref=first) 
+			hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+			povlev (ref="<100% PL")
+			edu (ref="hs degree or ged")
+			rwant
+			mard (ref=first)
+			curr_ins
+			religion;
+		weight weightvar;
+		effect spl=spline(rscrage / knotmethod=percentiles(5));
+		model effmeth_4 = spl;
+		output out=logodds_4 p=predprob_4 xbeta=logodds_4;
+		run;
+
+		data logodds_4; set logodds_4;
+			keep caseid logodds_4 predprob_4 &varlist;
+		run;
+
+		proc sgplot data=logodds_4;
+			scatter x=rscrage y=logodds_4;
+			run;
+
+		proc sgplot data=logodds_4;
+			scatter x=rscrage y=predprob_4;
+			run;
+
+	****** PSEUDO DECISION TREES;
+
+
+	title 'first branch: something vs nothing';
 	proc surveylogistic data=a;
-	class
-		effmeth_&i. (ref=first) 
+		class 
+			bcyes (ref=first)
+			hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+			povlev (ref="<100% PL")
+			edu (ref="hs degree or ged")
+			rwant
+			mard (ref=first)
+			curr_ins
+			religion;
+		weight weightvar;
+		model bcyes = rscrage hisprace2 povlev edu rwant
+			mard curr_ins religion;
+		run;
+
+	title 'second branch: get from doc vs get yourself';
+	proc surveylogistic data=a;
+		class 
+			doc (ref=first)
+			hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+			povlev (ref="<100% PL")
+			edu (ref="hs degree or ged")
+			rwant
+			mard (ref=first)
+			curr_ins
+			religion;
+		weight weightvar;
+		model doc = rscrage hisprace2 povlev edu rwant
+			mard curr_ins religion;
+		run;
+
+	* THIS VARIABLE NEEDS FIXING BUT WANT TO KEEP MOVING;
+	title 'third branch: doc-required methods';
+	proc surveylogistic data=a;
+	class 
+		docmeth
 		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
 		povlev (ref="<100% PL")
 		edu (ref="hs degree or ged")
-		fecund 
-		rmarital (ref=first)
+		rwant
+		mard (ref=first)
 		curr_ins
 		religion;
 	weight weightvar;
-	model effmeth_&i. = rscrage hisprace2 povlev edu fecund intend rmarital
-		curr_ins religion;
+	model docmeth = rscrage hisprace2 povlev edu rwant
+		mard curr_ins religion / link=glogit;
 	run;
-	%end;
 
-	%mend aim1ha;
-
-	%aim1ha;
-
+	* THIS VARIABLE MIGHT ALSO NEED FIXING BUT WANT TO KEEP MOVING;
+	title 'third branch: personal methods';
+	proc surveylogistic data=a;
+	class 
+		selfmeth (ref=first)
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") 
+		povlev (ref="<100% PL")
+		edu (ref="hs degree or ged")
+		rwant
+		mard (ref=first)
+		curr_ins
+		religion;
+	weight weightvar;
+	model selfmeth = rscrage hisprace2 povlev edu rwant
+		mard curr_ins religion / link=glogit;
+	run;
