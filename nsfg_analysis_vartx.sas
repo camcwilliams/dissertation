@@ -141,6 +141,35 @@ not include code to pull in the datasets and formats, those can happen from
 		proc freq; tables bc; by allrepro; run;
 		proc freq; tables constat1; where allrepro = .; run;*/
 
+		proc freq data=a; tables bc; run;
+
+		data a; set a;
+			doc = bc;
+			if bc>=1 and bc<=11 then doc = 1;
+			if bc>10 then doc = 2;
+			run;
+
+			proc freq data=a; tables bc*doc; run;
+
+		data a; set a;
+			docmeth = .;
+			if bc = 1 or bc = 2 then docmeth = 1;
+			if bc = 3 or bc = 9 then docmeth = 2;
+			if bc = 5 or bc = 6 or bc = 7 then docmeth = 3;
+			if bc = 4 then docmeth = 4;
+			run;
+
+			proc freq data=a; tables docmeth * bc; run;
+
+		data a; set a;
+			selfmeth = .;
+			if bc = 12 then selfmeth = 1;
+			if bc = 14 or bc = 17 or bc = 18 then selfmeth = 2;
+			if bc = 21 then selfmeth = 3;
+			if bc = 19 or bc = 20 then selfmeth = 4;
+			run;
+
+
 
 *** Subfecundity;
 
