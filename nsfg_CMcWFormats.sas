@@ -55,6 +55,11 @@ proc format;
 		7="withdrawal"
 		8="other"
 		9="not using contraception";
+	value bcc
+		1="sterilized"
+		2="reversible, needs doc"
+		3="reversible, doesn't need doc"
+		4="not using contraception";
 	value allrepro
 		1="sterilized"
 		2="IUD, implant"
@@ -88,6 +93,14 @@ proc format;
         4 = "divorced or annulled or widowed"
         5 = "separated for reasons of marital discord"
         6 = "never been married";
+	value doc
+		1 = "requires doctor or pharmacist"
+		2 = "does not require doctor or pharmacist";	
+	value curr_ins
+		1 = "private/medigap"
+		2 = "medicaid/chip/state"
+		3 = "medicare/military"
+		4 = "IHS, not covered";
 
 
 run;
@@ -99,11 +112,15 @@ data a; set a;
 			povlev povlev.
 			nouse nouse.
 			effmeth effmeth.
+			bcc bcc.
 			bcyes bcyes.
 			edu edu.
 			ster ster.
 			allrepro allrepro.
 			elig elig.
 			agebabycat agebabycat.
-			mard mard.;
+			mard mard.
+			doc doc.
+			curr_ins curr_ins.
+;
 ;run;
