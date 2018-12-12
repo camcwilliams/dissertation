@@ -255,8 +255,8 @@ proc freq data=a;
 *########### PROBING CONFOUNDERS ###########;
 
 	*SIMPLE FREQS AND CROSS TABS;
-
-
+	
+	* just frequencies;
 	proc freq data=a;
 		table
 			allrepro
@@ -267,23 +267,66 @@ proc freq data=a;
 			intend
 			jintend
 			parity
-			poverty
+			povlev
 			prevcohb
 			rmarital
 			religion
 			nchildhh;
 		weight weightvar;
 		run;
-
-	proc print data=confounders; run;
-
+	
+	* mean for the one continuous variable;
 	proc means data=a;
 		var
 			agebaby1;
 		weight weightvar;
 		run;
 
+	* cross tabs of all variables by a crude birth control variable;
+	proc freq data=a;
+		table
+			(
+			curr_ins
+			edu
+			fecund
+			intend
+			jintend
+			parity
+			povlev
+			prevcohb
+			rmarital
+			religion
+			nchildhh)*bcc / nopercent norow nocol;
+		weight weightvar;
+		run;
 
+	* box plots of all variables by age;
+	proc sgplot data=a;
+		hbox rscrage / category=curr_ins;
+		run;
+	%let confounders =
+		curr_ins
+		edu
+		fecund
+		intend
+		jintend
+		parity
+		povlev
+		prevcohb
+		rmarital
+		religion;
+
+	%macro ditto;
+		%let i=1;
+		%do %until(not %length(%scan(&confounders,&i)));
+		proc sgplot data=a;
+			vbox rscrage / category=%scan(&confounders,&i);
+		run;
+		%let i=%eval(&i+1);
+		%end;
+	%mend ditto;
+
+	%ditto;
 
 	*MORE DETAIL ON EDUCATION, POVERTY;
 
@@ -401,37 +444,39 @@ proc freq data=a;
 	title;
 
 
-	*Cross-tabs for all covariates of interest;
-	proc freq data=a; 
-		tables 
-		effmeth_1
-		hisprace2
-		povlev
-		edu
-		fecund 
-		rmarital
-		curr_ins
-		religion
-		;
+*########### BIVARIATE ANALYSES ###########;
+
+
+	*trying something first;
+	proc surveylogistic data=a;
+		class effmeth_1 (ref=first);
 		weight weightvar;
+		model bcc = rscrage / link=glogit;
 		run;
 
-	proc freq data=a;
-		tables effmeth_1;
+	proc surveylogistic data=a;
+		class effmeth_1 (ref=first) hisprace2 (ref=first);
+		weight weightvar;
+		model bcc = hisprace2 / link=glogit;
 		run;
 
-	proc freq data=a;
-		tables effmeth_1*(
-		hisprace2
-		povlev
-		edu
-		fecund 
-		rmarital
-		curr_ins
-		religion);
+	proc surveylogistic data=a;
+		class effmeth_1 (ref=first) povlev (ref=first);
+		weight weightvar;
+		model effmeth_1 = povlev;
 		run;
 
+	proc surveylogistic data=a;
+		class effmeth_1 (ref=first) edu (ref="hs degree or ged");
+		weight weightvar;
+		model effmeth_1 = edu;
+		run;
 
+	proc surveylogistic data=a;
+		class ster;
+		weight weightvar;
+		model ster=rscrage;
+		run;	
 
 
 *######################*
