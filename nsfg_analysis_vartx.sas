@@ -141,6 +141,18 @@ not include code to pull in the datasets and formats, those can happen from
 		proc freq; tables bc; by allrepro; run;
 		proc freq; tables constat1; where allrepro = .; run;*/
 
+		
+	data a; set a;
+		bcc = .;
+		if effmeth = 1 then bcc = 1;
+		if effmeth = 2 or effmeth = 3 then bcc = 2;
+		if effmeth = 4 or effmeth = 5 or effmeth = 6 or effmeth = 7 or effmeth = 8 then bcc = 3;
+		if effmeth = 9 then bcc = 4;
+		label bcc="4-cat crude contraception";
+		run;
+
+		/*proc freq data=a; tables effmeth*bc4; run;*/
+
 		proc freq data=a; tables bc; run;
 
 		data a; set a;
@@ -474,6 +486,7 @@ nouse
 bcyes
 ster
 effmeth
+bcc
 allrepro
 fecund
 educat
@@ -572,6 +585,7 @@ nouse
 bcyes
 ster
 effmeth
+bcc
 allrepro
 fecund
 educat
