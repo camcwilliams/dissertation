@@ -204,6 +204,14 @@ proc freq data=a;
 		weight weightvar;
 		run;
 
+	*as recommended by deb, regressing imputed poverty 
+		on other characteristics;
+	title 'imputed poverty regressed on sociodemographics';
+	proc surveylogistic data=a;
+		class edu (ref="hs degree or ged") hisprace2;
+		model poverty_i = rscrage edu hisprace2;
+		run;
+
 
 *########### REPRODUCTIVE CATEGORIES BY AGE ###########;
 
@@ -297,6 +305,16 @@ proc freq data=a;
 			rmarital
 			religion
 			nchildhh)*bcc / nopercent norow nocol;
+		weight weightvar;
+		run;
+
+	proc freq data=a;
+		table religion*bcc / nopercent norow nocol;
+		weight weightvar;
+		run;
+
+		proc freq data=a;
+		table religion*bcc;
 		weight weightvar;
 		run;
 
@@ -442,6 +460,10 @@ proc freq data=a;
 		where agecat > 4 and agefirstbirth > 30;
 		run;
 	title;
+
+	*How does education differ by race, specifically the "no HS";
+	proc freq data=a; tables hisprace2*edu; weight weightvar; run;
+	proc freq data=a; tables hisprace2*edu / nofreq nopercent nocol; weight weightvar; run;
 
 
 *########### BIVARIATE ANALYSES ###########;
@@ -882,3 +904,35 @@ perfect;
 	model selfmeth = rscrage hisprace2 povlev edu rwant
 		mard curr_ins religion / link=glogit;
 	run;
+
+	* BEFORE/DURING TREE;
+	title 'trunk: before/during';
+
+	proc sgplot data=a;
+		vbar rscrage / response = all;
+		run;
+	proc logistic data=a;
+		class all (ref = "during: barrier, withdrawal, nothing");
+		weight weightvar;
+		model all = rscrage;
+		effectplot;
+		run;
+	proc logistic data=a;
+		class all (ref = "during: barrier, withdrawal, nothing");
+		weight weightvar;
+		effect spl=spline(rscrage / knotmethod=percentiles(6));
+		model all = spl;
+		output out=all p=predprob_all xbeta=logodds_all;
+		run;
+
+		data all; set all;
+			keep caseid predprob_all logodds_all &varlist all;
+		run;
+
+		proc sgplot data=all;
+			scatter x=rscrage y=logodds_all;
+			run;
+
+		proc sgplot data=logodds_4;
+			scatter x=rscrage y=predprob_4;
+			run;

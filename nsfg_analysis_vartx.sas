@@ -271,6 +271,12 @@ not include code to pull in the datasets and formats, those can happen from
 
 			/*proc freq data=a; tables before during; run;*/
 
+		data a; set a;
+			all = .;
+			if before ne . then all = 1;
+			if during ne . then all = 2;
+			run;
+
 
 *** Subfecundity;
 
