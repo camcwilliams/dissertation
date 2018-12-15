@@ -155,32 +155,107 @@ not include code to pull in the datasets and formats, those can happen from
 
 		proc freq data=a; tables bc; run;
 
+		*below are a series of variables for doctor vs self-controlled. i don't think they'll
+		be used in the regression tree but I am keeping them in here just in case;
+			data a; set a;
+				doc = bc;
+				if bc>=1 and bc<=11 then doc = 1;
+				if bc>10 then doc = 2;
+				run;
+
+				proc freq data=a; tables bc*doc; run;
+
+			data a; set a;
+				docmeth = .;
+				if bc = 1 or bc = 2 then docmeth = 1;
+				if bc = 3 or bc = 9 then docmeth = 2;
+				if bc = 5 or bc = 6 or bc = 7 then docmeth = 3;
+				if bc = 4 then docmeth = 4;
+				run;
+
+				proc freq data=a; tables docmeth * bc; run;
+
+			data a; set a;
+				selfmeth = .;
+				if bc = 12 then selfmeth = 1;
+				if bc = 14 or bc = 17 or bc = 18 then selfmeth = 2;
+				if bc = 21 then selfmeth = 3;
+				if bc = 19 or bc = 20 then selfmeth = 4;
+				run;
+
+		* regression tree variables;
+		*LEAVES;
 		data a; set a;
-			doc = bc;
-			if bc>=1 and bc<=11 then doc = 1;
-			if bc>10 then doc = 2;
+			meth = bc;
+			if bc = 1 then meth = 1;
+			if bc = 2 then meth = 2;
+			if bc = 3 or bc = 10 then meth = 3;
+			if bc = 5 then meth = 4;
+			if bc = 6 then meth = 5;
+			if bc = 7 or bc = 8 then meth = 6;
+			if bc = 9 then meth = .;
+			if bc = 19 or bc = 20 then meth = 7;
+			if bc = 12 then meth = 8;
+			if bc = 11 or bc = 16 then meth = 9;
+			if bc = 14 or bc = 17 or bc = 18 then meth = 10;
+			if bc = 21 then meth = 11;
+			if bc = 22 then meth = .;
+			if bc = 42 then meth = 12;
+			label meth = "all methods, other and EC removed";
 			run;
 
-			proc freq data=a; tables bc*doc; run;
-
+		*TWIGS;
 		data a; set a;
-			docmeth = .;
-			if bc = 1 or bc = 2 then docmeth = 1;
-			if bc = 3 or bc = 9 then docmeth = 2;
-			if bc = 5 or bc = 6 or bc = 7 then docmeth = 3;
-			if bc = 4 then docmeth = 4;
+			perm = .;
+			if meth = 1 then perm = 1;
+			if meth = 2 then perm = 2;
+			label perm = "permanent methods";
+			run;
+		data a; set a;
+			rev = .;
+			if meth = 3 then rev = 1;
+			if meth = 4 then rev = 2;
+			label rev = "reversible long-term methods";
+			horm = .;
+			if meth = 5 then horm = 1;
+			if meth = 6 then horm = 2;
+			label horm = "hormonal short-term methods";
+			barr = .;
+			if meth = 8 then barr = 1;
+			if meth = 9 then barr = 2;
+			label barr = "barrier methods";
+			nobarr = .;
+			if meth = 10 then nobarr = 1;
+			label nobarr = "spermicide";
 			run;
 
-			proc freq data=a; tables docmeth * bc; run;
-
+		*BRANCHES;
 		data a; set a;
-			selfmeth = .;
-			if bc = 12 then selfmeth = 1;
-			if bc = 14 or bc = 17 or bc = 18 then selfmeth = 2;
-			if bc = 21 then selfmeth = 3;
-			if bc = 19 or bc = 20 then selfmeth = 4;
+			long = .;
+			if perm ne . then long = 1;
+			if rev ne . then long = 2;
+			label long = "long-term methods";
+			short = .;
+			if horm ne . then short = 1;
+			if meth = 7 then short = 2;
+			label short = "short-term methods";
+			prep = .;
+			if barr ne . then prep = 1;
+			if nobarr ne . then prep = 2;
+			label prep = "requires preparation";
+			noprep = .;
+			if meth = 11 then noprep = 1;
+			if meth = 12 then noprep = 2;
+			label noprep = "requires no preparation";
 			run;
 
+		/*proc freq data=a;
+			tables rev horm barr nobarr long short prep noprep;
+			run;
+
+		proc freq data=a;
+			tables noprep;
+			run;*/
 
 
 *** Subfecundity;
