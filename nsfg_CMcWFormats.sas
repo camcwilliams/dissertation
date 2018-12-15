@@ -101,6 +101,54 @@ proc format;
 		2 = "medicaid/chip/state"
 		3 = "medicare/military"
 		4 = "IHS, not covered";
+	value meth
+		1 = "tubal ligation"
+		2 = "vasectomy"
+		3 = "LARC"
+		4 = "injection"
+		5 = "oral contraceptive pill"
+		6 = "patch, ring"
+		7 = "periodic abstinence"
+		8 = "condom"
+		9 = "diaphragm, sponge"
+		10 = "spermicide alone"
+		11 = "withdrawal"
+		12 = "not using contraception";
+	value perm
+		1 = "tubal ligation"
+		2 = "vasectomy";
+	value rev
+		1 = "LARC"
+		2 = "injection";
+	value horm
+		1 = "oral contraceptive pill"
+		2 = "patch, ring";
+	value barr
+		1 = "condom"
+		2 = "diaphragm, sponge";
+	value nobarr
+		1 = "spermicide alone";
+	value long
+		1 = "permanent methods: tubal, vasectomy"
+		2 = "reversible methods: LARC, injection";
+	value short
+		1 = "short-term hormonal methods: OCP, patch, ring"
+		2 = "periodic abstinence";
+	value prep
+		1 = "barrier methods: condom, diaphragm, sponge"
+		2 = "spermicide";
+	value noprep
+		1 = "withdrawal"
+		2 = "not using contraception";
+	value before
+		1 = "long term methods: ster, LARC, inj"
+		2 = "short term methods: pill, patch/ring, NFP";
+	value during
+		1 = "requires prep: barrier, spermicide"
+		2 = "no prep needed: withdrawal, nothing";
+	value all
+		1 = "before: ster, hormonal, NFP"
+		2 = "during: barrier, withdrawal, nothing";
 
 
 run;
@@ -122,5 +170,18 @@ data a; set a;
 			mard mard.
 			doc doc.
 			curr_ins curr_ins.
+			meth meth.
+			perm perm.
+			rev rev.
+			horm horm.
+			barr barr.
+			nobarr nobarr.
+			long long.
+			short short.
+			prep prep.
+			noprep noprep.
+			before before.
+			during during.
+			all all.
 ;
 ;run;
