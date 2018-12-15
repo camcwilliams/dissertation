@@ -257,6 +257,20 @@ not include code to pull in the datasets and formats, those can happen from
 			tables noprep;
 			run;*/
 
+		*TRUNK (Yes I will stretch this metaphor);
+		data a; set a;
+			before = .;
+			if long ne . then before = 1;
+			if short ne . then before = 2;
+			label before = "arranged before sex";
+			during = .;
+			if prep ne . then during = 1;
+			if noprep ne . then during = 2;
+			label before = "arranged during sex";
+			run;
+
+			/*proc freq data=a; tables before during; run;*/
+
 
 *** Subfecundity;
 
