@@ -463,7 +463,13 @@ proc freq data=a;
 
 	*How does education differ by race, specifically the "no HS";
 	proc freq data=a; tables hisprace2*edu; weight weightvar; run;
-	proc freq data=a; tables hisprace2*edu / nofreq nopercent nocol; weight weightvar; run;
+	proc freq data=a; tables hisprace2*edu / nofreq nopercent nocol; 
+		weight weightvar; run;
+	proc freq data=a; tables edu*hisprace2; weight weightvar; run;
+
+	*How is age at first birth associated with race?;
+	proc freq data=a; tables hisprace2*agebabycat;
+		weight weightvar; run;
 
 
 *########### BIVARIATE ANALYSES ###########;
@@ -936,3 +942,95 @@ perfect;
 		proc sgplot data=logodds_4;
 			scatter x=rscrage y=predprob_4;
 			run;
+
+
+		*Stratified analysis for Deb;
+			*First just sterilization by age;
+
+		%macro ditto;
+		%do i=0 %to 6;
+		title 'stratified1';
+		proc logistic data=a;
+			class 
+				effmeth_1 (ref=first)
+				agebabycat;
+			weight weightvar;
+			model effmeth_1 = rscrage;
+			where agebabycat = &i.;
+			run;
+
+		%end;
+		%mend;
+
+		%ditto;
+
+		proc logistic data=a;
+			class 
+				agebabycat;
+			weight weightvar;
+			model effmeth_1 = rscrage;
+			where agebabycat = 1;
+			run;
+
+		proc logistic data=a;
+			class 
+				agebabycat;
+			weight weightvar;
+			model effmeth_1 = rscrage;
+			where agebabycat = 2;
+			run;
+
+		proc logistic data=a;
+			class 
+				agebabycat;
+			weight weightvar;
+			model effmeth_1 = rscrage;
+			where agebabycat = 3;
+			run;
+
+		proc logistic data=a;
+			class 
+				agebabycat;
+			weight weightvar;
+			model effmeth_1 = rscrage;
+			where agebabycat = 4;
+			run;
+
+		proc logistic data=a;
+			class 
+				agebabycat;
+			weight weightvar;
+			model effmeth_1 = rscrage;
+			where agebabycat = 5;
+			run;
+
+		proc logistic data=a;
+			class 
+				agebabycat;
+			weight weightvar;
+			model effmeth_1 = rscrage;
+			where agebabycat = 6;
+			run;
+
+		*Now trying with a few more variables;
+
+		%macro ditto;
+
+		%do i=0 %to 6;
+
+		title "stratified2";
+		proc logistic data=a;
+			class 
+				effmeth_1 (ref=first)
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+				edu (ref="hs degree or ged")
+				agebabycat;
+			weight weightvar;
+			model effmeth_1 = rscrage hisprace2 edu;
+			where agebabycat = &i.;
+			run;
+
+		%end;
+		%mend;
+
+		%ditto;
