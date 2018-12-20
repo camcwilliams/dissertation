@@ -964,55 +964,9 @@ perfect;
 
 		%ditto;
 
-		proc logistic data=a;
-			class 
-				agebabycat;
-			weight weightvar;
-			model effmeth_1 = rscrage;
-			where agebabycat = 1;
-			run;
 
-		proc logistic data=a;
-			class 
-				agebabycat;
-			weight weightvar;
-			model effmeth_1 = rscrage;
-			where agebabycat = 2;
-			run;
-
-		proc logistic data=a;
-			class 
-				agebabycat;
-			weight weightvar;
-			model effmeth_1 = rscrage;
-			where agebabycat = 3;
-			run;
-
-		proc logistic data=a;
-			class 
-				agebabycat;
-			weight weightvar;
-			model effmeth_1 = rscrage;
-			where agebabycat = 4;
-			run;
-
-		proc logistic data=a;
-			class 
-				agebabycat;
-			weight weightvar;
-			model effmeth_1 = rscrage;
-			where agebabycat = 5;
-			run;
-
-		proc logistic data=a;
-			class 
-				agebabycat;
-			weight weightvar;
-			model effmeth_1 = rscrage;
-			where agebabycat = 6;
-			run;
-
-		*Now trying with a few more variables;
+		*Now trying with a few more variables, stratified by age
+		at first birth;
 
 		%macro ditto;
 
@@ -1034,3 +988,87 @@ perfect;
 		%mend;
 
 		%ditto;
+
+		*Now same variables by stratified by race;
+		%macro ditto;
+
+		%do i=0 %to 4;
+
+		title "stratified";
+		proc logistic data=a;
+			class 
+				effmeth_1 (ref=first)
+				agebabycat (ref=first)
+				edu (ref="hs degree or ged");
+			weight weightvar;
+			model effmeth_1 = rscrage edu;
+			where hisprace2 = &i.;
+			run;
+
+		%end;
+		%mend;
+
+		%ditto;	
+
+		*Now same variables by stratified by race, doing one with age at first birth;
+		%macro ditto;
+
+		%do i=0 %to 4;
+
+		title "stratified4";
+		proc logistic data=a;
+			class 
+				effmeth_1 (ref=first)
+				agebabycat (ref=first)
+				edu (ref="hs degree or ged");
+			weight weightvar;
+			model effmeth_1 = rscrage edu agebabycat;
+			where hisprace2 = &i.;
+			run;
+
+		%end;
+		%mend;
+
+		%ditto;	
+
+		*Now same variables by stratified by education;
+		%macro ditto;
+
+		%do i=0 %to 6;
+
+		title "stratified5";
+		proc logistic data=a;
+			class 
+				effmeth_1 (ref=first)
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE");
+			weight weightvar;
+			model effmeth_1 = rscrage hisprace2;
+			where edu = &i.;
+			run;
+
+		%end;
+		%mend;
+
+		%ditto;	
+
+
+		*Same but with agebabycat;
+		%macro ditto;
+
+		%do i=0 %to 6;
+
+		title "stratified6";
+		proc logistic data=a;
+			class 
+				effmeth_1 (ref=first)
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+				agebabycat (ref="no births");
+			weight weightvar;
+			model effmeth_1 = rscrage hisprace2 agebabycat;
+			where edu = &i.;
+			run;
+
+		%end;
+		%mend;
+
+		%ditto;	
