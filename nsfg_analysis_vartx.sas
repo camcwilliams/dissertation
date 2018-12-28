@@ -310,6 +310,40 @@ not include code to pull in the datasets and formats, those can happen from
 		except in the motivation questions after reporting non-use,
 		need to investigate further;
 
+		
+		*Upon further investigation, canhaver or posiblpg
+			and some associated vars might work;
+		/*proc freq data=a;
+			tables posiblpg posiblpg*bcc posiblpg*hisprace2;
+			run;
+
+		proc freq data=a;
+			tables canhaver;
+			run;
+
+		proc freq data=a;
+			tables canhaver*bcc;
+			run;
+
+		proc freq data=a;
+			tables canhaver*posiblpg;
+			run;
+
+		proc freq data=a;
+			tables canhaver*pregnono;
+			run;
+
+		proc freq data=a;
+			tables reasdiff:;
+			run;
+
+		proc freq data=a;
+			tables reasdiff1*reasdiff2;
+			run;
+
+		*Reasdiff1--5 are also worth exploring;
+		proc freq*/
+
 
 *** Age at first birth;
 
@@ -449,6 +483,15 @@ not include code to pull in the datasets and formats, those can happen from
 	* Quick fix on a recode I think nchs missed;
 	data a; set a;
 		if jintendn = 98 then jintendn = .;
+		run;
+
+	*Checking intention/want one more time;
+	proc freq data=a;
+		tables rwant;
+		run;
+
+	proc freq data=a;
+		tables rwant*bcc;
 		run;
 
 *** Income;
