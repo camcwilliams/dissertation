@@ -272,9 +272,9 @@ not include code to pull in the datasets and formats, those can happen from
 			/*proc freq data=a; tables before during; run;*/
 
 		data a; set a;
-			all = .;
-			if before ne . then all = 1;
-			if during ne . then all = 2;
+			allr = .;
+			if before ne . then allr = 1;
+			if during ne . then allr = 2;
 			run;
 
 
@@ -485,7 +485,7 @@ not include code to pull in the datasets and formats, those can happen from
 		if jintendn = 98 then jintendn = .;
 		run;
 
-	*Checking intention/want one more time;
+	/*Checking intention/want one more time;
 	proc freq data=a;
 		tables rwant;
 		run;
@@ -493,6 +493,11 @@ not include code to pull in the datasets and formats, those can happen from
 	proc freq data=a;
 		tables rwant*bcc;
 		run;
+
+	proc freq data=a;
+		tables intend;
+		run;
+	*/
 
 *** Income;
 
@@ -553,8 +558,18 @@ not include code to pull in the datasets and formats, those can happen from
 	proc freq; tables numbabes*parity nbabes_s*parity; run;
 
 	proc freq; tables reactslf numkdhh numfmhh; run;
-	*/
+	
 
+	*Was planning to use parity, but I think I should check on pregnancy hx;
+	proc freq data=a;
+		tables everpreg pregnum;
+		run;
+
+	proc freq data=a;
+		tables pregnum*parity;
+		run;
+	*In the end I think parity is sufficient;
+	*/
 
 *****************************************
 Creating dummy outcome variables for regression outcomes

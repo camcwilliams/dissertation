@@ -146,7 +146,7 @@ proc format;
 	value during
 		1 = "requires prep: barrier, spermicide"
 		2 = "no prep needed: withdrawal, nothing";
-	value all
+	value allr
 		1 = "before: ster, hormonal, NFP"
 		2 = "during: barrier, withdrawal, nothing";
 
@@ -182,6 +182,6 @@ data a; set a;
 			noprep noprep.
 			before before.
 			during during.
-			all all.
+			allr allr.
 ;
 ;run;
