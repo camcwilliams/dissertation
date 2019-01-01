@@ -499,6 +499,11 @@ not include code to pull in the datasets and formats, those can happen from
 		run;
 	*/
 
+	* Quick fix on rwant;
+	data a; set a;
+		if rwant = 8 then rwant = 9;
+		run;
+
 *** Income;
 
 	/*proc freq; tables poverty; run;
