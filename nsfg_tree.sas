@@ -46,7 +46,7 @@ proc sgplot data=a;
 proc logistic data=a;
 	class allr (ref="during: barrier, withdrawal, nothing");
 	effect spl=spline(rscrage / details naturalcubic basis=tpf(noint)
-								knotmethod=list(15 20 26 31 37 44));
+								knotmethod=percentiles(5));
 	model allr = spl;
 	output out=allr p=predprob_allr xbeta=logodds_allr;
 	run;
@@ -131,23 +131,34 @@ proc logistic data=a;
 		run;
 
 	*bivariate with splines;
-	proc logistic data=a outdesign=SplineBasis;
+	ods trace on;
+	title 'allr = age';
+	proc surveylogistic data=a;
 		class
 			allr (ref="during: barrier, withdrawal, nothing");
 		weight weightvar;
 		effect spl=spline(rscrage / details naturalcubic basis=tpf(noint)
 									knotmethod=percentiles(5));
 		model allr = spl;
-		estimate '35 vs 25' spl [1,35] [-1,25] / e exp cl;
-		estimate '38 vs 25' spl [1,38] [-1,25] / e exp cl;
-		estimate '40 vs 25' spl [1,40] [-1,25] / e exp cl;
-		estimate '42 vs 25' spl [1,42] [-1,25] / e exp cl;
-		estimate '44 vs 25' spl [1,35] [-1,25] / e exp cl;
+		estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
+		estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
+		estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+		estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+		estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+		estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+		estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+		estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
 		output out=allr pred=pred;
+		ods output Estimates=Estimates;
 		run;
 
-		proc contents data=SplineBasis; run;
-		proc print data=SplineBasis (obs=25); run;
+		proc export data=Estimates
+			dbms=xlsx
+			outfile="U:\Dissertation\xls_graphs\Estimates.xlsx"
+			replace;
+			run;
+		proc contents data=Estimates; run;
+		proc print data=Estimates; run;
 
 	*Trying guidance from here: http://support.sas.com/kb/57/975.html;
 	proc sgplot data=allr;
@@ -155,7 +166,7 @@ proc logistic data=a;
 		run;
 
 *first doing some stepwise work for Deb;
-title 'allr = all + demographics';
+title 'allr = age + demographics';
 proc surveylogistic data=a;
 	class 
 		allr (ref="during: barrier, withdrawal, nothing")
@@ -164,7 +175,7 @@ proc surveylogistic data=a;
 		povlev;
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
-								knotmethod=list(15 20 26 31 37 44) details);
+								knotmethod=percentiles(5) details);
 	model allr = spl 
 		edu
 		hisprace2
@@ -192,7 +203,7 @@ proc surveylogistic data=a;
 		mard;
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
-								knotmethod=list(15 20 26 31 37 44) details);
+								knotmethod=percentiles(5) details);
 	model allr = spl 
 		edu
 		hisprace2
@@ -228,7 +239,7 @@ proc surveylogistic data=a;
 		religion;
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
-								knotmethod=list(15 20 26 31 37 44) details);
+								knotmethod=percentiles(5) details);
 	model allr = spl 
 		edu
 		hisprace2
@@ -265,7 +276,7 @@ proc surveylogistic data=a;
 		religion;
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
-								knotmethod=list(15 20 26 31 37 44) details);
+								knotmethod=percentiles(5) details);
 	model allr = spl 
 		edu
 		hisprace2
