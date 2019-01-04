@@ -22,24 +22,24 @@ proc sgplot data=a;
 	vbar rscrage / response = allr;
 	run;
 
-*checking proc univariate to see if i want to use knots other than percentiles;
-proc univariate data=a;
-	var rscrage;
-	output out=percentiles1 pctlpts=5 27.5 50 72.5 95 pctlpre=P;
-	run;
-
-	proc print data=percentiles1; run;
-	*the 5% and 95% will only include 1-2 years, I think it will be better to use percentiles;
-
-*in order for the bottom and top knots to be at the correct ages, 
-	i think i need to use the knotmethod=list option. using proc univariate
-	here to calculate those percentiles;
+	/*checking proc univariate to see if i want to use knots other than percentiles;
 	proc univariate data=a;
 		var rscrage;
-		output out=percentiles2 pctlpts = 0 20 40 60 80 100 pctlpre=P;
+		output out=percentiles1 pctlpts=5 27.5 50 72.5 95 pctlpre=P;
 		run;
 
-	proc print data=percentiles2; run;
+		proc print data=percentiles1; run;
+		*the 5% and 95% will only include 1-2 years, I think it will be better to use percentiles;
+
+	*in order for the bottom and top knots to be at the correct ages, 
+		i think i need to use the knotmethod=list option. using proc univariate
+		here to calculate those percentiles;
+		proc univariate data=a;
+			var rscrage;
+			output out=percentiles2 pctlpts = 0 20 40 60 80 100 pctlpre=P;
+			run;
+
+		proc print data=percentiles2; run;*/
 
 *bivariate relationship between age splines and outcome, 
 	FOR GRAPHING ONLY, NO WEIGHT STATEMENT;	
@@ -64,7 +64,7 @@ proc logistic data=a;
 		scatter x=rscrage y=predprob_allr;
 		run;
 
-		*quickly want to compare the natural cubic with listed knots to 
+		/*quickly want to compare the natural cubic with listed knots to 
 		percentile knots;
 		*bivariate relationship between age splines and outcome, 
 			FOR GRAPHING ONLY, NO WEIGHT STATEMENT;	
@@ -113,30 +113,30 @@ proc logistic data=a;
 				scatter x=rscrage y=predprob_allr;
 				run;
 
-	************ OK, I LANDED ON NATURAL CUBIC SPLINE WITH LIST KNOT METHOD;
-	
-	*Running this to confirm estimate statement by hand (weight statement
-	not included);
-	proc surveylogistic data=a;
-		class
-			allr (ref="during: barrier, withdrawal, nothing");
-		effect spl=spline(rscrage / knotmethod=percentiles(5) details);
-		model allr = spl;
-		estimate 'log OR for 35 vs 25' spl [1,35] [-1,25] / e exp cl;
-		output out=allr pred=pred xbeta=logodds;
-		run;
+		************ OK, I LANDED ON NATURAL CUBIC SPLINE WITH LIST KNOT METHOD;
+		
+		*Running this to confirm estimate statement by hand (weight statement
+		not included);
+		proc surveylogistic data=a;
+			class
+				allr (ref="during: barrier, withdrawal, nothing");
+			effect spl=spline(rscrage / knotmethod=percentiles(5) details);
+			model allr = spl;
+			estimate 'log OR for 35 vs 25' spl [1,35] [-1,25] / e exp cl;
+			output out=allr pred=pred xbeta=logodds;
+			run;*/
 
 	proc sgplot data=allr;
 		scatter x=rscrage y=logodds;
 		run;
 
 	*bivariate with splines;
-	proc surveylogistic data=a;
+	proc logistic data=a outdesign=SplineBasis;
 		class
 			allr (ref="during: barrier, withdrawal, nothing");
 		weight weightvar;
-		effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
-									knotmethod=percentiles(5) details);
+		effect spl=spline(rscrage / details naturalcubic basis=tpf(noint)
+									knotmethod=percentiles(5));
 		model allr = spl;
 		estimate '35 vs 25' spl [1,35] [-1,25] / e exp cl;
 		estimate '38 vs 25' spl [1,38] [-1,25] / e exp cl;
@@ -145,6 +145,9 @@ proc logistic data=a;
 		estimate '44 vs 25' spl [1,35] [-1,25] / e exp cl;
 		output out=allr pred=pred;
 		run;
+
+		proc contents data=SplineBasis; run;
+		proc print data=SplineBasis (obs=25); run;
 
 	*Trying guidance from here: http://support.sas.com/kb/57/975.html;
 	proc sgplot data=allr;
