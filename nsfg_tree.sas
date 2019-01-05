@@ -3,6 +3,11 @@
 *#########################*;
 
 
+libname library "U:\Dissertation";
+%include "U:\Dissertation\nsfg_CMcWFormats.sas";
+data a; set library.nsfg; run;
+
+
 * LEVEL 1: COUPLED WITH INTERCOURSE VS NOT;
 
 proc freq data=a;
