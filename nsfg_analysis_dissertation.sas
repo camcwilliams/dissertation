@@ -43,6 +43,14 @@ data a; set a;
 	if rscrage = 97 then delete;
 	run;
 
+data library.nsfg; set a;
+run;
+
+data a; set library.nsfg; run;
+proc format library=library; run;
+
+proc freq data=a; tables allr; run;
+
 *######################*
 *#### DESCRIPTIVES ####*
 *######################*;
