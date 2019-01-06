@@ -337,8 +337,10 @@ proc surveylogistic data=a;
 	estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
 	estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
 	estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+	estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
 	estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
-	estimate '44 vs 25' spl [1,44] [-1,25] / exp cl;
+	estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+	estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
 	ods output Estimates=estallr_all_plusinteraction;
 	ods output FitStatistics=fsallr_all_plusinteraction;
 	run;
@@ -349,6 +351,14 @@ proc surveylogistic data=a;
 	Estallr_age_dem_fert
 	Estallr_all_nointeraction
 	Estallr_all_plusinteraction;
+
+%let titles = 
+	"By Age Only"
+	"By Age, Controlling for Demographics"
+	"By Age, Controlling for Demographics and Fertilty Hx"
+	"By Age, Controlling for All Covariates, No Interaction"
+	"By Age, Controlling for All Covariates, Including Interaction";
+
 	
 		proc export data=Estimatesallr_age
 			outfile="U:\Dissertation\xls_graphs\EstimatesLevel1.xlsx"
@@ -379,7 +389,6 @@ proc surveylogistic data=a;
 
 			%rounding;
 
-			title 'Coupled vs Uncoupled, Bivariate';
 			proc sgplot data=Estimatesallr_age;
 				vbarparm category=Label response=ORR /
 				datalabel=ORR datalabelpos=data
@@ -388,18 +397,22 @@ proc surveylogistic data=a;
 				xaxis label="Age";
 				yaxis label="Odds Ratio"
 				type=log logbase=e;
+				title1 "Coupled vs Uncoupled";
 				run;
 
 		%macro ditto;
 		%let i=1;
 		%do %until(not %length(%scan(&datasets,&i)));
 		proc sgplot data=%scan(&datasets,&i);
-			vbarparm category=Label response=ExpEstimate /
-			limitlower=LowerExp limitupper=UpperExp;
-			yaxis label = "Odds Ratio";
-			xaxis label = "Age";
+			vbarparm category=Label response=ORR /
+			datalabel=ORR datalabelpos=data
+			baseline=1 groupdisplay=cluster
+			limitlower=LCLR limitupper=UCLR;
+			xaxis label="Age";
+			yaxis label="Odds Ratio"
 			type=log logbase=e;
-			title %scan(&datasets,&i);
+			title1 "Coupled vs Uncoupled";
+			title2 %scan(&datasets,&i);
 			run;
 		%let i=%eval(&i+1);
 		%end;
