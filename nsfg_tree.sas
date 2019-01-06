@@ -37,8 +37,14 @@ proc freq data=a;
 
 *plotting the relationship between outcome and age, no adjustment;
 title 'simple relationship between outcome and age';
-proc sgplot data=a;
+proc freq data=a; tables allr*rscrage / nofreq nopercent norow; 
+	ods output CrossTabFreqs=allr_age; run;
+proc sgplot data=allr_age;
 	vbar rscrage / response = allr;
+	run;
+
+proc sgplot data=a;
+	vbarparm category=rscrage response=allr;
 	run;
 
 title 'just bivariate using logistic reg, no spline';
