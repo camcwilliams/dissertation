@@ -37,14 +37,19 @@ proc freq data=a;
 
 *plotting the relationship between outcome and age, no adjustment;
 title 'simple relationship between outcome and age';
-proc freq data=a; tables allr*rscrage / nofreq nopercent norow; 
-	ods output CrossTabFreqs=allr_age; run;
-proc sgplot data=allr_age;
-	vbar rscrage / response = allr;
-	run;
+ods graphics on;
 
-proc sgplot data=a;
-	vbarparm category=rscrage response=allr;
+proc freq data=a;
+	tables allr*rscrage / nofreq nopercent norow;
+	ods output CrossTabFreqs=allr_age;
+	run;
+data allr_age; set allr_age;
+	allrp = allr/100;
+	run;
+	proc print data=allr_age; run;
+proc sgplot data=allr_age;
+	vbar rscrage / response = ColPercent;
+	where allr = 1;
 	run;
 
 title 'just bivariate using logistic reg, no spline';
@@ -206,16 +211,18 @@ proc logistic data=a;
 		proc contents data=Estimates; run;
 		proc print data=Estimates; run;*/
 
-
+proc freq data=a;
+	tables edu hisprace2 povlev;
+	run;
 
 *first doing some stepwise work for Deb;
 title 'allr = age + demographics';
 proc surveylogistic data=a;
 	class 
 		allr (ref="during: barrier, withdrawal, nothing")
-		edu
-		hisprace2
-		povlev;
+		edu (ref="hs degree or ged")
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+		povlev (ref="100-199% PL");
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
@@ -240,14 +247,14 @@ title 'allr = age + demographics + relationship & fertility';
 proc surveylogistic data=a;
 	class 
 		allr (ref="during: barrier, withdrawal, nothing")
-		edu
-		hisprace2
-		povlev
-		canhaver
+		edu (ref="hs degree or ged")
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+		povlev (ref="100-199% PL")
+		canhaver (ref="NO")
 		agebabycat
-		parity		
-		rwant
-		mard;
+		parity (ref="0 BABIES")		
+		rwant (ref="NO")
+		mard (ref="never been married");
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
@@ -273,21 +280,20 @@ proc surveylogistic data=a;
 	ods output OddsRatios=ORallr_age_dem_fert;
 	run;
 
-
 title 'allr = all vars of interest, no interaction';
 proc surveylogistic data=a;
 	class 
 		allr (ref="during: barrier, withdrawal, nothing")
-		edu
-		hisprace2
-		povlev
-		canhaver
+		edu (ref="hs degree or ged")
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+		povlev (ref="100-199% PL")
+		canhaver (ref="NO")
 		agebabycat
-		parity		
-		rwant
+		parity (ref="0 BABIES")		
+		rwant (ref="NO")
+		mard (ref="never been married")
 		curr_ins
-		mard
-		religion;
+		religion (ref="NO RELIGION");
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
@@ -319,16 +325,16 @@ title 'allr = all vars of interest, includes interaction';
 proc surveylogistic data=a;
 	class 
 		allr (ref="during: barrier, withdrawal, nothing")
-		edu
-		hisprace2
-		povlev
-		canhaver
+		edu (ref="hs degree or ged")
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+		povlev (ref="100-199% PL")
+		canhaver (ref="NO")
 		agebabycat
-		parity		
-		rwant
+		parity (ref="0 BABIES")		
+		rwant (ref="NO")
+		mard (ref="never been married")
 		curr_ins
-		mard
-		religion;
+		religion (ref="NO RELIGION");
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
