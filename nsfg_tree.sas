@@ -223,6 +223,7 @@ proc surveylogistic data=a;
 	estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
 	ods output Estimates=EstimatesALLR_AGE_DEM;
 	ods output FitStatistics=FSallr_age_dem;
+	ods output OddsRatios=ORallr_age_dem;
 	run;
 
 title 'allr = age + demographics + relationship & fertility';
@@ -259,6 +260,7 @@ proc surveylogistic data=a;
 	estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
 	ods output Estimates=estallr_age_dem_fert;
 	ods output FitStatistics=fsallr_age_dem_fert;
+	ods output OddsRatios=ORallr_age_dem_fert;
 	run;
 
 
@@ -300,6 +302,7 @@ proc surveylogistic data=a;
 	estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
 	ods output Estimates=estallr_all_nointeraction;
 	ods output FitStatistics=fsallr_all_nointeraction;
+	ods output OddsRatios=ORallr_all_nointeraction;
 	run;
 
 title 'allr = all vars of interest, includes interaction';
@@ -343,21 +346,8 @@ proc surveylogistic data=a;
 	estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
 	ods output Estimates=estallr_all_plusinteraction;
 	ods output FitStatistics=fsallr_all_plusinteraction;
+	ods output OddsRatios=ORallr_all_plusinteraction;
 	run;
-
-%let datasets =
-	Estimatesallr_age
-	Estimatesallr_age_dem
-	Estallr_age_dem_fert
-	Estallr_all_nointeraction
-	Estallr_all_plusinteraction;
-
-%let titles = 
-	"By Age Only"
-	"By Age, Controlling for Demographics"
-	"By Age, Controlling for Demographics and Fertilty Hx"
-	"By Age, Controlling for All Covariates, No Interaction"
-	"By Age, Controlling for All Covariates, Including Interaction";
 
 	
 		proc export data=Estimatesallr_age
@@ -366,6 +356,20 @@ proc surveylogistic data=a;
 			replace;
 			sheet="allr_age";
 			run;
+
+		%let datasets =
+		Estimatesallr_age
+		Estimatesallr_age_dem
+		Estallr_age_dem_fert
+		Estallr_all_nointeraction
+		Estallr_all_plusinteraction;
+
+		%let titles = 
+			"By Age Only"
+			"By Age, Controlling for Demographics"
+			"By Age, Controlling for Demographics and Fertilty Hx"
+			"By Age, Controlling for All Covariates, No Interaction"
+			"By Age, Controlling for All Covariates, Including Interaction";
 			
 			proc freq data=a; tables allr; run;
 			proc print data=Estimatesallr_age; run;
