@@ -364,11 +364,20 @@ proc surveylogistic data=a;
 			title;
 			*need to change the output datasets for the estimates
 			so the data labels fit;
-			data Estimatesallr_age; set Estimatesallr_age;
+			%macro rounding;
+			%let i=1;
+			%do %until(not %length(%scan(&datasets,&i)));
+			data %scan(&datasets,&i); set %scan(&datasets,&i);
 				ORR=round(ExpEstimate,.001);
 				LCLR=round(LowerExp,.001);
 				UCLR=round(UpperExp,.001);
+				title %scan(&datasets,&i);
 				run;
+			%let i=%eval(&i+1);
+			%end;
+			%mend;
+
+			%rounding;
 
 			title 'Coupled vs Uncoupled, Bivariate';
 			proc sgplot data=Estimatesallr_age;
