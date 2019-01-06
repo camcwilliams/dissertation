@@ -7,13 +7,16 @@ libname library "U:\Dissertation";
 %include "U:\Dissertation\nsfg_CMcWFormats.sas";
 data a; set library.nsfg; run;
 
-
+*******************
 * LEVEL 1: COUPLED WITH INTERCOURSE VS NOT;
+*******************;
 
 ods trace on;
 ods graphics on / reset=index imagename="allr_age";
 ods listing gpath = "U:\Dissertation\sas_graphs";
 
+*FREQUENCY FOR OUTCOME VARIABLE OF INTEREST,
+COUPLED WITH SEX VS UNCOUPLED;
 proc freq data=a;
 	tables allr;
 	ods output OneWayFreqs=allrfreq;
@@ -23,6 +26,7 @@ proc freq data=a;
 			F_allr = formats
 			allr = codes;
 		run;
+
 	proc print data=allrfreq; run;
 
 	proc export data=allrfreq
@@ -349,60 +353,47 @@ proc surveylogistic data=a;
 	ods output OddsRatios=ORallr_all_plusinteraction;
 	run;
 
-	
-		proc export data=Estimatesallr_age
-			outfile="U:\Dissertation\xls_graphs\EstimatesLevel1.xlsx"
-			dbms=xlsx
-			replace;
-			sheet="allr_age";
-			run;
+	*creating a macro variable to work on output datasets;
+	%let datasets =
+	Estimatesallr_age
+	Estimatesallr_age_dem
+	Estallr_age_dem_fert
+	Estallr_all_nointeraction
+	Estallr_all_plusinteraction;
 
-		%let datasets =
-		Estimatesallr_age
-		Estimatesallr_age_dem
-		Estallr_age_dem_fert
-		Estallr_all_nointeraction
-		Estallr_all_plusinteraction;
+	title;
+	*need to change the output datasets for the estimates
+	so the data labels fit;
+	%macro rounding;
+	%let i=1;
+	%do %until(not %length(%scan(&datasets,&i)));
+	data %scan(&datasets,&i); set %scan(&datasets,&i);
+		ORR=round(ExpEstimate,.001);
+		LCLR=round(LowerExp,.001);
+		UCLR=round(UpperExp,.001);
+		title %scan(&datasets,&i);
+		run;
+	%let i=%eval(&i+1);
+	%end;
+	%mend;
 
-		%let titles = 
-			"By Age Only"
-			"By Age, Controlling for Demographics"
-			"By Age, Controlling for Demographics and Fertilty Hx"
-			"By Age, Controlling for All Covariates, No Interaction"
-			"By Age, Controlling for All Covariates, Including Interaction";
-			
-			proc freq data=a; tables allr; run;
-			proc print data=Estimatesallr_age; run;
-			proc contents data=Estimatesallr_age; run;
+	%rounding;
 
-			title;
-			*need to change the output datasets for the estimates
-			so the data labels fit;
-			%macro rounding;
-			%let i=1;
-			%do %until(not %length(%scan(&datasets,&i)));
-			data %scan(&datasets,&i); set %scan(&datasets,&i);
-				ORR=round(ExpEstimate,.001);
-				LCLR=round(LowerExp,.001);
-				UCLR=round(UpperExp,.001);
-				title %scan(&datasets,&i);
-				run;
-			%let i=%eval(&i+1);
-			%end;
-			%mend;
+	proc contents data=Estallr_all_plusinteraction; run;
 
-			%rounding;
+	*Running sgplot for every Regression model;
 
-			proc sgplot data=Estimatesallr_age;
-				vbarparm category=Label response=ORR /
-				datalabel=ORR datalabelpos=data
-				baseline=1 groupdisplay=cluster
-				limitlower=LCLR limitupper=UCLR;
-				xaxis label="Age";
-				yaxis label="Odds Ratio"
-				type=log logbase=e;
-				title1 "Coupled vs Uncoupled";
-				run;
+		/*used this code to create the macro;
+		proc sgplot data=Estimatesallr_age;
+			vbarparm category=Label response=ORR /
+			datalabel=ORR datalabelpos=data
+			baseline=1 groupdisplay=cluster
+			limitlower=LCLR limitupper=UCLR;
+			xaxis label="Age";
+			yaxis label="Odds Ratio"
+			type=log logbase=e;
+			title1 "Coupled vs Uncoupled";
+			run;*/
 
 		%macro ditto;
 		%let i=1;
@@ -424,12 +415,71 @@ proc surveylogistic data=a;
 
 		%ditto;
 
-		proc export data=Estimatesallr_age_dem
-			outfile="U:\Dissertation\xls_graphs\EstimatesLevel1.xlsx"
-			dbms=xlsx
-			replace;
-			sheet="allr_age_dem";
-			run;
+	*exporting Estimates output to excel;
+
+	*checking;
+	proc print data=Estimatesallr_age_dem; run;
+
+	*first removing unnecessary variables;
+
+	/*used this code to create macro;
+	data Estimatesallr_age_dem; set Estimatesallr_age_dem;
+		Odds_Ratio = ORR;
+		Lower_CL = LCLR;
+		Upper_CL = UCLR;
+		keep
+			Label
+			Odds_Ratio
+			Lower_CL
+			Upper_CL;
+		run;
+	*/
+
+	%macro remove;
+	%let i=1;
+	%do %until(not %length(%scan(&datasets,&i)));
+	data %scan(&datasets,&i); set %scan(&datasets,&i);
+		Odds_Ratio = ORR;
+		Lower_CL = LCLR;
+		Upper_CL = UCLR;
+		keep
+			Label
+			Odds_Ratio
+			Lower_CL
+			Upper_CL;
+		run;
+		%let i=%eval(&i+1);
+		%end;
+		%mend remove;
+
+		%remove;
+
+		proc print data=Estimatesallr_age_dem; run;
+
+	*now exporting to one spreadsheet with several
+		worksheets;
+	proc export data=Estimatesallr_age_dem
+		outfile="U:\Dissertation\xls_graphs\EstimatesLevel1.xlsx"
+		dbms=xlsx
+		replace;
+		sheet="allr_age_dem";
+		run;
+
+	%macro worksheets;
+	%let i=1;
+	%do %until(not %length(%scan(&datasets,&i)));
+	proc export data=%scan(&datasets,&i)
+		outfile="U:\Dissertation\xls_graphs\EstimatesLevel1.xlsx"
+		dbms=xlsx
+		replace;
+		sheet="%scan(&datasets,&i)";
+		run;
+		%let i=%eval(&i+1);
+		%end;
+		%mend worksheets;
+
+		%worksheets;
+
 		proc export data=Estallr_age_dem_fert
 			outfile="U:\Dissertation\xls_graphs\EstimatesLevel1.xlsx"
 			dbms=xlsx
