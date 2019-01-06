@@ -458,12 +458,16 @@ proc surveylogistic data=a;
 
 	*now exporting to one spreadsheet with several
 		worksheets;
+
+	/*used this code to create macro;
 	proc export data=Estimatesallr_age_dem
 		outfile="U:\Dissertation\xls_graphs\EstimatesLevel1.xlsx"
 		dbms=xlsx
 		replace;
 		sheet="allr_age_dem";
 		run;
+
+	*/
 
 	%macro worksheets;
 	%let i=1;
@@ -480,24 +484,64 @@ proc surveylogistic data=a;
 
 		%worksheets;
 
-		proc export data=Estallr_age_dem_fert
-			outfile="U:\Dissertation\xls_graphs\EstimatesLevel1.xlsx"
-			dbms=xlsx
-			replace;
-			sheet="allr_age_dem_fert";
-			run;
-		proc export data=Estallr_all_nointeraction
-			outfile="U:\Dissertation\xls_graphs\EstimatesLevel1.xlsx"
-			dbms=xlsx
-			replace;
-			sheet="allr_all_nointeraction";
-			run;	
-		proc export data=Estallr_all_plusinteraction
-			outfile="U:\Dissertation\xls_graphs\EstimatesLevel1.xlsx"
-			dbms=xlsx
-			replace;
-			sheet="allr_all_plusinteraction";
-			run;	
+	*exporting odds ratios output to excel;
+
+	/*used this code to write macro;
+		proc export data=orallr_age_dem
+		outfile="U:\Dissertation\xls_graphs\OddsRatios1.xlsx"
+		dbms=xlsx
+		replace;
+		sheet="orallr_age_dem";
+		run;*/
+
+%let oddsratios = 
+	orallr_age_dem
+	orallr_age_dem_fert
+	orallr_all_nointeraction
+	orallr_all_plusinteraction;
+
+	%macro orworksheets;
+	%let i=1;
+	%do %until(not %length(%scan(&oddsratios,&i)));
+	proc export data=%scan(&oddsratios,&i)
+		outfile="U:\Dissertation\xls_graphs\ORsLevel1.xlsx"
+		dbms=xlsx
+		replace;
+		sheet="%scan(&oddsratios,&i)";
+		run;
+		%let i=%eval(&i+1);
+		%end;
+		%mend orworksheets;
+
+		%orworksheets;
+
+
+	*exporting fit statistics output to excel;
+
+	proc print data=fitstatisticsallr_age; run;
+
+	%let fits = 
+		fitstatisticsallr_age
+		fsallr_age_dem
+		fsallr_age_dem_fert
+		fsallr_all_nointeraction
+		fsallr_all_plusinteraction;
+
+	%macro fitworksheets;
+	%let i=1;
+	%do %until(not %length(%scan(&fits,&i)));
+	proc export data=%scan(&fits,&i)
+		outfile="U:\Dissertation\xls_graphs\FitLevel1.xlsx"
+		dbms=xlsx
+		replace;
+		sheet="%scan(&fits,&i)";
+		run;
+		%let i=%eval(&i+1);
+		%end;
+		%mend fitworksheets;
+
+		%fitworksheets;
+
 
 	*#### LEVEL 2 ####; 
 
