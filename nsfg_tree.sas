@@ -4,8 +4,8 @@
 
 
 libname library "U:\Dissertation";
-%include "U:\Dissertation\nsfg_CMcWFormats.sas";
 data a; set library.nsfg; run;
+%include "U:\Dissertation\nsfg_CMcWFormats.sas";
 
 *******************
 * LEVEL 1: COUPLED WITH INTERCOURSE VS NOT;
@@ -156,6 +156,7 @@ proc logistic data=a;
 				run;
 
 		************ OK, I LANDED ON NATURAL CUBIC SPLINE WITH LIST KNOT METHOD;
+		* DISREGARD LIST KNOT, I LANDED ON PERCENTILES;
 		
 		*Running this to confirm estimate statement by hand (weight statement
 		not included);
@@ -365,6 +366,183 @@ proc surveylogistic data=a;
 	ods output OddsRatios=ORallr_all_plusinteraction;
 	run;
 
+		* Comparing a couple of other models to the above full model;
+
+		title 'allr = all vars of interest, includes interaction, 
+		remove religion';
+		proc surveylogistic data=a;
+			class 
+				allr (ref="during: barrier, withdrawal, nothing")
+				edu (ref="hs degree or ged")
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+				povlev (ref="100-199% PL")
+				canhaver (ref="NO")
+				agebabycat
+				parity (ref="0 BABIES")		
+				rwant (ref="NO")
+				mard (ref="never been married")
+				curr_ins;
+			weight weightvar;
+			effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+										knotmethod=percentiles(5) details);
+			model allr = spl 
+				edu
+				hisprace2
+				povlev
+				canhaver
+				agebabycat
+				parity		
+				rwant
+				curr_ins
+				mard
+				hisprace2*agebabycat
+				edu*agebabycat
+				hisprace2*edu;
+			estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
+			estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
+			estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+			estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+			estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+			estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+			estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+			estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
+			ods output Estimates=estallr_all_plusinteraction;
+			ods output FitStatistics=fsallr_all_plusinteraction;
+			ods output OddsRatios=ORallr_all_norel;
+			run;
+
+		proc freq data=a; tables parity; run;
+		title 'allr = all vars of interest, includes interaction, 
+		remove religion, change parity ref';
+		proc surveylogistic data=a;
+			class 
+				allr (ref="during: barrier, withdrawal, nothing")
+				edu (ref="hs degree or ged")
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+				povlev (ref="100-199% PL")
+				canhaver (ref="NO")
+				agebabycat
+				parity (ref="1 BABY")		
+				rwant (ref="NO")
+				mard (ref="never been married")
+				curr_ins;
+			weight weightvar;
+			effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+										knotmethod=percentiles(5) details);
+			model allr = spl 
+				edu
+				hisprace2
+				povlev
+				canhaver
+				agebabycat
+				parity		
+				rwant
+				curr_ins
+				mard
+				hisprace2*agebabycat
+				edu*agebabycat
+				hisprace2*edu;
+			estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
+			estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
+			estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+			estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+			estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+			estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+			estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+			estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
+			ods output Estimates=estallr_all_plusinteraction;
+			ods output FitStatistics=fsallr_all_plusinteraction;
+			ods output OddsRatios=ORallr_all_norel_1baby;
+			run;
+
+		title 'allr = all vars of interest, includes interaction, 
+		remove religion, change age at first birth ref';
+		proc surveylogistic data=a;
+			class 
+				allr (ref="during: barrier, withdrawal, nothing")
+				edu (ref="hs degree or ged")
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+				povlev (ref="100-199% PL")
+				canhaver (ref="NO")
+				agebabycat (ref="25-29")
+				parity (ref="0 BABIES")		
+				rwant (ref="NO")
+				mard (ref="never been married")
+				curr_ins;
+			weight weightvar;
+			effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+										knotmethod=percentiles(5) details);
+			model allr = spl 
+				edu
+				hisprace2
+				povlev
+				canhaver
+				agebabycat
+				parity		
+				rwant
+				curr_ins
+				mard
+				hisprace2*agebabycat
+				edu*agebabycat
+				hisprace2*edu;
+			estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
+			estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
+			estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+			estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+			estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+			estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+			estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+			estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
+			ods output Estimates=estallr_all_plusinteraction;
+			ods output FitStatistics=fsallr_all_plusinteraction;
+			ods output OddsRatios=ORallr_all_norel_2529agebaby;
+			run;
+
+		title 'allr = all vars of interest, includes interaction, 
+		remove religion, change parity and age at first birth refs';
+		proc surveylogistic data=a;
+			class 
+				allr (ref="during: barrier, withdrawal, nothing")
+				edu (ref="hs degree or ged")
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+				povlev (ref="100-199% PL")
+				canhaver (ref="NO")
+				agebabycat (ref="25-29")
+				parity (ref="1 BABY")		
+				rwant (ref="NO")
+				mard (ref="never been married")
+				curr_ins;
+			weight weightvar;
+			effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+										knotmethod=percentiles(5) details);
+			model allr = spl 
+				edu
+				hisprace2
+				povlev
+				canhaver
+				agebabycat
+				parity		
+				rwant
+				curr_ins
+				mard
+				hisprace2*agebabycat
+				edu*agebabycat
+				hisprace2*edu;
+			estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
+			estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
+			estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+			estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+			estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+			estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+			estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+			estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
+			ods output Estimates=estallr_all_plusinteraction;
+			ods output FitStatistics=fsallr_all_plusinteraction;
+			ods output OddsRatios=ORallr_all_norel_changes;
+			run;
+
+
+
 	*creating a macro variable to work on output datasets;
 	%let datasets =
 	Estimatesallr_age
@@ -527,7 +705,29 @@ proc surveylogistic data=a;
 
 		%orworksheets;
 
+		*Making another spreadsheet to look at how things changed;
+		%let oddsratiostwo = 
+		orallr_all_plusinteraction
+		orallr_all_norel
+		orallr_all_norel_1baby
+		orallr_all_norel_2529agebaby;
 
+		%macro orworksheetstwo;
+		%let i=1;
+		%do %until(not %length(%scan(&oddsratiostwo,&i)));
+		proc export data=%scan(&oddsratiostwo,&i)
+			outfile="U:\Dissertation\xls_graphs\ORsLevel1_2.xlsx"
+			dbms=xlsx
+			replace;
+			sheet="%scan(&oddsratiostwo,&i)";
+			run;
+			%let i=%eval(&i+1);
+			%end;
+			%mend orworksheetstwo;
+
+			%orworksheetstwo;
+
+proc freq data=a; tables parity; run;
 	*exporting fit statistics output to excel;
 
 	proc print data=fitstatisticsallr_age; run;
