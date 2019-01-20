@@ -277,6 +277,162 @@ proc surveylogistic data=a;
 		ods output OddsRatios=ORallr_age_dem_par;
 		run;
 
+		title 'allr = age + demographics + marital status';
+		proc surveylogistic data=a;
+			class 
+				allr (ref="during: barrier, withdrawal, nothing")
+				edu (ref="hs degree or ged")
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+				povlev (ref="100-199% PL")
+				mard (ref="never been married");
+			weight weightvar;
+			effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+										knotmethod=percentiles(5) details);
+			model allr = spl 
+				edu
+				hisprace2
+				povlev
+				mard;
+			estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
+			estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
+			estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+			estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+			estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+			estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+			estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+			estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
+			ods output Estimates=estallr_age_dem_mard;
+			ods output FitStatistics=fsallr_age_dem_mard;
+			ods output OddsRatios=ORallr_age_dem_mard;
+			run;
+
+
+		title 'allr = age + demographics + parity & marital status';
+		proc surveylogistic data=a;
+			class 
+				allr (ref="during: barrier, withdrawal, nothing")
+				edu (ref="hs degree or ged")
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+				povlev (ref="100-199% PL")
+				parity (ref="0 BABIES")		
+				mard (ref="never been married");
+			weight weightvar;
+			effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+										knotmethod=percentiles(5) details);
+			model allr = spl 
+				edu
+				hisprace2
+				povlev
+				parity		
+				mard;
+			estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
+			estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
+			estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+			estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+			estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+			estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+			estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+			estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
+			ods output Estimates=estallr_age_dem_parmard;
+			ods output FitStatistics=fsallr_age_dem_parmard;
+			ods output OddsRatios=ORallr_age_dem_parmard;
+			run;
+
+
+		title 'allr = age + demographics + aa1b';
+		proc surveylogistic data=a;
+			class 
+				allr (ref="during: barrier, withdrawal, nothing")
+				edu (ref="hs degree or ged")
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+				povlev (ref="100-199% PL")
+				agebabycat;
+			weight weightvar;
+			effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+										knotmethod=percentiles(5) details);
+			model allr = spl 
+				edu
+				hisprace2
+				povlev
+				agebabycat;
+			estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
+			estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
+			estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+			estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+			estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+			estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+			estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+			estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
+			ods output Estimates=estallr_age_dem_aa1b;
+			ods output FitStatistics=fsallr_age_dem_aa1b;
+			ods output OddsRatios=ORallr_age_dem_aa1b;
+			run;
+
+		title 'allr = age + demographics + canhaver';
+		proc surveylogistic data=a;
+			class 
+				allr (ref="during: barrier, withdrawal, nothing")
+				edu (ref="hs degree or ged")
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+				povlev (ref="100-199% PL")
+				canhaver (ref="YES");
+			weight weightvar;
+			effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+										knotmethod=percentiles(5) details);
+			model allr = spl 
+				edu
+				hisprace2
+				povlev
+				canhaver;
+			estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
+			estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
+			estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+			estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+			estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+			estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+			estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+			estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
+			ods output Estimates=estallr_age_dem_canhaver;
+			ods output FitStatistics=fsallr_age_dem_canhaver;
+			ods output OddsRatios=ORallr_age_dem_canhaver;
+			run;
+
+			ODS TRACE ON;
+			proc freq data=a; tables canhaver*agecat; 
+			ods output crosstabfreqs=canhaverage; run;
+			proc print data=canhaverage; run;
+
+
+		title 'allr = age + demographics + rwant';
+		proc surveylogistic data=a;
+			class 
+				allr (ref="during: barrier, withdrawal, nothing")
+				edu (ref="hs degree or ged")
+				hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+				povlev (ref="100-199% PL")
+				rwant (ref="NO");
+			weight weightvar;
+			effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+										knotmethod=percentiles(5) details);
+			model allr = spl 
+				edu
+				hisprace2
+				povlev
+				rwant;
+			estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
+			estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
+			estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+			estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+			estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+			estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+			estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+			estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
+			ods output Estimates=estallr_age_dem_rwant;
+			ods output FitStatistics=fsallr_age_dem_rwant;
+			ods output OddsRatios=ORallr_age_dem_rwant;
+			run;
+		
+
 
 title 'allr = age + demographics + relationship & fertility';
 proc surveylogistic data=a;
@@ -626,9 +782,12 @@ proc surveylogistic data=a;
 	%let datasets =
 	Estimatesallr_age
 	Estimatesallr_age_dem
-	Estallr_age_dem_fert
-	Estallr_all_nointeraction
-	Estallr_all_plusinteraction;
+	Estallr_age_dem_par
+	Estallr_age_dem_mard
+	Estallr_age_dem_parmard
+	Estallr_age_dem_aa1b
+	Estallr_age_dem_canhaver
+	Estallr_age_dem_rwant;
 
 	title;
 	*need to change the output datasets for the estimates
@@ -647,8 +806,6 @@ proc surveylogistic data=a;
 	%mend;
 
 	%rounding;
-
-	proc contents data=Estallr_all_plusinteraction; run;
 
 	*Running sgplot for every Regression model;
 
