@@ -136,8 +136,9 @@ proc surveylogistic data=a;
 	ods output OddsRatios=OR_doc_age_dem;
 	run;
 
-	*adding levels here on Paul's recommendation - just for probing so reducing
-	number of estimate levels;
+
+	****** ADDING VARIABLES INDIVIDUALLY ON PAUL'S RECOMMENDATION, JUST FOR
+	PROBING SO I REMOVED SOME OF THE ESTIMATE LEVELS;
 
 	%let parity = edu hisprace2 povlev parity;
 	%let mard = edu hisprace2 povlev mard;
@@ -245,22 +246,60 @@ proc surveylogistic data=a;
 		ods output OddsRatios=ORallr_age_dem_agebabycat;
 		run;
 
+		*Graphing estimates for the addition of individual variables;
+		title;
+
+		%let datasets1 = Edoc_age_dem Estallr_age_dem_agebabycat 
+		Estallr_age_dem_canhaver Estallr_age_dem_mard Estallr_age_dem_par 
+		Estallr_age_dem_rwant;
+
+		*change output datasets so the data labels fit;
+		%macro rounding1;
+		%let i=1;
+		%do %until(not %length(%scan(&datasets1,&i)));
+		data %scan(&datasets1,&i); set %scan(&datasets1,&i);
+			ORR=round(ExpEstimate,.001);
+			LCLR=round(LowerExp,.001);
+			UCLR=round(UpperExp,.001);
+			title %scan(&datasets1,&i);
+			run;
+		%let i=%eval(&i+1);
+		%end;
+		%mend;
+
+		%rounding1;
+
+		%macro ditto;
+		%let i=1;
+		%do %until(not %length(%scan(&datasets1,&i)));
+		proc sgplot data=%scan(&datasets1,&i);
+			vbarparm category=Label response=ORR /
+			datalabel=ORR datalabelpos=data
+			baseline=1 groupdisplay=cluster
+			limitlower=LCLR limitupper=UCLR;
+			xaxis label="Age";
+			yaxis label="Odds Ratio"
+			type=log logbase=e;
+			title1 "Coupled vs Uncoupled";
+			title2 %scan(&datasets1,&i);
+			run;
+		%let i=%eval(&i+1);
+		%end;
+		%mend ditto;
+
+		%ditto;
+
+
 title 'allr = age + demographics + relationship & fertility';
 proc surveylogistic data=a;
-	class 
-		allr (ref="during: barrier, withdrawal, nothing")
-		edu (ref="hs degree or ged")
-		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
-		povlev (ref="100-199% PL")
-		canhaver (ref="NO")
-		agebabycat
-		parity (ref="0 BABIES")		
-		rwant (ref="NO")
-		mard (ref="never been married");
+	class doc (ref=first) edu (ref="hs degree or ged") 
+	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
+	canhaver (ref="NO") agebabycat parity (ref="1 BABY") rwant (ref=first)
+	mard (ref="never been married");
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
-	model allr = spl 
+	model doc = spl 
 		edu
 		hisprace2
 		povlev
@@ -269,94 +308,58 @@ proc surveylogistic data=a;
 		parity		
 		rwant
 		mard;
-	estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
-	estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
-	estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+	estimate '23 vs 25' spl [1,23] [-1,25] / exp cl;
+	estimate '28 vs 25' spl [1,28] [-1,25] / exp cl;
+	estimate '30 vs 25' spl [1,30] [-1,25] / exp cl;
 	estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
 	estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
 	estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
 	estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
 	estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
-	ods output Estimates=estallr_age_dem_fert;
-	ods output FitStatistics=fsallr_age_dem_fert;
-	ods output OddsRatios=ORallr_age_dem_fert;
+	ods output Estimates=edoc_age_dem_fert;
+	ods output FitStatistics=fsdoc_age_dem_fert;
+	ods output OddsRatios=ordoc_age_dem_fert;
 	run;
 
-title 'allr = all vars of interest, no interaction';
+title 'doc = all vars of interest, no interaction';
 proc surveylogistic data=a;
-	class 
-		allr (ref="during: barrier, withdrawal, nothing")
-		edu (ref="hs degree or ged")
-		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
-		povlev (ref="100-199% PL")
-		canhaver (ref="NO")
-		agebabycat
-		parity (ref="0 BABIES")		
-		rwant (ref="NO")
-		mard (ref="never been married")
-		curr_ins
-		religion (ref="NO RELIGION");
+	class doc (ref=first) edu (ref="hs degree or ged") 
+	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
+	canhaver (ref="NO") agebabycat parity (ref="1 BABY") rwant (ref=first)
+	mard (ref="never been married") curr_ins;
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
-	model allr = spl 
-		edu
-		hisprace2
-		povlev
-		canhaver
-		agebabycat
-		parity		
-		rwant
-		curr_ins
-		mard
-		religion;
-	estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
-	estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
-	estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+	model doc = spl 
+  		edu hisprace2 povlev canhaver agebabycat parity rwant mard curr_ins;
+	estimate '23 vs 25' spl [1,23] [-1,25] / exp cl;
+	estimate '28 vs 25' spl [1,28] [-1,25] / exp cl;
+	estimate '30 vs 25' spl [1,30] [-1,25] / exp cl;
 	estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
 	estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
 	estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
 	estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
 	estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
-	ods output Estimates=estallr_all_nointeraction;
-	ods output FitStatistics=fsallr_all_nointeraction;
-	ods output OddsRatios=ORallr_all_nointeraction;
+	ods output Estimates=edoc_all_noint;
+	ods output FitStatistics=fsdoc_all_noint;
+	ods output OddsRatios=ordoc_all_noint;
 	run;
 
-title 'allr = all vars of interest, includes interaction';
+title 'doc = all vars of interest, includes interaction';
 proc surveylogistic data=a;
-	class 
-		allr (ref="during: barrier, withdrawal, nothing")
-		edu (ref="hs degree or ged")
-		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
-		povlev (ref="100-199% PL")
-		canhaver (ref="NO")
-		agebabycat
-		parity (ref="0 BABIES")		
-		rwant (ref="NO")
-		mard (ref="never been married")
-		curr_ins
-		religion (ref="NO RELIGION");
+	class doc (ref=first) edu (ref="hs degree or ged") 
+	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
+	canhaver (ref="NO") agebabycat parity (ref="1 BABY") rwant (ref=first)
+	mard (ref="never been married") curr_ins;);
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
 	model allr = spl 
-		edu
-		hisprace2
-		povlev
-		canhaver
-		agebabycat
-		parity		
-		rwant
-		curr_ins
-		mard
-		religion
-		hisprace2*agebabycat
-		edu*agebabycat
-		hisprace2*edu;
-	estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
-	estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
-	estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
+		edu hisprace2 povlev canhaver agebabycat parity rwant mard curr_ins
+		hisprace2*agebabycat edu*agebabycat hisprace2*edu;
+	estimate '23 vs 25' spl [1,23] [-1,25] / exp cl;
+	estimate '28 vs 25' spl [1,28] [-1,25] / exp cl;
+	estimate '30 vs 25' spl [1,30] [-1,25] / exp cl;
 	estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
 	estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
 	estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
