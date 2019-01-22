@@ -8,6 +8,11 @@ libname library "U:\Dissertation";
 %include "U:\Dissertation\nsfg_CMcWFormats.sas";
 data a; set library.nsfg; run;
 
+*Removing respondents under 23;
+data a; set a;
+	if rscrage < 23 then delete;
+	run;
+
 *******************
 * LEVEL 1: HCP REQUIRED VS NOT;
 *******************;
@@ -16,7 +21,7 @@ data a; set library.nsfg; run;
 
 ods trace on;
 ods graphics on / reset=index imagename="allr_age";
-ods listing gpath = "U:\Dissertation\sas_graphs";
+ods listing gpath = "U:\Dissertation\sas_graphs_doc";
 
 proc freq data=a; tables bc; ods output onewayfreqs=bcfreq; run;
 proc print data=bcfreq; format bc 3.1; run;
@@ -170,7 +175,7 @@ proc surveylogistic data=a;
 	proc surveylogistic data=a;
 		class doc (ref=first) edu (ref="hs degree or ged") 
 		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
-		canhaver (ref="NO") agebabycat parity (ref="0 BABIES") rwant (ref="YES")
+		agebabycat parity (ref="0 BABIES") rwant (ref="YES")
 		mard (ref="never been married");
 		weight weightvar;
 		effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
@@ -210,7 +215,7 @@ proc surveylogistic data=a;
 	proc surveylogistic data=a;
 		class doc (ref=first) edu (ref="hs degree or ged") 
 		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
-		canhaver (ref="NO") agebabycat parity (ref="0 BABIES") rwant (ref=first)
+		agebabycat parity (ref="0 BABIES") rwant (ref=first)
 		mard (ref="never been married");
 		weight weightvar;
 		effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
@@ -230,7 +235,7 @@ proc surveylogistic data=a;
 	proc surveylogistic data=a;
 		class doc (ref=first) edu (ref="hs degree or ged") 
 		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
-		canhaver (ref="NO") agebabycat parity (ref="0 BABIES") rwant (ref=first)
+		agebabycat parity (ref="0 BABIES") rwant (ref=first)
 		mard (ref="never been married");
 		weight weightvar;
 		effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
@@ -294,7 +299,7 @@ title 'allr = age + demographics + relationship & fertility';
 proc surveylogistic data=a;
 	class doc (ref=first) edu (ref="hs degree or ged") 
 	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
-	canhaver (ref="NO") agebabycat parity (ref="1 BABY") rwant (ref=first)
+	agebabycat parity (ref="1 BABY") rwant (ref=first)
 	mard (ref="never been married");
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
@@ -303,7 +308,6 @@ proc surveylogistic data=a;
 		edu
 		hisprace2
 		povlev
-		canhaver
 		agebabycat
 		parity		
 		rwant
@@ -325,13 +329,13 @@ title 'doc = all vars of interest, no interaction';
 proc surveylogistic data=a;
 	class doc (ref=first) edu (ref="hs degree or ged") 
 	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
-	canhaver (ref="NO") agebabycat parity (ref="1 BABY") rwant (ref=first)
+	agebabycat parity (ref="1 BABY") rwant (ref=first)
 	mard (ref="never been married") curr_ins;
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
 	model doc = spl 
-  		edu hisprace2 povlev canhaver agebabycat parity rwant mard curr_ins;
+  		edu hisprace2 povlev agebabycat parity rwant mard curr_ins;
 	estimate '23 vs 25' spl [1,23] [-1,25] / exp cl;
 	estimate '28 vs 25' spl [1,28] [-1,25] / exp cl;
 	estimate '30 vs 25' spl [1,30] [-1,25] / exp cl;
@@ -361,13 +365,13 @@ title 'doc = all vars of interest, includes interaction';
 proc surveylogistic data=a;
 	class doc (ref=first) edu (ref="hs degree or ged") 
 	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
-	canhaver (ref="NO") agebabycat parity (ref="1 BABY") rwant (ref=first)
+	agebabycat parity (ref="1 BABY") rwant (ref=first)
 	mard (ref="never been married") curr_ins;
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
 	model allr = spl 
-		edu hisprace2 povlev canhaver agebabycat parity rwant mard curr_ins
+		edu hisprace2 povlev agebabycat parity rwant mard curr_ins
 		hisprace2*agebabycat edu*agebabycat hisprace2*edu;
 	estimate '23 vs 25' spl [1,23] [-1,25] / e exp cl;
 	estimate '28 vs 25' spl [1,28] [-1,25] / exp cl;
@@ -389,15 +393,15 @@ title 'doc = all vars of interest, includes interaction & interaction with age';
 proc surveylogistic data=a;
 	class doc (ref=first) edu (ref="hs degree or ged") 
 	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
-	canhaver (ref="NO") agebabycat parity (ref="1 BABY") rwant (ref=first)
+	agebabycat parity (ref="1 BABY") rwant (ref=first)
 	mard (ref="never been married") curr_ins / param=ref;
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
 	model doc = spl 
-		edu hisprace2 povlev canhaver agebabycat parity rwant mard curr_ins
-		hisprace2*agebabycat edu*agebabycat hisprace2*edu edu*spl hisprace2*spl;
-	estimate '23 vs 25' spl [1,23] [-1,25] / exp cl;
+		edu hisprace2 povlev agebabycat parity rwant mard curr_ins 
+		edu*spl hisprace2*spl hisprace2*agebabycat edu*agebabycat hisprace2*edu;
+	estimate '23 vs 25' spl [1,23] [-1,25] / e exp cl;
 	estimate '28 vs 25' spl [1,28] [-1,25] / exp cl;
 	estimate '30 vs 25' spl [1,30] [-1,25] / exp cl;
 	estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
@@ -405,9 +409,6 @@ proc surveylogistic data=a;
 	estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
 	estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
 	estimate '44 vs 25' spl [1,44] [-1,25] / exp cl;
-	estimate '44 vs 25 for white college graduates'
-		spl [1,44] [-1,25] edu*spl [1,2 44] [-1,2 25] 
-		hisprace2*spl [1,4 44] [-1,4 25] / e exp cl;
 	ods output Estimates=e_int3;
 	ods output FitStatistics=fs_int3;
 	ods output OddsRatios=or_int3;
@@ -418,7 +419,122 @@ proc surveylogistic data=a;
 		proc print data=coef_int3; run;
 		proc print data=class_int3; run;
 
-		proc freq data=a; tables edu*rscrage; weight weightvar; run;
+	************
+	* I WENT BACK AND REMOVED CANHAVER AFTER THIS INVESTIGATION:
+	************;
+
+	/*output says over 6000 observations were deleted due to missing values, which is
+		way too high. exploring here;
+	proc freq data=a; tables edu hisprace2 povlev canhaver agebabycat parity rwant 
+	mard curr_ins; run;
+	*the problem is canhaver, investigating;
+	proc freq data=a; tables posiblpg*canhaver; run;
+	proc freq data=a; tables posiblpg*ster; run;
+	proc freq data=a; tables canhaver*ster; run;
+	proc freq data=a; tables canhaver*bc / missing; run;
+	*ok, both vars incorporate responses about sterilizing procedures into the 
+	development of the variable. it won't work to include them;
+	*/
+
+		/*proc export data=class_int3
+		outfile="U:\Dissertation\xls_graphs\class_int3.xlsx"
+		dbms=xlsx
+		replace;
+		run;*/			
+
+*********** ESTIMATE STATEMENTS IN EARNEST;
+
+proc freq data=a; tables agecat*parity; run;
+proc freq data=a; tables agecat*agebabycat; weight weightvar; run;
+
+title1 'doc = all vars of interest, includes interaction & interaction with age';
+title2 'estimate statements for race';
+proc surveylogistic data=a;
+	class doc (ref=first) edu (ref="hs degree or ged") 
+	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
+	agebabycat parity (ref="1 BABY") rwant (ref=first)
+	mard (ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model doc = spl 
+		edu hisprace2 povlev agebabycat parity rwant mard curr_ins 
+		edu*spl hisprace2*spl hisprace2*agebabycat edu*agebabycat hisprace2*edu;
+	estimate 'NHB vs NHW, bachelors, kid in late 20s' spl 40 hisprace2*spl [1,2 40] [-1,4 40]
+		hisprace2*agebabycat [1,2 3] [-1,4 3] hisprace2*edu [1,2 2] [1,4 2]/ exp cl;
+	estimate 'Hisp vs NHW, bachelors, kid in late 20s' spl 40 hisprace2*spl [1,1 40] [-1,4 40]
+		hisprace2*agebabycat [1,1 3] [-1,4 3] hisprace2*edu [1,1 2] [1,4 2]/ exp cl;
+	estimate 'NHO vs NHW, bachelors, kid in late 20s' spl 40 hisprace2*spl [1,3 40] [-1,4 40]
+		hisprace2*agebabycat [1,3 3] [-1,4 3] hisprace2*edu [1,3 2] [1,4 2]/ exp cl;
+	ods output Estimates=e_intrace;
+	ods output FitStatistics=fs_intrace;
+	ods output OddsRatios=or_intrace;
+	ods output coef=coef_intrace;
+	ods output classlevelinfo=class_intrace;
+	run;
+*estimates are a little wild and confidence intervals are extreme;
+proc freq data=a; tables doc*agecat; where hisprace2=1 and edu=5 and agebabycat=3; run; 
+*that is terrible;
+
+	*looking at distributions here;
+	title 'age at first birth for Hisp, respondents 35+';
+	proc sgplot data=a;
+		histogram agefirstbirth_all;
+		where hisprace2=1;
+		run;
+
+	title 'age at first birth for NHB respondents 35+';
+	proc sgplot data=a;
+		histogram agefirstbirth_all;
+		where hisprace2=3 and rscrage>34;
+		run;
+
+	title 'age at first birth for NHO respondents 35+';
+	proc sgplot data=a;
+		histogram agefirstbirth_all;
+		where hisprace2=4 and rscrage>34;
+		run;
+
+	title 'age at first birth for NHW respondents 35+';
+	proc sgplot data=a;
+		histogram agefirstbirth_all;
+		where hisprace2=2 and rscrage>34;
+		run;
+
+	*these differences in distribution could be a problem, it appears very few Hispanic women
+	have a first birth in their late 20s and bachelors degrees;
+
+ods trace off;
+
+proc freq data=a; tables doc*agecat; where hisprace2=1 and edu=5 and agebabycat=3; run; 
+
+*so let's start with less education and earlier kid-having;
+
+title1 'doc = all vars of interest, includes interaction & interaction with age';
+title2 'estimate statements for race, HS degree, kid in early 20s';
+proc surveylogistic data=a;
+	class doc (ref=first) edu (ref="hs degree or ged") 
+	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
+	agebabycat parity (ref="1 BABY") rwant (ref=first)
+	mard (ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model doc = spl 
+		edu hisprace2 povlev agebabycat parity rwant mard curr_ins 
+		edu*spl hisprace2*spl hisprace2*agebabycat edu*agebabycat hisprace2*edu;
+	estimate 'NHB vs NHW, HS degree, kid in early 20s' spl 40 hisprace2*spl [1,2 40] [-1,4 40]
+		hisprace2*agebabycat [1,2 2] [-1,4 2] hisprace2*edu [1,2 4] [1,4 4]/ exp cl;
+	estimate 'Hisp vs NHW, HS degree, kid in early 20s' spl 40 hisprace2*spl [1,1 40] [-1,4 40]
+		hisprace2*agebabycat [1,1 2] [-1,4 2] hisprace2*edu [1,1 4] [1,4 4]/ exp cl;
+	estimate 'NHO vs NHW, HS degree, kid in early 20s' spl 40 hisprace2*spl [1,3 40] [-1,4 40]
+		hisprace2*agebabycat [1,3 2] [-1,4 2] hisprace2*edu [1,3 4] [1,4 4]/ exp cl;
+	ods output Estimates=e_intrace_low;
+	ods output FitStatistics=fs_intrace_low;
+	ods output OddsRatios=or_intrace_low;
+	ods output coef=coef_intrace_low;
+	ods output classlevelinfo=class_intrace_low;
+	run;
 
 		data e_int2; set e_int2;
 			ORR=round(ExpEstimate,.001);
@@ -493,24 +609,6 @@ proc surveylogistic data=a;
 		%ditto;
 
 	*exporting Estimates output to excel;
-
-	*checking;
-	proc print data=Estimatesallr_age_dem; run;
-
-	*first removing unnecessary variables;
-
-	/*used this code to create macro;
-	data Estimatesallr_age_dem; set Estimatesallr_age_dem;
-		Odds_Ratio = ORR;
-		Lower_CL = LCLR;
-		Upper_CL = UCLR;
-		keep
-			Label
-			Odds_Ratio
-			Lower_CL
-			Upper_CL;
-		run;
-	*/
 
 	%macro remove;
 	%let i=1;
