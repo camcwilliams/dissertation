@@ -532,9 +532,13 @@ proc surveylogistic data=a;
 	ods output Estimates=e_intrace_low;
 	ods output FitStatistics=fs_intrace_low;
 	ods output OddsRatios=or_intrace_low;
-	ods output coef=coef_intrace_low;
 	ods output classlevelinfo=class_intrace_low;
 	run;
+*these are also terrible;
+title 'NHB, HS, kid in early 20s';
+proc freq data=a; tables doc*aged; where hisprace2=3 and edu=2 and agebabycat=2; run;
+title 'NHW, HS, kid in early 20s';
+proc freq data=a; tables doc*aged; where hisprace2=2 and edu=2 and agebabycat=2; run;
 
 		data e_int2; set e_int2;
 			ORR=round(ExpEstimate,.001);
