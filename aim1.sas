@@ -419,6 +419,37 @@ proc surveylogistic data=a;
 		proc print data=coef_int3; run;
 		proc print data=class_int3; run;
 
+*Doing log likelihood ratio test for the three levels - full model without interaction,
+full model with interaction of covariates, and full model with interaction of splines and 
+covariates;
+
+proc print data=coef_int; run;
+proc print data=fsdoc_all_noint; run;
+proc print data=fs_int; run;
+proc print data=fs_int3; run;
+proc print data=coef_int3; run;
+
+*using the values from the print procedures above, i calculated the log likelihood ratio test
+in excel - "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\doc_logliketest.xlsx"
+and am using some guidance from sas help to calculate here 
+(from http://support.sas.com/kb/24/474.html);
+
+data lrt_pval;
+	lrt1 = 6098554;
+	df1 = 63;
+	p_value1 = 1-probchi(LRT1,df1);
+	lrt2 = 7480758;
+	df2 = 32;
+	p_value2 = 1-probchi(LRT2,df2);
+	format p_value1 7.6 p_value2 7.6;
+	run;
+
+proc print data=lrt_pval;
+	title1 "Likelihood ratio test statistic and p-value";
+	run;
+
+
+
 	************
 	* I WENT BACK AND REMOVED CANHAVER AFTER THIS INVESTIGATION:
 	************;
