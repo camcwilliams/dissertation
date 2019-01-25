@@ -295,7 +295,7 @@ proc surveylogistic data=a;
 		%ditto;
 
 
-title 'allr = age + demographics + relationship & fertility';
+title 'doc = age + demographics + relationship & fertility';
 proc surveylogistic data=a;
 	class doc (ref=first) edu (ref="hs degree or ged") 
 	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
@@ -448,7 +448,40 @@ proc print data=lrt_pval;
 	title1 "Likelihood ratio test statistic and p-value";
 	run;
 
+	*Checking age by fertility interactions;
+		%macro stratified1;
+		%do i=1 %to 9;
+	proc surveylogistic data=a;
+		class agecat (ref=first) edu (ref="hs degree or ged") 
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
+		agebabycat parity (ref="1 BABY") rwant (ref=first)
+		mard (ref="never been married") curr_ins / param=ref;
+		weight weightvar;
+		model doc = hisprace2 povlev agebabycat parity rwant mard;
+		where agecat = &i.;
+		ods output OddsRatios=or_1strat&i.;
+		run;
+		%end;
+		%mend stratified1;
+		%stratified1;
 
+		%let oddsratiostwo = or_1strat2 or_1strat3 or_1strat4
+		or_1strat5 or_1strat6;
+		%macro orworksheetsstrat;
+		%let i=1;
+		%do %until(not %length(%scan(&oddsratiostwo,&i)));
+		proc export data=%scan(&oddsratiostwo,&i)
+			outfile="U:\Dissertation\xls_graphs\ORsStrat.xlsx"
+			dbms=xlsx
+			replace;
+			sheet="%scan(&oddsratiostwo,&i)";
+			run;
+			%let i=%eval(&i+1);
+			%end;
+			%mend orworksheetsstrat;
+
+			%orworksheetsstrat;
+		
 
 	************
 	* I WENT BACK AND REMOVED CANHAVER AFTER THIS INVESTIGATION:
@@ -704,366 +737,5 @@ proc freq data=a; tables doc*aged; where hisprace2=2 and edu=2 and agebabycat=2;
 		sheet="orallr_age_dem";
 		run;*/
 
-%let oddsratios = 
-	orallr_age_dem
-	orallr_age_dem_fert
-	orallr_all_nointeraction
-	orallr_all_plusinteraction;
-
-	%macro orworksheets;
-	%let i=1;
-	%do %until(not %length(%scan(&oddsratios,&i)));
-	proc export data=%scan(&oddsratios,&i)
-		outfile="U:\Dissertation\xls_graphs\ORsLevel1.xlsx"
-		dbms=xlsx
-		replace;
-		sheet="%scan(&oddsratios,&i)";
-		run;
-		%let i=%eval(&i+1);
-		%end;
-		%mend orworksheets;
-
-		%orworksheets;
-
-		*Making another spreadsheet to look at how things changed;
-		%let oddsratiostwo = 
-		orallr_all_plusinteraction
-		orallr_all_norel
-		orallr_all_norel_1baby
-		orallr_all_norel_2529agebaby;
-
-		%macro orworksheetstwo;
-		%let i=1;
-		%do %until(not %length(%scan(&oddsratiostwo,&i)));
-		proc export data=%scan(&oddsratiostwo,&i)
-			outfile="U:\Dissertation\xls_graphs\ORsLevel1_2.xlsx"
-			dbms=xlsx
-			replace;
-			sheet="%scan(&oddsratiostwo,&i)";
-			run;
-			%let i=%eval(&i+1);
-			%end;
-			%mend orworksheetstwo;
-
-			%orworksheetstwo;
-
-proc freq data=a; tables parity; run;
-	*exporting fit statistics output to excel;
-
-	proc print data=fitstatisticsallr_age; run;
-
-	%let fits = 
-		fitstatisticsallr_age
-		fsallr_age_dem
-		fsallr_age_dem_fert
-		fsallr_all_nointeraction
-		fsallr_all_plusinteraction;
-
-	%macro fitworksheets;
-	%let i=1;
-	%do %until(not %length(%scan(&fits,&i)));
-	proc export data=%scan(&fits,&i)
-		outfile="U:\Dissertation\xls_graphs\FitLevel1.xlsx"
-		dbms=xlsx
-		replace;
-		sheet="%scan(&fits,&i)";
-		run;
-		%let i=%eval(&i+1);
-		%end;
-		%mend fitworksheets;
-
-		%fitworksheets;
 
 
-	*#### LEVEL 2 ####; 
-
-	*LONG-TERM VS SHORT-TERM (variable=BEFORE);
-
-	proc freq data=a;
-		tables before;
-		run;
-
-	proc logistic;
-		class before (ref="short term methods: pill, patch/ring, NFP");
-		weight weightvar;
-		model before = rscrage;
-		effectplot;
-		run;
-
-	proc sgplot data=a;
-		vbar rscrage / response = before;
-		run;
-
-		*THIS IS FOR GRAPHING ONLY, NOTE NO WEIGHT STATEMENT;
-		proc logistic data=a;
-			class before (ref="short term methods: pill, patch/ring, NFP");
-			effect spl=spline(rscrage / knotmethod=percentiles(5));
-			model before = spl;
-			output out=before p=pred xbeta=logodds;
-			run;
-
-		proc sgplot data=before;
-			scatter y=pred x=rscrage;
-			run;
-
-		proc sgplot data=before;
-			scatter y=logodds x=rscrage;
-			run;
-
-	proc surveylogistic data=a;
-		class 
-			before (ref="short term methods: pill, patch/ring, NFP")
-			edu
-			hisprace2
-			povlev
-			canhaver
-			agebabycat
-			parity		
-			rwant
-			curr_ins
-			mard
-			religion;
-		weight weightvar;
-		effect spl=spline(rscrage / knotmethod=percentiles(5));
-		model before = spl 
-			edu
-			hisprace2
-			povlev
-			canhaver
-			agebabycat
-			parity		
-			rwant
-			curr_ins
-			mard
-			religion
-			hisprace2*agebabycat
-			edu*agebabycat
-			hisprace2*edu;
-		estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
-		estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
-		estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
-		estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
-		estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
-		estimate '44 vs 25' spl [1,44] [-1,25] / exp cl;
-		output out=before p=pred xbeta=logodds;
-		run;
-
-
-	* LEVEL 2: LONG-TERM VS SHORT-TERM (variable=BEFORE);
-
-	proc freq data=a;
-		tables before;
-		run;
-
-	proc logistic;
-		class before (ref="short term methods: pill, patch/ring, NFP");
-		weight weightvar;
-		model before = rscrage;
-		effectplot;
-		run;
-
-	proc sgplot data=a;
-		vbar rscrage / response = before;
-		run;
-
-		*THIS IS FOR GRAPHING ONLY, NOTE NO WEIGHT STATEMENT;
-		proc logistic data=a;
-			class before (ref="short term methods: pill, patch/ring, NFP");
-			effect spl=spline(rscrage / knotmethod=percentiles(5));
-			model before = spl;
-			output out=before p=pred xbeta=logodds;
-			run;
-
-		proc sgplot data=before;
-			scatter y=pred x=rscrage;
-			run;
-
-		proc sgplot data=before;
-			scatter y=logodds x=rscrage;
-			run;
-
-	proc surveylogistic data=a;
-		class 
-			before (ref="short term methods: pill, patch/ring, NFP")
-			edu
-			hisprace2
-			povlev
-			canhaver
-			agebabycat
-			parity		
-			rwant
-			curr_ins
-			mard
-			religion;
-		weight weightvar;
-		effect spl=spline(rscrage / knotmethod=percentiles(5));
-		model before = spl 
-			edu
-			hisprace2
-			povlev
-			canhaver
-			agebabycat
-			parity		
-			rwant
-			curr_ins
-			mard
-			religion
-			hisprace2*agebabycat
-			edu*agebabycat
-			hisprace2*edu;
-		estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
-		estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
-		estimate '30 vs 35' spl [1,30] [-1,25] / exp cl;
-		estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
-		estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
-		estimate '44 vs 25' spl [1,44] [-1,25] / exp cl;
-		output out=before p=pred xbeta=logodds;
-		run;
-
-
-	* LEVEL 2: NEED TO BE PREPARED VS DON'T NEED TO BE PREPARED
-	(variable=DURING);
-
-	proc freq data=a;
-		tables during;
-		run;
-
-	proc logistic;
-		class during (ref="no prep needed: withdrawal, nothing");
-		weight weightvar;
-		model during = rscrage;
-		effectplot;
-		run;
-
-	proc sgplot data=a;
-		vbar rscrage / response = during;
-		run;
-
-		*THIS IS FOR GRAPHING ONLY, NOTE NO WEIGHT STATEMENT;
-		proc logistic data=a;
-			class during (ref=first);
-			effect spl=spline(rscrage / knotmethod=percentiles(5));
-			model during = spl;
-			output out=during p=pred xbeta=logodds;
-			run;
-
-		proc sgplot data=during;
-			scatter y=pred x=rscrage;
-			run;
-
-		proc sgplot data=during;
-			scatter y=logodds x=rscrage;
-			run;
-
-	proc surveylogistic data=a;
-		class 
-			during (ref=first)
-			edu
-			hisprace2
-			povlev
-			canhaver
-			agebabycat
-			parity		
-			rwant
-			curr_ins
-			mard
-			religion;
-		weight weightvar;
-		effect spl=spline(rscrage / knotmethod=percentiles(5));
-		model during = spl 
-			edu
-			hisprace2
-			povlev
-			canhaver
-			agebabycat
-			parity		
-			rwant
-			curr_ins
-			mard
-			religion
-			hisprace2*agebabycat
-			edu*agebabycat
-			hisprace2*edu;
-		estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
-		estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
-		estimate '30 vs 25' spl [1,30] [-1,25] / exp cl;
-		estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
-		estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
-		estimate '44 vs 25' spl [1,44] [-1,25] / exp cl;
-		output out=during p=pred xbeta=logodds;
-		run;
-
-
-		*#### LEVEL 3 ####; 
-
-		* LEVEL 3: PERMANENT VS REVERSIBLE
-		(variable=LONG);
-
-		proc freq data=a;
-			tables during;
-			run;
-
-		proc logistic;
-			class during (ref="no prep needed: withdrawal, nothing");
-			weight weightvar;
-			model during = rscrage;
-			effectplot;
-			run;
-
-		proc sgplot data=a;
-			vbar rscrage / response = during;
-			run;
-
-			*THIS IS FOR GRAPHING ONLY, NOTE NO WEIGHT STATEMENT;
-			proc logistic data=a;
-				class during (ref=first);
-				effect spl=spline(rscrage / knotmethod=percentiles(5));
-				model during = spl;
-				output out=during p=pred xbeta=logodds;
-				run;
-
-			proc sgplot data=during;
-				scatter y=pred x=rscrage;
-				run;
-
-			proc sgplot data=during;
-				scatter y=logodds x=rscrage;
-				run;
-
-		proc surveylogistic data=a;
-			class 
-				during (ref=first)
-				edu
-				hisprace2
-				povlev
-				canhaver
-				agebabycat
-				parity		
-				rwant
-				curr_ins
-				mard
-				religion;
-			weight weightvar;
-			effect spl=spline(rscrage / knotmethod=percentiles(5));
-			model during = spl 
-				edu
-				hisprace2
-				povlev
-				canhaver
-				agebabycat
-				parity		
-				rwant
-				curr_ins
-				mard
-				religion
-				hisprace2*agebabycat
-				edu*agebabycat
-				hisprace2*edu;
-			estimate '15 vs 25' spl [1,15] [-1,25] / exp cl;
-			estimate '20 vs 25' spl [1,20] [-1,25] / exp cl;
-			estimate '30 vs 25' spl [1,30] [-1,25] / exp cl;
-			estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
-			estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
-			estimate '44 vs 25' spl [1,44] [-1,25] / exp cl;
-			output out=during p=pred xbeta=logodds;
-			run;
