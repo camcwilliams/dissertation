@@ -112,3 +112,71 @@ proc surveylogistic data=a;
 	ods output FitStatistics=fsnu_age_dem_fert;
 	ods output OddsRatios=ORnu_age_dem_fert;
 	run;	
+
+title 'nouse = age + demographics + fert + insurance';
+proc surveylogistic data=a;
+	class nouse (ref = "using contraception") edu (ref="hs degree or ged")
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+		povlev (ref="100-199% PL") agebabycat parity (ref="1 BABY") 
+		rwant (ref=first) mard (ref="never been married") curr_ins;
+	weight weightvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model nouse = spl edu hisprace2 povlev agebabycat parity rwant mard curr_ins;
+	estimate '23 vs 25' spl [1,23] [-1,25] / exp cl;
+	estimate '28 vs 25' spl [1,30] [-1,25] / exp cl;
+	estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+	estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+	estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+	estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+	estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
+	ods output Estimates=enu_age_dem_fert_ins;
+	ods output FitStatistics=fsnu_age_dem_fert_ins;
+	ods output OddsRatios=ORnu_age_dem_fert_ins;
+	run;	
+
+title 'nouse = age + demographics + fert + insurance + interactions';
+proc surveylogistic data=a;
+	class nouse (ref = "using contraception") edu (ref="hs degree or ged")
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+		povlev (ref="100-199% PL") agebabycat parity (ref="1 BABY") 
+		rwant (ref=first) mard (ref="never been married") curr_ins;
+	weight weightvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model nouse = spl edu hisprace2 povlev agebabycat parity rwant mard curr_ins
+	hisprace2*agebabycat edu*agebabycat hisprace2*edu;
+	estimate '23 vs 25' spl [1,23] [-1,25] / exp cl;
+	estimate '28 vs 25' spl [1,30] [-1,25] / exp cl;
+	estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+	estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+	estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+	estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+	estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
+	ods output Estimates=enu_age_dem_fert_ins_int;
+	ods output FitStatistics=fsnu_age_dem_fert_ins_int;
+	ods output OddsRatios=ORnu_age_dem_fert_ins_int;
+	run;	
+
+title 'nouse = everything + age interactions';
+proc surveylogistic data=a;
+	class nouse (ref = "using contraception") edu (ref="hs degree or ged")
+		hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE")
+		povlev (ref="100-199% PL") agebabycat parity (ref="1 BABY") 
+		rwant (ref=first) mard (ref="never been married") curr_ins;
+	weight weightvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model nouse = spl edu hisprace2 povlev agebabycat parity rwant mard curr_ins
+	hisprace2*agebabycat edu*agebabycat hisprace2*edu edu*spl hisprace2*spl;
+	estimate '23 vs 25' spl [1,23] [-1,25] / exp cl;
+	estimate '28 vs 25' spl [1,30] [-1,25] / exp cl;
+	estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+	estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+	estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+	estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+	estimate '44 vs 25' spl [1,35] [-1,25] / exp cl;
+	ods output Estimates=enu_all;
+	ods output FitStatistics=fsnu_all;
+	ods output OddsRatios=ORnu_all;
+	run;	

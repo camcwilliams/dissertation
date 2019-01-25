@@ -481,7 +481,39 @@ proc print data=lrt_pval;
 			%mend orworksheetsstrat;
 
 			%orworksheetsstrat;
-		
+
+proc print data=or_1strat2; run;
+
+data or_1strat2; set or_1strat2;
+	rename OddsRatioEst = OR2 LowerCL = LCL2 UpperCL = UCL2;
+	run;
+
+%macro strat;
+%do i=3 %to 6;
+data or_1strat&i.; set or_1strat&i.;
+	rename OddsRatioEst = OR&i. LowerCL = LCL&i. UpperCL = UCL&i.;
+	run;
+	%end;
+	%mend strat;
+
+	%strat;
+	
+%macro sort;
+%do i=2 %to 6;
+proc sort data=or_1strat&i.; by Effect; run;
+%end; %mend sort; %sort;
+
+data doc_strat;
+   merge &oddsratiostwo;
+   by Effect;
+run;
+
+proc export data=doc_strat
+	outfile = "U:\Dissertation\xls_graphs\doc_strat"
+	dbms = xlsx
+	replace;
+	run;
+
 
 	************
 	* I WENT BACK AND REMOVED CANHAVER AFTER THIS INVESTIGATION:
