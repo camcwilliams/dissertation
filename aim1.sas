@@ -448,6 +448,8 @@ proc print data=lrt_pval;
 	title1 "Likelihood ratio test statistic and p-value";
 	run;
 
+	proc freq data=a; tables rwant; run;
+
 	*Checking age by fertility interactions;
 		%macro stratified1;
 		%do i=1 %to 9;
@@ -457,7 +459,7 @@ proc print data=lrt_pval;
 		agebabycat parity (ref="1 BABY") rwant (ref=first)
 		mard (ref="never been married") curr_ins / param=ref;
 		weight weightvar;
-		model doc = hisprace2 povlev agebabycat parity rwant mard;
+		model doc = edu hisprace2 povlev agebabycat parity rwant mard;
 		where agecat = &i.;
 		ods output OddsRatios=or_1strat&i.;
 		run;
@@ -471,7 +473,7 @@ proc print data=lrt_pval;
 		%let i=1;
 		%do %until(not %length(%scan(&oddsratiostwo,&i)));
 		proc export data=%scan(&oddsratiostwo,&i)
-			outfile="U:\Dissertation\xls_graphs\ORsStrat.xlsx"
+			outfile="U:\Dissertation\xls_graphs\ORsStrat2.xlsx"
 			dbms=xlsx
 			replace;
 			sheet="%scan(&oddsratiostwo,&i)";
