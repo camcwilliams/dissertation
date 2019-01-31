@@ -1,6 +1,7 @@
 *############################################*
 *######### McWilliams Dissertation ##########*
 *##### Aim 1 Logistic Regression Models #####*
+*####### Needs HC Provider vs Doesn't #######*
 *############################################*;
 
 
@@ -20,7 +21,7 @@ data a; set a;
 *Turning on ODS trace and setting up so charts get saved;
 
 ods trace on;
-ods graphics on / reset=index imagename="allr_age";
+ods graphics on / reset=index imagename="doc_age";
 ods listing gpath = "U:\Dissertation\sas_graphs_doc";
 
 proc freq data=a; tables bc; ods output onewayfreqs=bcfreq; run;
@@ -34,11 +35,13 @@ proc freq data=a;
 
 	*formatting to make the frequency datasets nicer;
 	data docfreq1; set docfreq1;
-		drop f_doc;
+		drop f_doc Table CumFrequency CumPercent;
 		rename doc = Doc;
 		run;
 
 	proc print data=docfreq1; run;
+	proc export data=docfreq1 dbms=xlsx outfile="U:\Dissertation\xls_graphs\docfreq1.xlsx";
+	run;
 
 	/*proc export data=allrfreq
 	dbms=xlsx
@@ -370,7 +373,7 @@ proc surveylogistic data=a;
 	weight weightvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
-	model allr = spl 
+	model doc = spl 
 		edu hisprace2 povlev agebabycat parity rwant mard curr_ins
 		hisprace2*agebabycat edu*agebabycat hisprace2*edu;
 	estimate '23 vs 25' spl [1,23] [-1,25] / e exp cl;
@@ -384,10 +387,13 @@ proc surveylogistic data=a;
 	ods output Estimates=e_int;
 	ods output FitStatistics=fs_int;
 	ods output OddsRatios=or_int;
-	ods output coef=coef_int;
+	ods output ModelANOVA=joint_int;
 	run;
 
-proc print data=coef_int; run;
+	proc export data=joint_int outfile="U:\Dissertation\xls_graphs\joint_int.xlsx" dbms=xlsx;
+	run;
+
+proc print data=fs_int; run;
 
 title 'doc = all vars of interest, includes interaction & interaction with age';
 proc surveylogistic data=a;
@@ -412,8 +418,7 @@ proc surveylogistic data=a;
 	ods output Estimates=e_int3;
 	ods output FitStatistics=fs_int3;
 	ods output OddsRatios=or_int3;
-	ods output coef=coef_int3;
-	ods output classlevelinfo=class_int3;
+	ods output ModelANOVA=joint_int3;
 	run;
 
 		proc print data=coef_int3; run;
@@ -771,5 +776,82 @@ proc freq data=a; tables doc*aged; where hisprace2=2 and edu=2 and agebabycat=2;
 		sheet="orallr_age_dem";
 		run;*/
 
+*************
+****** INTERACTIONS BETWEEN FERTILITY VARIABLES AND AGE
+*************;
 
+title 'doc = all vars of interest, includes dem interaction and age x fert';
+proc surveylogistic data=a;
+	class doc (ref=first) edu (ref="hs degree or ged") 
+	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
+	agebabycat parity (ref="1 BABY") rwant (ref="YES")
+	mard (ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model doc = spl 
+		edu hisprace2 povlev agebabycat parity rwant mard curr_ins 
+		hisprace2*spl edu*spl
+		parity*spl rwant*spl
+		hisprace2*agebabycat edu*agebabycat;
+	estimate '23 vs 25' spl [1,23] [-1,25] / exp cl;
+	estimate '28 vs 25' spl [1,28] [-1,25] / exp cl;
+	estimate '30 vs 25' spl [1,30] [-1,25] / exp cl;
+	estimate '35 vs 25' spl [1,35] [-1,25] / exp cl;
+	estimate '38 vs 25' spl [1,38] [-1,25] / exp cl;
+	estimate '40 vs 25' spl [1,40] [-1,25] / exp cl;
+	estimate '42 vs 25' spl [1,42] [-1,25] / exp cl;
+	estimate '44 vs 25' spl [1,44] [-1,25] / exp cl;
+	ods output Estimates=e_fertxspl;
+	ods output FitStatistics=fs_fertxspl;
+	ods output OddsRatios=or_fertxspl;
+	ods output ModelANOVA=jt_fertxspl;
+	run;
 
+	proc export data=jt_fertxspl 
+	outfile="U:\Dissertation\xls_graphs\jt_fertxspl.xlsx"
+	dbms=xlsx;
+	run;
+
+	title;
+
+	data e_fertxspl; set e_fertxspl;
+		ORR=round(ExpEstimate,.001);
+		LCLR=round(LowerExp,.001);
+		UCLR=round(UpperExp,.001);
+		title 'fert x spl';
+		run;
+
+	proc sgplot data=e_fertxspl;
+		vbarparm category=Label response=ORR /
+		datalabel=ORR datalabelpos=data
+		baseline=1 groupdisplay=cluster
+		limitlower=LCLR limitupper=UCLR;
+		xaxis label="Age";
+		yaxis label="Odds Ratio"
+		type=log logbase=e;
+		title1 "Requires HC Provider vs Doesn't";
+		title2 "fertility and age interactions";
+		run;
+
+title 'doc, final model with estimate statements';
+proc surveylogistic data=a;
+	class doc (ref=first) edu (ref="hs degree or ged") 
+	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
+	agebabycat parity (ref="1 BABY") rwant (ref="YES")
+	mard (ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model doc = spl 
+		edu hisprace2 povlev agebabycat parity rwant mard curr_ins rwant*spl
+		hisprace2*agebabycat edu*agebabycat;
+	estimate '35 vs 30, wants kids' spl [1,35] [-1,30]
+	rwant*spl [1,3 35] [-1,3 30] / exp cl;
+	estimate '40 vs 30, wants kids' spl [1,40] [-1,30]
+	rwant*spl [1,3 40] [-1,3 30] / exp cl;
+	estimate '44 vs 30, wants kids' spl [1,44] [-1,30]
+	rwant*spl [1,3 44] [-1,3 30] / exp cl;
+	run;
+
+	proc print data=coef_all; run;
