@@ -499,28 +499,28 @@ proc surveylogistic data=a;
 								knotmethod=percentiles(5) details);
 	model tub = spl &full edu*agebabycat hisprace2*agebabycat spl*povlev spl*hisprace2
 	spl*parity;
-estimate '23 vs 28' spl [1,23] [-1,28] spl*povlev [1, 1 23] [-1,1 28] spl*hisprace2 [1, 4 23] [-1,4 28] spl*parity [1,3 23] [-1,3 28] / exp cl;
-estimate '24 vs 28' spl [1,24] [-1,28] spl*povlev [1, 1 24] [-1,1 28] spl*hisprace2 [1, 4 24] [-1,4 28] spl*parity [1,3 24] [-1,3 28] / exp cl;
-estimate '25 vs 28' spl [1,25] [-1,28] spl*povlev [1, 1 25] [-1,1 28] spl*hisprace2 [1, 4 25] [-1,4 28] spl*parity [1,3 25] [-1,3 28] / exp cl;
-estimate '26 vs 28' spl [1,26] [-1,28] spl*povlev [1, 1 26] [-1,1 28] spl*hisprace2 [1, 4 26] [-1,4 28] spl*parity [1,3 26] [-1,3 28] / exp cl;
-estimate '27 vs 28' spl [1,27] [-1,28] spl*povlev [1, 1 27] [-1,1 28] spl*hisprace2 [1, 4 27] [-1,4 28] spl*parity [1,3 27] [-1,3 28] / exp cl;
-estimate '28 vs 28' spl [1,28] [-1,28] spl*povlev [1, 1 28] [-1,1 28] spl*hisprace2 [1, 4 28] [-1,4 28] spl*parity [1,3 28] [-1,3 28] / exp cl;
-estimate '29 vs 28' spl [1,29] [-1,28] spl*povlev [1, 1 29] [-1,1 28] spl*hisprace2 [1, 4 29] [-1,4 28] spl*parity [1,3 29] [-1,3 28] / exp cl;
-estimate '30 vs 28' spl [1,30] [-1,28] spl*povlev [1, 1 30] [-1,1 28] spl*hisprace2 [1, 4 30] [-1,4 28] spl*parity [1,3 30] [-1,3 28] / exp cl;
-estimate '31 vs 28' spl [1,31] [-1,28] spl*povlev [1, 1 31] [-1,1 28] spl*hisprace2 [1, 4 31] [-1,4 28] spl*parity [1,3 31] [-1,3 28] / exp cl;
-estimate '32 vs 28' spl [1,32] [-1,28] spl*povlev [1, 1 32] [-1,1 28] spl*hisprace2 [1, 4 32] [-1,4 28] spl*parity [1,3 32] [-1,3 28] / exp cl;
-estimate '33 vs 28' spl [1,33] [-1,28] spl*povlev [1, 1 33] [-1,1 28] spl*hisprace2 [1, 4 33] [-1,4 28] spl*parity [1,3 33] [-1,3 28] / exp cl;
-estimate '34 vs 28' spl [1,34] [-1,28] spl*povlev [1, 1 34] [-1,1 28] spl*hisprace2 [1, 4 34] [-1,4 28] spl*parity [1,3 34] [-1,3 28] / exp cl;
-estimate '35 vs 28' spl [1,35] [-1,28] spl*povlev [1, 1 35] [-1,1 28] spl*hisprace2 [1, 4 35] [-1,4 28] spl*parity [1,3 35] [-1,3 28] / exp cl;
-estimate '36 vs 28' spl [1,36] [-1,28] spl*povlev [1, 1 36] [-1,1 28] spl*hisprace2 [1, 4 36] [-1,4 28] spl*parity [1,3 36] [-1,3 28] / exp cl;
-estimate '37 vs 28' spl [1,37] [-1,28] spl*povlev [1, 1 37] [-1,1 28] spl*hisprace2 [1, 4 37] [-1,4 28] spl*parity [1,3 37] [-1,3 28] / exp cl;
-estimate '38 vs 28' spl [1,38] [-1,28] spl*povlev [1, 1 38] [-1,1 28] spl*hisprace2 [1, 4 38] [-1,4 28] spl*parity [1,3 38] [-1,3 28] / exp cl;
-estimate '39 vs 28' spl [1,39] [-1,28] spl*povlev [1, 1 39] [-1,1 28] spl*hisprace2 [1, 4 39] [-1,4 28] spl*parity [1,3 39] [-1,3 28] / exp cl;
-estimate '40 vs 28' spl [1,40] [-1,28] spl*povlev [1, 1 40] [-1,1 28] spl*hisprace2 [1, 4 40] [-1,4 28] spl*parity [1,3 40] [-1,3 28] / exp cl;
-estimate '41 vs 28' spl [1,41] [-1,28] spl*povlev [1, 1 41] [-1,1 28] spl*hisprace2 [1, 4 41] [-1,4 28] spl*parity [1,3 41] [-1,3 28] / exp cl;
-estimate '42 vs 28' spl [1,42] [-1,28] spl*povlev [1, 1 42] [-1,1 28] spl*hisprace2 [1, 4 42] [-1,4 28] spl*parity [1,3 42] [-1,3 28] / exp cl;
-estimate '43 vs 28' spl [1,43] [-1,28] spl*povlev [1, 1 43] [-1,1 28] spl*hisprace2 [1, 4 43] [-1,4 28] spl*parity [1,3 43] [-1,3 28] / exp cl;
-estimate '44 vs 28' spl [1,44] [-1,28] spl*povlev [1, 1 44] [-1,1 28] spl*hisprace2 [1, 4 44] [-1,4 28] spl*parity [1,3 44] [-1,3 28] / exp cl;
+estimate '23 vs 28' spl [1,23] [-1,28] spl*povlev [1, 6 23] [-1,6 28] spl*hisprace2 [1, 4 23] [-1,4 28] spl*parity [1,3 23] [-1,3 28] / exp cl;
+estimate '24 vs 28' spl [1,24] [-1,28] spl*povlev [1, 6 24] [-1,6 28] spl*hisprace2 [1, 4 24] [-1,4 28] spl*parity [1,3 24] [-1,3 28] / exp cl;
+estimate '25 vs 28' spl [1,25] [-1,28] spl*povlev [1, 6 25] [-1,6 28] spl*hisprace2 [1, 4 25] [-1,4 28] spl*parity [1,3 25] [-1,3 28] / exp cl;
+estimate '26 vs 28' spl [1,26] [-1,28] spl*povlev [1, 6 26] [-1,6 28] spl*hisprace2 [1, 4 26] [-1,4 28] spl*parity [1,3 26] [-1,3 28] / exp cl;
+estimate '27 vs 28' spl [1,27] [-1,28] spl*povlev [1, 6 27] [-1,6 28] spl*hisprace2 [1, 4 27] [-1,4 28] spl*parity [1,3 27] [-1,3 28] / exp cl;
+estimate '28 vs 28' spl [1,28] [-1,28] spl*povlev [1, 6 28] [-1,6 28] spl*hisprace2 [1, 4 28] [-1,4 28] spl*parity [1,3 28] [-1,3 28] / exp cl;
+estimate '29 vs 28' spl [1,29] [-1,28] spl*povlev [1, 6 29] [-1,6 28] spl*hisprace2 [1, 4 29] [-1,4 28] spl*parity [1,3 29] [-1,3 28] / exp cl;
+estimate '30 vs 28' spl [1,30] [-1,28] spl*povlev [1, 6 30] [-1,6 28] spl*hisprace2 [1, 4 30] [-1,4 28] spl*parity [1,3 30] [-1,3 28] / exp cl;
+estimate '31 vs 28' spl [1,31] [-1,28] spl*povlev [1, 6 31] [-1,6 28] spl*hisprace2 [1, 4 31] [-1,4 28] spl*parity [1,3 31] [-1,3 28] / exp cl;
+estimate '32 vs 28' spl [1,32] [-1,28] spl*povlev [1, 6 32] [-1,6 28] spl*hisprace2 [1, 4 32] [-1,4 28] spl*parity [1,3 32] [-1,3 28] / exp cl;
+estimate '33 vs 28' spl [1,33] [-1,28] spl*povlev [1, 6 33] [-1,6 28] spl*hisprace2 [1, 4 33] [-1,4 28] spl*parity [1,3 33] [-1,3 28] / exp cl;
+estimate '34 vs 28' spl [1,34] [-1,28] spl*povlev [1, 6 34] [-1,6 28] spl*hisprace2 [1, 4 34] [-1,4 28] spl*parity [1,3 34] [-1,3 28] / exp cl;
+estimate '35 vs 28' spl [1,35] [-1,28] spl*povlev [1, 6 35] [-1,6 28] spl*hisprace2 [1, 4 35] [-1,4 28] spl*parity [1,3 35] [-1,3 28] / exp cl;
+estimate '36 vs 28' spl [1,36] [-1,28] spl*povlev [1, 6 36] [-1,6 28] spl*hisprace2 [1, 4 36] [-1,4 28] spl*parity [1,3 36] [-1,3 28] / exp cl;
+estimate '37 vs 28' spl [1,37] [-1,28] spl*povlev [1, 6 37] [-1,6 28] spl*hisprace2 [1, 4 37] [-1,4 28] spl*parity [1,3 37] [-1,3 28] / exp cl;
+estimate '38 vs 28' spl [1,38] [-1,28] spl*povlev [1, 6 38] [-1,6 28] spl*hisprace2 [1, 4 38] [-1,4 28] spl*parity [1,3 38] [-1,3 28] / exp cl;
+estimate '39 vs 28' spl [1,39] [-1,28] spl*povlev [1, 6 39] [-1,6 28] spl*hisprace2 [1, 4 39] [-1,4 28] spl*parity [1,3 39] [-1,3 28] / exp cl;
+estimate '40 vs 28' spl [1,40] [-1,28] spl*povlev [1, 6 40] [-1,6 28] spl*hisprace2 [1, 4 40] [-1,4 28] spl*parity [1,3 40] [-1,3 28] / exp cl;
+estimate '41 vs 28' spl [1,41] [-1,28] spl*povlev [1, 6 41] [-1,6 28] spl*hisprace2 [1, 4 41] [-1,4 28] spl*parity [1,3 41] [-1,3 28] / exp cl;
+estimate '42 vs 28' spl [1,42] [-1,28] spl*povlev [1, 6 42] [-1,6 28] spl*hisprace2 [1, 4 42] [-1,4 28] spl*parity [1,3 42] [-1,3 28] / exp cl;
+estimate '43 vs 28' spl [1,43] [-1,28] spl*povlev [1, 6 43] [-1,6 28] spl*hisprace2 [1, 4 43] [-1,4 28] spl*parity [1,3 43] [-1,3 28] / exp cl;
+estimate '44 vs 28' spl [1,44] [-1,28] spl*povlev [1, 6 44] [-1,6 28] spl*hisprace2 [1, 4 44] [-1,4 28] spl*parity [1,3 44] [-1,3 28] / exp cl;
 	ods output Estimates=e_tub_finallopl;
 	ods output FitStatistics=fs_tub_int_finallopl;
 	ods output OddsRatios=or_tub_int_finallopl;
@@ -566,8 +566,54 @@ estimate '44 vs 28' spl [1,44] [-1,28] spl*povlev [1, 5 44] [-1,5 28] spl*hispra
 	ods output OddsRatios=or_tub_int_finalhipl;
 	run;
 
+* Trying one more PL level for safe measure, will likely need to make other comparisons
+for final chapters;
+
+proc freq data=a; tables povlev; weight weightvar; run;
+
+title 'tub Use, Final Model, % FPL set to 200-299%';
+proc surveylogistic data=a;
+	class tub (ref=first) edu (ref="hs degree or ged") 
+	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
+	agebabycat parity (ref="1 BABY") rwant (ref="YES")
+	mard (ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tub = spl &full edu*agebabycat hisprace2*agebabycat spl*povlev spl*hisprace2
+	spl*parity;
+estimate '23 vs 28' spl [1,23] [-1,28] spl*povlev [1, 2 23] [-1,2 28] spl*hisprace2 [1, 4 23] [-1,4 28] spl*parity [1,3 23] [-1,3 28] / exp cl;
+estimate '24 vs 28' spl [1,24] [-1,28] spl*povlev [1, 2 24] [-1,2 28] spl*hisprace2 [1, 4 24] [-1,4 28] spl*parity [1,3 24] [-1,3 28] / exp cl;
+estimate '25 vs 28' spl [1,25] [-1,28] spl*povlev [1, 2 25] [-1,2 28] spl*hisprace2 [1, 4 25] [-1,4 28] spl*parity [1,3 25] [-1,3 28] / exp cl;
+estimate '26 vs 28' spl [1,26] [-1,28] spl*povlev [1, 2 26] [-1,2 28] spl*hisprace2 [1, 4 26] [-1,4 28] spl*parity [1,3 26] [-1,3 28] / exp cl;
+estimate '27 vs 28' spl [1,27] [-1,28] spl*povlev [1, 2 27] [-1,2 28] spl*hisprace2 [1, 4 27] [-1,4 28] spl*parity [1,3 27] [-1,3 28] / exp cl;
+estimate '28 vs 28' spl [1,28] [-1,28] spl*povlev [1, 2 28] [-1,2 28] spl*hisprace2 [1, 4 28] [-1,4 28] spl*parity [1,3 28] [-1,3 28] / exp cl;
+estimate '29 vs 28' spl [1,29] [-1,28] spl*povlev [1, 2 29] [-1,2 28] spl*hisprace2 [1, 4 29] [-1,4 28] spl*parity [1,3 29] [-1,3 28] / exp cl;
+estimate '30 vs 28' spl [1,30] [-1,28] spl*povlev [1, 2 30] [-1,2 28] spl*hisprace2 [1, 4 30] [-1,4 28] spl*parity [1,3 30] [-1,3 28] / exp cl;
+estimate '31 vs 28' spl [1,31] [-1,28] spl*povlev [1, 2 31] [-1,2 28] spl*hisprace2 [1, 4 31] [-1,4 28] spl*parity [1,3 31] [-1,3 28] / exp cl;
+estimate '32 vs 28' spl [1,32] [-1,28] spl*povlev [1, 2 32] [-1,2 28] spl*hisprace2 [1, 4 32] [-1,4 28] spl*parity [1,3 32] [-1,3 28] / exp cl;
+estimate '33 vs 28' spl [1,33] [-1,28] spl*povlev [1, 2 33] [-1,2 28] spl*hisprace2 [1, 4 33] [-1,4 28] spl*parity [1,3 33] [-1,3 28] / exp cl;
+estimate '34 vs 28' spl [1,34] [-1,28] spl*povlev [1, 2 34] [-1,2 28] spl*hisprace2 [1, 4 34] [-1,4 28] spl*parity [1,3 34] [-1,3 28] / exp cl;
+estimate '35 vs 28' spl [1,35] [-1,28] spl*povlev [1, 2 35] [-1,2 28] spl*hisprace2 [1, 4 35] [-1,4 28] spl*parity [1,3 35] [-1,3 28] / exp cl;
+estimate '36 vs 28' spl [1,36] [-1,28] spl*povlev [1, 2 36] [-1,2 28] spl*hisprace2 [1, 4 36] [-1,4 28] spl*parity [1,3 36] [-1,3 28] / exp cl;
+estimate '37 vs 28' spl [1,37] [-1,28] spl*povlev [1, 2 37] [-1,2 28] spl*hisprace2 [1, 4 37] [-1,4 28] spl*parity [1,3 37] [-1,3 28] / exp cl;
+estimate '38 vs 28' spl [1,38] [-1,28] spl*povlev [1, 2 38] [-1,2 28] spl*hisprace2 [1, 4 38] [-1,4 28] spl*parity [1,3 38] [-1,3 28] / exp cl;
+estimate '39 vs 28' spl [1,39] [-1,28] spl*povlev [1, 2 39] [-1,2 28] spl*hisprace2 [1, 4 39] [-1,4 28] spl*parity [1,3 39] [-1,3 28] / exp cl;
+estimate '40 vs 28' spl [1,40] [-1,28] spl*povlev [1, 2 40] [-1,2 28] spl*hisprace2 [1, 4 40] [-1,4 28] spl*parity [1,3 40] [-1,3 28] / exp cl;
+estimate '41 vs 28' spl [1,41] [-1,28] spl*povlev [1, 2 41] [-1,2 28] spl*hisprace2 [1, 4 41] [-1,4 28] spl*parity [1,3 41] [-1,3 28] / exp cl;
+estimate '42 vs 28' spl [1,42] [-1,28] spl*povlev [1, 2 42] [-1,2 28] spl*hisprace2 [1, 4 42] [-1,4 28] spl*parity [1,3 42] [-1,3 28] / exp cl;
+estimate '43 vs 28' spl [1,43] [-1,28] spl*povlev [1, 2 43] [-1,2 28] spl*hisprace2 [1, 4 43] [-1,4 28] spl*parity [1,3 43] [-1,3 28] / exp cl;
+estimate '44 vs 28' spl [1,44] [-1,28] spl*povlev [1, 2 44] [-1,2 28] spl*hisprace2 [1, 4 44] [-1,4 28] spl*parity [1,3 44] [-1,3 28] / exp cl;
+	ods output Estimates=e_tub_finalmidpl;
+	ods output FitStatistics=fs_tub_int_finalmidpl;
+	ods output OddsRatios=or_tub_int_finalmidpl;
+	run;
+
+/*proc export data=class_tub outfile="U:\Dissertation\xls_graphs\class_tub.xlsx"
+dbms=xlsx; run;*/
+
 * Making graphs with estimates;
-%let estimates = e_tub_finallopl e_tub_finalhipl;
+%let estimates = e_tub_finallopl e_tub_finalmidpl e_tub_finalhipl;
 
 *change output estimates so the data labels fit;
 %macro rounding1;
@@ -585,7 +631,7 @@ data %scan(&estimates,&i); set %scan(&estimates,&i);
 
 %rounding1;
 
-*getting an error about 0, my rounding may be a problem;
+*getting an error about 0 in the hipl group, my rounding may be a problem;
 proc print data=e_tub_finalhipl; run;
 
 *yep, the rounding is causing LCLR at the lowest ages to be 0.00;
@@ -597,6 +643,12 @@ data e_tub_finalhipl; set e_tub_finalhipl;
 	if Label="23 vs 28" then LCLR = 0.0004;
 	if Label="24 vs 28" then LCLR = 0.0022;
 	run;
+
+*looks like i need to fix midpl as well;
+data e_tub_finalmidpl; set e_tub_finalmidpl;
+	if Label="23 vs 28" then LCLR = 0.0001;
+	if Label="24 vs 28" then LCLR = 0.0008;
+	run;	
 
 %macro ditto;
 %let i=1;
@@ -619,49 +671,4 @@ proc sgplot data=%scan(&estimates,&i);
 
 %ditto;
 
-* Trying one more PL level for safe measure, will likely need to make other comparisons
-for final chapters;
-
-proc freq data=a; tables povlev; run;
-
-title 'tub Use, Final Model, % FPL set to 200-299%';
-proc surveylogistic data=a;
-	class tub (ref=first) edu (ref="hs degree or ged") 
-	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
-	agebabycat parity (ref="1 BABY") rwant (ref="YES")
-	mard (ref="never been married") curr_ins / param=ref;
-	weight weightvar;
-	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
-								knotmethod=percentiles(5) details);
-	model tub = spl &full edu*agebabycat hisprace2*agebabycat spl*povlev spl*hisprace2
-	spl*parity;
-estimate '23 vs 28' spl [1,23] [-1,28] spl*povlev [1, 5 23] [-1,5 28] spl*hisprace2 [1, 4 23] [-1,4 28] spl*parity [1,3 23] [-1,3 28] / exp cl;
-/*estimate '24 vs 28' spl [1,24] [-1,28] spl*povlev [1, 5 24] [-1,5 28] spl*hisprace2 [1, 4 24] [-1,4 28] spl*parity [1,3 24] [-1,3 28] / exp cl;
-estimate '25 vs 28' spl [1,25] [-1,28] spl*povlev [1, 5 25] [-1,5 28] spl*hisprace2 [1, 4 25] [-1,4 28] spl*parity [1,3 25] [-1,3 28] / exp cl;
-estimate '26 vs 28' spl [1,26] [-1,28] spl*povlev [1, 5 26] [-1,5 28] spl*hisprace2 [1, 4 26] [-1,4 28] spl*parity [1,3 26] [-1,3 28] / exp cl;
-estimate '27 vs 28' spl [1,27] [-1,28] spl*povlev [1, 5 27] [-1,5 28] spl*hisprace2 [1, 4 27] [-1,4 28] spl*parity [1,3 27] [-1,3 28] / exp cl;
-estimate '28 vs 28' spl [1,28] [-1,28] spl*povlev [1, 5 28] [-1,5 28] spl*hisprace2 [1, 4 28] [-1,4 28] spl*parity [1,3 28] [-1,3 28] / exp cl;
-estimate '29 vs 28' spl [1,29] [-1,28] spl*povlev [1, 5 29] [-1,5 28] spl*hisprace2 [1, 4 29] [-1,4 28] spl*parity [1,3 29] [-1,3 28] / exp cl;
-estimate '30 vs 28' spl [1,30] [-1,28] spl*povlev [1, 5 30] [-1,5 28] spl*hisprace2 [1, 4 30] [-1,4 28] spl*parity [1,3 30] [-1,3 28] / exp cl;
-estimate '31 vs 28' spl [1,31] [-1,28] spl*povlev [1, 5 31] [-1,5 28] spl*hisprace2 [1, 4 31] [-1,4 28] spl*parity [1,3 31] [-1,3 28] / exp cl;
-estimate '32 vs 28' spl [1,32] [-1,28] spl*povlev [1, 5 32] [-1,5 28] spl*hisprace2 [1, 4 32] [-1,4 28] spl*parity [1,3 32] [-1,3 28] / exp cl;
-estimate '33 vs 28' spl [1,33] [-1,28] spl*povlev [1, 5 33] [-1,5 28] spl*hisprace2 [1, 4 33] [-1,4 28] spl*parity [1,3 33] [-1,3 28] / exp cl;
-estimate '34 vs 28' spl [1,34] [-1,28] spl*povlev [1, 5 34] [-1,5 28] spl*hisprace2 [1, 4 34] [-1,4 28] spl*parity [1,3 34] [-1,3 28] / exp cl;
-estimate '35 vs 28' spl [1,35] [-1,28] spl*povlev [1, 5 35] [-1,5 28] spl*hisprace2 [1, 4 35] [-1,4 28] spl*parity [1,3 35] [-1,3 28] / exp cl;
-estimate '36 vs 28' spl [1,36] [-1,28] spl*povlev [1, 5 36] [-1,5 28] spl*hisprace2 [1, 4 36] [-1,4 28] spl*parity [1,3 36] [-1,3 28] / exp cl;
-estimate '37 vs 28' spl [1,37] [-1,28] spl*povlev [1, 5 37] [-1,5 28] spl*hisprace2 [1, 4 37] [-1,4 28] spl*parity [1,3 37] [-1,3 28] / exp cl;
-estimate '38 vs 28' spl [1,38] [-1,28] spl*povlev [1, 5 38] [-1,5 28] spl*hisprace2 [1, 4 38] [-1,4 28] spl*parity [1,3 38] [-1,3 28] / exp cl;
-estimate '39 vs 28' spl [1,39] [-1,28] spl*povlev [1, 5 39] [-1,5 28] spl*hisprace2 [1, 4 39] [-1,4 28] spl*parity [1,3 39] [-1,3 28] / exp cl;
-estimate '40 vs 28' spl [1,40] [-1,28] spl*povlev [1, 5 40] [-1,5 28] spl*hisprace2 [1, 4 40] [-1,4 28] spl*parity [1,3 40] [-1,3 28] / exp cl;
-estimate '41 vs 28' spl [1,41] [-1,28] spl*povlev [1, 5 41] [-1,5 28] spl*hisprace2 [1, 4 41] [-1,4 28] spl*parity [1,3 41] [-1,3 28] / exp cl;
-estimate '42 vs 28' spl [1,42] [-1,28] spl*povlev [1, 5 42] [-1,5 28] spl*hisprace2 [1, 4 42] [-1,4 28] spl*parity [1,3 42] [-1,3 28] / exp cl;
-estimate '43 vs 28' spl [1,43] [-1,28] spl*povlev [1, 5 43] [-1,5 28] spl*hisprace2 [1, 4 43] [-1,4 28] spl*parity [1,3 43] [-1,3 28] / exp cl;
-estimate '44 vs 28' spl [1,44] [-1,28] spl*povlev [1, 5 44] [-1,5 28] spl*hisprace2 [1, 4 44] [-1,4 28] spl*parity [1,3 44] [-1,3 28] / exp cl;
-	ods output Estimates=e_tub_finalhipl;
-	ods output FitStatistics=fs_tub_int_finalhipl;
-	ods output OddsRatios=or_tub_int_finalhipl;*/
-	ods output ClassLevelInfo=class_tub;
-	run;
-
-/*proc export data=class_tub outfile="U:\Dissertation\xls_graphs\class_tub.xlsx"
-dbms=xlsx; run;*/
+proc print data=e_tub_finalmidpl; run;
