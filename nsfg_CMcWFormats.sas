@@ -28,6 +28,10 @@ proc format;
 		4="300-399% PL"
 		5="400-499% PL"
 		6="500%+ PL";
+	value pov
+		1 = "<=138%"
+		2 = "138-307%"
+		3 = "307-500%";
 	value nouse
 		1="not using anything"
 		0="using contraception";
@@ -39,6 +43,12 @@ proc format;
 		2="hs degree or ged"
 		3="some college no degree"
 		4="associate's"
+		5="bachelor's"
+		6="graduate or professional degree";
+	value edud
+		1="no hs degree"
+		2="hs degree or ged"
+		4="some college or associate's"
 		5="bachelor's"
 		6="graduate or professional degree";
 	value ster
@@ -149,7 +159,18 @@ proc format;
 	value allr
 		1 = "before: ster, hormonal, NFP"
 		2 = "during: barrier, withdrawal, nothing";
-
+	value withd
+		0 = "using contraception other than withdrawal"
+		1 = "using withdrawal";
+	value iud
+		0 = "using contraception other than iud"
+		1 = "using iud";
+	value tub
+		0 = "using contraception other than tubal ligation"
+		1 = "using tubal ligation";
+	value vas
+		0 = "using contraception other than vasectomy"
+		1 = "using vasectomy";
 
 run;
 
@@ -183,5 +204,10 @@ data a; set a;
 			before before.
 			during during.
 			allr allr.
+			withd withd.
+			iud iud.
+			tub tub.
+			edud edud.
+			pov pov.
 ;
 ;run;
