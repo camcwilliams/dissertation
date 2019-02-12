@@ -100,6 +100,23 @@ not include code to pull in the datasets and formats, those can happen from
 		label ster="sterilized, using non-sterilization contraception, not contracepting";
 		run;
 
+	* tub: tubal vs anything else, doesn't include non-users;
+	data a; set a;
+		if bc ne . then tub = 0;
+		if bc = 1 then tub = 1;
+		if ster = 3 then tub = .;
+		if bc = 2 then tub = 0;
+		run;
+
+	* vas: vasectomy vs anything else, doesn't include non-users;
+	data a; set a;
+		if bc ne . then vas = 0;
+		if bc = 2 then vas = 1;
+		if ster = 3 then vas = .;
+		if bc = 1 then vas = 0;
+		run;
+		proc freq data=a; tables vas*bc; run;
+
 	* creating conceptually appropriate method groups;
 	data a; set a;
 		effmeth = bc;
@@ -151,16 +168,36 @@ not include code to pull in the datasets and formats, those can happen from
 		label bcc="4-cat crude contraception";
 		run;
 
-		/*proc freq data=a; tables effmeth*bc4; run;*/
+		/*proc freq data=a; tables effmeth*bc4; run;
+	proc freq data=a; tables ster / missing; run;
+	data a; set a;
+		bccd = ster;
+		if elig = 0 then bccd = 4;
+		run;
+		proc freq data=a; tables bccd*allrepro / missing; run;
+		proc freq data=a; tables bccd*ster; run;*/
 
-		proc freq data=a; tables bc; run;
+	data a; set a;
+		withd = bc;
+		if bc ne . then withd = 0;
+		if bc = 21 then withd = 1;
+		run;
+
+	data a; set a;
+		iud = bc;
+		if bc ne . then iud = 0;
+		if bc = 10 then iud = 1;
+		if bc = 42 then iud = .;
+		run;
+
 
 		*below are a series of variables for doctor vs self-controlled. i don't think they'll
 		be used in the regression tree but I am keeping them in here just in case;
 			data a; set a;
 				doc = bc;
 				if bc>=1 and bc<=11 then doc = 1;
-				if bc>10 then doc = 2;
+				if bc>10 and bc < 42 then doc = 2;
+				if bc=42 then doc=.;
 				run;
 
 				proc freq data=a; tables bc*doc; run;
@@ -420,6 +457,14 @@ not include code to pull in the datasets and formats, those can happen from
 				label edu = "education categories";
 				run;
 
+			data a; set a;
+				edud = edu;
+				if edu = 3 then edud = 4;
+				label edud = "education categories, comb some college & assoc's";
+				run;
+
+				proc freq data=a; tables edud; run;
+
 *** Race;
 
 	/*proc freq; tables race; run;
@@ -528,6 +573,20 @@ not include code to pull in the datasets and formats, those can happen from
 		label povlev = "poverty level categories";
 		run;
 
+	* poverty level categories, collapsed into three based on 132% FPL 
+		then the same proportions in the other two;
+
+	data a; set a;
+		pov = .;
+		if poverty <=138 then pov = 1;
+		if poverty >138 and poverty <307 then pov = 2;
+		if poverty >=308 then pov = 3;
+		label pov = "3-category percent FPL";
+		run;
+
+		proc freq data=a; tables pov; run;
+		proc means data=a; var poverty; run;
+
 
 *** Health Insurance;
 
@@ -575,6 +634,16 @@ not include code to pull in the datasets and formats, those can happen from
 		run;
 	*In the end I think parity is sufficient;
 	*/
+
+	data a; set a;
+		parityd = .;
+		if parity = 0 then parityd = 0;
+		if parity = 1 then parityd = 1;
+		if parity = 2 then parityd = 2;
+		if parity = 3 then parityd = 3;
+		if parity = 4 then parityd = 4;
+		if parity >4 then parityd = 4;
+		run;
 
 *****************************************
 Creating dummy outcome variables for regression outcomes
@@ -818,4 +887,4 @@ proc contents data = b; title "CONTINUOUS VARIABLES OF INTEREST (contlist)"; run
 
 title;
 
-data a; set a; run;
+data library.nsfg; set a; run;
