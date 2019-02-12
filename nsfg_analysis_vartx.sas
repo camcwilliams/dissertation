@@ -458,12 +458,21 @@ not include code to pull in the datasets and formats, those can happen from
 				run;
 
 			data a; set a;
-				edud = edu;
-				if edu = 3 then edud = 4;
-				label edud = "education categories, comb some college & assoc's";
+				eduo = edu;
+				if edu = 3 then eduo = 4;
+				label eduo = "education categories, comb some college & assoc's";
 				run;
 
-				proc freq data=a; tables edud; run;
+			data a; set a;
+				edud = .;
+				if edu = 1 then edud = 1;
+				if edu = 2 then edud = 2;
+				if edu = 3 or edu = 4 then edud = 3;
+				if edu = 5 or edu = 6 then edud = 4;
+				label edud = "4-cat education categories";
+				run;
+
+				/*proc freq data=a; tables edu*(edud eduo); run;*/
 
 *** Race;
 
@@ -640,9 +649,8 @@ not include code to pull in the datasets and formats, those can happen from
 		if parity = 0 then parityd = 0;
 		if parity = 1 then parityd = 1;
 		if parity = 2 then parityd = 2;
-		if parity = 3 then parityd = 3;
-		if parity = 4 then parityd = 4;
-		if parity >4 then parityd = 4;
+		if parity >= 3 then parityd = 3;
+		label parityd = "4-cat parity, 3=3+ live births";
 		run;
 
 *****************************************

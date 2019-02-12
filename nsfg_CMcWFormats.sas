@@ -45,12 +45,17 @@ proc format;
 		4="associate's"
 		5="bachelor's"
 		6="graduate or professional degree";
-	value edud
+	value eduo
 		1="no hs degree"
 		2="hs degree or ged"
 		4="some college or associate's"
 		5="bachelor's"
 		6="graduate or professional degree";
+	value edud
+		1="no hs degree"
+		2="hs degree or ged"
+		3="some college or associate"
+		4="bachelor's or grad/professional";
 	value ster
 		1="sterilized"
 		2="using reversible contraception"
@@ -207,6 +212,7 @@ data a; set a;
 			withd withd.
 			iud iud.
 			tub tub.
+			eduo eduo.
 			edud edud.
 			pov pov.
 ;
