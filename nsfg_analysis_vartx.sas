@@ -593,9 +593,6 @@ not include code to pull in the datasets and formats, those can happen from
 		label pov = "3-category percent FPL";
 		run;
 
-		proc freq data=a; tables pov; run;
-		proc means data=a; var poverty; run;
-
 
 *** Health Insurance;
 
