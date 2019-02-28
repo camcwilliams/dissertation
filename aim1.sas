@@ -9,10 +9,10 @@ libname library "U:\Dissertation";
 %include "U:\Dissertation\nsfg_CMcWFormats.sas";
 data a; set library.nsfg; run;
 
-*Removing respondents under 23;
+/*Removing respondents under 23;
 data a; set a;
 	if rscrage < 23 then delete;
-	run;
+	run;*/ *permanent dataset now does not include people over 23;
 
 *******************
 * LEVEL 1: HCP REQUIRED VS NOT;
@@ -28,6 +28,8 @@ proc freq data=a; tables bc; ods output onewayfreqs=bcfreq; run;
 proc print data=bcfreq; format bc 3.1; run;
 
 *DESCRIPTIVES FOR HCP REQUIRED VS NOT;
+
+* Makes little dataset for simple proportion table;
 proc freq data=a;
 	tables doc;
 	ods output OneWayFreqs=docfreq1;
@@ -40,7 +42,7 @@ proc freq data=a;
 		run;
 
 	proc print data=docfreq1; run;
-	proc export data=docfreq1 dbms=xlsx outfile="U:\Dissertation\xls_graphs\docfreq1.xlsx";
+	proc export data=docfreq1 dbms=xlsx outfile="U:\Dissertation\xls_graphs\docfreq2.xlsx";
 	run;
 
 	/*proc export data=allrfreq
@@ -48,6 +50,19 @@ proc freq data=a;
 	outfile="U:\Dissertation\xls_graphs\allrfreq.xlsx"
 	replace;
 	run;*/
+
+*Trying the freqs using strata and cluster variables, they do not
+	change the estimates;
+
+proc surveyfreq data=a;
+	tables doc;
+	strata stratvar;
+	cluster panelvar;
+	weight weightvar;
+	ods output OneWay=docsf;
+	run; 
+
+	proc print data=docsf; run;
 
 *plotting the relationship between outcome and age, no adjustment;
 title 'simple relationship between outcome and age';
@@ -66,10 +81,22 @@ proc sgplot data=docage;
 	where doc = 1;
 	run;
 
-* Removing respondents younger than 23;
-data a; set a;
-	if rscrage < 23 then delete;
+	*creating dataset and plotting in SAS, using weight, stratum, and panel vars;
+	proc surveyfreq data=a;
+	tables doc*rscrage / nofreq nopercent norow;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	ods output CrossTabFreqs=docage;
 	run;
+	data docage; set docage;
+		docp = doc/100;
+		run;
+		proc print data=docage; run;
+	proc sgplot data=docage;
+		vbar rscrage / response = ColPercent;
+		where doc = 1;
+		run;
 
 title 'just bivariate using logistic reg, no spline';
 proc logistic data=a;
