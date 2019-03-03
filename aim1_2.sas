@@ -545,16 +545,12 @@ title 'IUD vs Anything Else';
 proc surveylogistic data=a;
 	class &class / param=ref;
 	weight weightvar;
-	strata stratvar;
-	cluster panelvar;
+	/*strata stratvar;
+	cluster panelvar;*/
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
 	model iud = spl &confounders spl*hisprace2 spl*pov;
-	estimate spl [1,25] [-1,28] / exp cl e;
-	ods output ClassLevelInfo=class_iud;
+	estimate "black vs white, 25 138" spl 30 spl*hisprace2 [1,2 30] [-1,4 30] / exp cl;
 	run;
 
-	proc export data=class_iud
-		outfile="U:\Dissertation\xls_graphs\class_iud.xlsx"
-		dbms=xlsx;
-		run;
+	proc freq data=a; tables hisprace2*rscrage; where iud = 1; run;
