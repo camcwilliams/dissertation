@@ -554,3 +554,43 @@ proc surveylogistic data=a;
 	run;
 
 	proc freq data=a; tables hisprace2*rscrage; where iud = 1; run;
+
+%macro iud_white_loinc;
+%do x=23 %to 43 %by 1;
+	"&x vs 28" spl [1,&x] [-1,28] spl*hisprace2 [1,4 &x] [-1,4 28] 
+	spl*pov [1,3 &x] [-1,3 28],
+	%end;
+	"44 vs 28" spl [1,44] [-1,28] spl*hisprace2 [1,4 44] [-1,4 28] 
+	spl*pov [1,3 44] [-1,3 28]
+	%mend;
+
+%macro iud_black_loinc;
+%do x=23 %to 43 %by 1;
+	"&x vs 28" spl [1,&x] [-1,28] spl*hisprace2 [1,2 &x] [-1,2 28] 
+	spl*pov [1,3 &x] [-1,3 28],
+	%end;
+	"44 vs 28" spl [1,44] [-1,28] spl*hisprace2 [1,2 44] [-1,2 28] 
+	spl*pov [1,3 44] [-1,3 28]
+	%mend;	
+
+%macro iud_hisp_loinc;
+%do x=23 %to 43 %by 1;
+	"&x vs 28" spl [1,&x] [-1,28] spl*hisprace2 [1,1 &x] [-1,1 28] 
+	spl*pov [1,3 &x] [-1,3 28],
+	%end;
+	"44 vs 28" spl [1,44] [-1,28] spl*hisprace2 [1,1 44] [-1,1 28] 
+	spl*pov [1,3 44] [-1,3 28]
+	%mend;	
+
+title 'IUD vs Anything Else';
+proc surveylogistic data=a;
+	class &class / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl &confounders spl*hisprace2 spl*pov;
+	estimate "23 vs 28, white, loinc" spl [1,23] [-1,28] 
+	spl*hisprace2 [1,4 23] [-1,4 28] spl*pov [1,3 23] [-1,3 28] / exp cl;
+	run;
