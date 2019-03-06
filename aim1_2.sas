@@ -557,28 +557,28 @@ proc surveylogistic data=a;
 
 %macro iud_white_loinc;
 %do x=23 %to 43 %by 1;
-	"&x vs 28" spl [1,&x] [-1,28] spl*hisprace2 [1,4 &x] [-1,4 28] 
+	"&x vs 28 w lo" spl [1,&x] [-1,28] spl*hisprace2 [1,4 &x] [-1,4 28] 
 	spl*pov [1,3 &x] [-1,3 28],
 	%end;
-	"44 vs 28" spl [1,44] [-1,28] spl*hisprace2 [1,4 44] [-1,4 28] 
+	"44 vs 28 w lo" spl [1,44] [-1,28] spl*hisprace2 [1,4 44] [-1,4 28] 
 	spl*pov [1,3 44] [-1,3 28]
 	%mend;
 
 %macro iud_black_loinc;
 %do x=23 %to 43 %by 1;
-	"&x vs 28" spl [1,&x] [-1,28] spl*hisprace2 [1,2 &x] [-1,2 28] 
+	"&x vs 28 b lo" spl [1,&x] [-1,28] spl*hisprace2 [1,2 &x] [-1,2 28] 
 	spl*pov [1,3 &x] [-1,3 28],
 	%end;
-	"44 vs 28" spl [1,44] [-1,28] spl*hisprace2 [1,2 44] [-1,2 28] 
+	"44 vs 28 b lo" spl [1,44] [-1,28] spl*hisprace2 [1,2 44] [-1,2 28] 
 	spl*pov [1,3 44] [-1,3 28]
 	%mend;	
 
 %macro iud_hisp_loinc;
 %do x=23 %to 43 %by 1;
-	"&x vs 28" spl [1,&x] [-1,28] spl*hisprace2 [1,1 &x] [-1,1 28] 
+	"&x vs 28 h lo" spl [1,&x] [-1,28] spl*hisprace2 [1,1 &x] [-1,1 28] 
 	spl*pov [1,3 &x] [-1,3 28],
 	%end;
-	"44 vs 28" spl [1,44] [-1,28] spl*hisprace2 [1,1 44] [-1,1 28] 
+	"44 vs 28 h lo" spl [1,44] [-1,28] spl*hisprace2 [1,1 44] [-1,1 28] 
 	spl*pov [1,3 44] [-1,3 28]
 	%mend;	
 
@@ -591,6 +591,41 @@ proc surveylogistic data=a;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
 	model iud = spl &confounders spl*hisprace2 spl*pov;
-	estimate "23 vs 28, white, loinc" spl [1,23] [-1,28] 
-	spl*hisprace2 [1,4 23] [-1,4 28] spl*pov [1,3 23] [-1,3 28] / exp cl;
+	estimate %iud_white_loinc / exp cl;
+	estimate %iud_black_loinc / exp cl;
+	estimate %iud_hisp_loinc / exp cl;
+	ods output estimates=e_loinc;
 	run;
+
+	*damn that actually worked;
+
+	data e_loinc; set e_loinc;
+	 /* for char version, get last 5 characters */
+  		label2 = substr(right(label),10);
+		label3 = substr(label,1,8);
+		run;
+
+		proc print data=e_loinc; run;
+
+	data e_loinc; set e_loinc;
+		if label2 = "h lo" then race = 2;
+		if label2 = "b lo" then race = 3;
+		if label2 = "w lo" then race = 1;
+		drop Hispanic African_American White;
+		run;
+
+	data e_loinc; set e_loinc;
+		ORR=round(ExpEstimate,.01);
+		LCLR=round(LowerExp,.01);
+		UCLR=round(UpperExp,.01);
+		title loinc;
+		run;
+
+	proc sgplot data=e_loinc;
+		/*band x=Label3 lower=LCLR upper=UCLR/ group=race;*/
+		series x=Label3 y=ORR / group=race datalabel=ORR groupdisplay=overlay;
+		refline "28 vs 28" / axis=x label="Ref";
+		xaxis label="Age";
+		yaxis label="Odds Ratio"
+		type=log logbase=e;
+		run;
