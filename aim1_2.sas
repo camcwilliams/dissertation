@@ -549,9 +549,38 @@ proc surveylogistic data=a;
 	cluster panelvar;*/
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
-	model iud = spl &confounders spl*hisprace2 spl*pov;
-	estimate "black vs white, 25 138" spl 30 spl*hisprace2 [1,2 30] [-1,4 30] / exp cl;
+	model iud = spl &confounders spl*hisprace2 spl*pov;,
+	estimate "black, 40" intercept 1 
+	estimate "black vs white, 40" spl*hisprace2 [1,2 40] [-1,4 40] / exp cl;
+	ods output Estimates=e;
 	run;
+
+	proc surveylogistic data=a;
+	class hisprace2 pov/ param=ref;
+	weight weightvar;
+	/*strata stratvar;
+	cluster panelvar;*/
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl hisprace2 spl*hisprace2 pov spl*pov;
+	estimate "black, 40" intercept 1 spl [1,40] hisprace2[1,2] spl*hisprace2 [1, 2 40];
+	estimate "white, 40" intercept 1 spl [1,40] hisprace2[1,4] spl*hisprace2 [1, 4 40]; 
+	estimate "black vs white, 40" intercept 0 spl [0,40] hisprace2 [1,2] [-1,4] spl*hisprace2 [1,2 40] [-1,4 40] / exp cl e;
+	estimate "black vs white, 30" hisprace2 0 1 0 -1 spl*hisprace2 [1,2 30] [-1,4 30] / exp cl;
+	run;
+
+	proc surveylogistic data=a;
+	class hisprace2 / param=ref;
+	weight weightvar;
+	/*strata stratvar;
+	cluster panelvar;*/
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl hisprace2;
+	estimate "black vs white" hisprace2 0 1 0 -1 / exp cl;
+	run;
+
+	proc print data=e; run;
 
 	proc freq data=a; tables hisprace2*rscrage; where iud = 1; run;
 
@@ -606,11 +635,15 @@ proc surveylogistic data=a;
 		run;
 
 		proc print data=e_loinc; run;
+		proc export data=e_loinc
+		outfile="U:\Dissertation\xls_graphs\e_loinc.xlsx"
+		dbms=xlsx;
+		run;
 
 	data e_loinc; set e_loinc;
-		if label2 = "h lo" then race = 2;
-		if label2 = "b lo" then race = 3;
-		if label2 = "w lo" then race = 1;
+		if label2 = "h lo" then race = "Hispanic";
+		if label2 = "b lo" then race = "African American";
+		if label2 = "w lo" then race = "White";
 		drop Hispanic African_American White;
 		run;
 
@@ -622,10 +655,13 @@ proc surveylogistic data=a;
 		run;
 
 	proc sgplot data=e_loinc;
-		/*band x=Label3 lower=LCLR upper=UCLR/ group=race;*/
+		band x=Label3 lower=LCLR upper=UCLR/ group=race;
 		series x=Label3 y=ORR / group=race datalabel=ORR groupdisplay=overlay;
 		refline "28 vs 28" / axis=x label="Ref";
 		xaxis label="Age";
 		yaxis label="Odds Ratio"
 		type=log logbase=e;
 		run;
+
+
+proc print data=a (obs=20); var rscrage; format _all_; run;
