@@ -541,6 +541,19 @@ proc sgplot data=%scan(&estimates,&i);
 *** IUD USE, FINAL MODEL, FIXING AGE ***
 ****************************************;
 
+*coming back to this to look at type 3 effects for main effects and interactions
+between age and demographic variables;
+title 'IUD vs Anything Else';
+proc surveylogistic data=a;
+	class &class / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl &confounders spl*hisprace2 spl*pov spl*edud;
+	run;
+
 title 'IUD vs Anything Else';
 proc surveylogistic data=a;
 	class &class / param=ref;
