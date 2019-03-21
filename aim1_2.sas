@@ -21,7 +21,7 @@ ods listing gpath = "U:\Dissertation\sas_graphs_iud";
 
 *The code below creates a simple one-way frequency and histogram for the outcome of
 interest. Commenting out for clarity, the final versions for use are in the 
-xls_graphs and graphs_iud folders refernced in the code;
+xls_graphs and graphs_iud folders referenced in the code;
 
 	/*DESCRIPTIVES FOR IUD VS NOT;
 	proc freq data=a; tables iud; ods output onewayfreqs=iudfreq; run;
@@ -82,7 +82,7 @@ proc surveyfreq data=a;
 	%do %until(not %length(%scan(&ds,&i)));
 	data %scan(&ds,&i); set %scan(&ds,&i);
 		if iud ne 1 then delete;
-		drop Table _TYPE_ _TABLE_ Frequency Missing;
+		/*drop Table _TYPE_ _TABLE_ Frequency Missing;*/
 		run;
 	%let i=%eval(&i+1);
 	%end;
@@ -94,7 +94,7 @@ proc surveyfreq data=a;
 	%let i=1;
 	%do %until(not %length(%scan(&ds,&i)));
 	proc export data=%scan(&ds,&i)
-		outfile="U:\Dissertation\xls_graphs\IUD.xlsx"
+		outfile="U:\Dissertation\xls_graphs\IUD_conf.xlsx"
 		dbms=xlsx
 		replace;
 		sheet="%scan(&ds,&i)";
@@ -551,7 +551,7 @@ proc surveylogistic data=a;
 	cluster panelvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
-	model iud = spl &confounders spl*hisprace2 spl*pov spl*edud;
+	model iud = spl &confounders spl*hisprace2 spl*pov spl*edud edud*pov;
 	run;
 
 title 'IUD vs Anything Else';
@@ -596,6 +596,17 @@ proc surveylogistic data=a;
 	proc print data=e; run;
 
 	proc freq data=a; tables hisprace2*rscrage; where iud = 1; run;
+
+	proc surveylogistic data=a;
+	class &class;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl &confounders spl*hisprace2 spl*pov spl*edud spl*rwant spl*parityd
+	 spl*mard hisprace2*edud hisprace2*pov edud*pov / df=infinity;
+	run;
 
 %macro iud_white_loinc;
 %do x=23 %to 43 %by 1;
@@ -678,3 +689,73 @@ proc surveylogistic data=a;
 
 
 proc print data=a (obs=20); var rscrage; format _all_; run;
+
+
+***************************************
+** REGRESSION MODELS, PART DEUX: KEEPING PARITY AND INCOME INTERACTIONS **
+**************************************;
+		*trying to figure out parameterization;
+		/*proc surveylogistic data=a;
+		class &class / param=ref;
+		weight weightvar;
+		strata stratvar;
+		cluster panelvar;
+		effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+									knotmethod=percentiles(5) details);
+		model iud = spl &confounders spl*pov spl*parityd;
+		estimate "40, low income" spl [1,40] pov [1,1]
+		spl*pov [1,1 40] / exp cl e;
+		ods output classlevelinfo=cli;
+		ods output coef=coef;
+		ods exclude assocation oddsratios parameterestimates ModelANOVA GlobalTests 
+		FitStatistics TPFSplineDetails;
+		run;
+
+		proc freq data=a; tables pov; run;
+		proc freq data=a; tables iud; run;
+		proc freq data=a; tables parityd; run;
+		proc print data=coef; run;
+		proc print data=cli; run;
+
+		proc export data=cli
+			outfile="U:\Dissertation\xls_graphs\cli.xlsx"
+			dbms=xlsx;
+			run;*/
+
+proc surveylogistic data=a;
+class &class / param=ref;
+weight weightvar;
+strata stratvar;
+cluster panelvar;
+effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+							knotmethod=percentiles(5) details);
+model iud = spl &confounders spl*pov spl*parityd;
+estimate "40, low income, 2 kids" spl [1,40] pov [1,3] spl*pov [1,3 40] 
+parityd [1,3] spl*parityd [1,3 40]/ exp cl;
+estimate "40, mid income, 2 kids" spl [1,40] pov [1,1] spl*pov [1,1 40] 
+parityd [1,3] spl*parityd [1,3 40]/ exp cl;
+estimate "40, high income, 2 kids" spl [1,40] pov [1,2] spl*pov [1,2 40]
+parityd [1,3] spl*parityd [1,3 40]/ exp cl;
+estimate "35, low income, 2 kids" spl [1,35] pov [1,3] spl*pov [1,3 35] 
+parityd [1,3] spl*parityd [1,3 35]/ exp cl;
+estimate "35, mid income, 2 kids" spl [1,35] pov [1,1] spl*pov [1,1 35] 
+parityd [1,3] spl*parityd [1,3 35]/ exp cl;
+estimate "35, high income, 2 kids" spl [1,35] pov [1,2] spl*pov [1,2 35]
+parityd [1,3] spl*parityd [1,3 35]/ exp cl;
+estimate "40, low income, 0 kids" spl [1,40] pov [1,3] spl*pov [1,3 40]
+parityd [1,1] spl*parityd [1,1 40] / exp cl;
+estimate "40, low income, 1 kid" spl [1,40] pov [1,3] spl*pov [1,3 40]
+parityd [1,2] spl*parityd [1,2 40] / exp cl;
+estimate "40, low income, 2 kids" spl [1,40] pov [1,3] spl*pov [1,3 40]
+parityd [1,3] spl*parityd [1,3 40] / exp cl;
+ods output estimates=e;
+run;
+
+proc freq data=a; tables iud; where rscrage=40 and pov=1 and parityd=0; run;
+proc print data=a; var iud; where rscrage=40 and pov=1 and parityd=0; run;
+proc freq data=a; tables parityd; where rscrage=40 and pov=1; run;
+
+proc export data=e
+	outfile="U:\Dissertation\xls_graphs\test.xlsx"
+	dbms=xlsx;
+	run;
