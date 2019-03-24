@@ -786,19 +786,19 @@ proc print data=a (obs=20); var rscrage; format _all_; run;
 
 %macro iud_2kid_loinc;
 %do x=23 %to 43 %by 1;
-	"&x, 1 kid, lo inc" spl [1,&x] pov [1,3] spl*pov [1,3 &x]
+	"&x, 2 kids, lo inc" spl [1,&x] pov [1,3] spl*pov [1,3 &x]
 	parityd [1,3] spl*parityd [1,3 &x],
 	%end;
-	"44, 1 kid, lo inc" spl [1,44] pov [1,3] spl*pov [1,3 44]
+	"44, 2 kids, lo inc" spl [1,44] pov [1,3] spl*pov [1,3 44]
 	parityd [1,3] spl*parityd [1,3 44]
 	%mend;
 
 %macro iud_2kid_midinc;
 %do x=23 %to 43 %by 1;
-	"&x, 1 kid, mid inc" spl [1,&x] pov [1,1] spl*pov [1,1 &x]
+	"&x, 2 kids, mid inc" spl [1,&x] pov [1,1] spl*pov [1,1 &x]
 	parityd [1,3] spl*parityd [1,3 &x],
 	%end;
-	"44, 1 kid, mid inc" spl [1,44] pov [1,1] spl*pov [1,1 44]
+	"44, 2 kids, mid inc" spl [1,44] pov [1,1] spl*pov [1,1 44]
 	parityd [1,3] spl*parityd [1,3 44]
 	%mend;
 
@@ -815,28 +815,28 @@ proc print data=a (obs=20); var rscrage; format _all_; run;
 
 %macro iud_3kid_loinc;
 %do x=23 %to 43 %by 1;
-	"&x, 1 kid, lo inc" spl [1,&x] pov [1,3] spl*pov [1,3 &x]
+	"&x, 3 kids, lo inc" spl [1,&x] pov [1,3] spl*pov [1,3 &x]
 	parityd [1,4] spl*parityd [1,4 &x],
 	%end;
-	"44, 1 kid, lo inc" spl [1,44] pov [1,3] spl*pov [1,3 44]
+	"44, 3 kids, lo inc" spl [1,44] pov [1,3] spl*pov [1,3 44]
 	parityd [1,4] spl*parityd [1,4 44]
 	%mend;
 
 %macro iud_3kid_midinc;
 %do x=23 %to 43 %by 1;
-	"&x, 1 kid, mid inc" spl [1,&x] pov [1,1] spl*pov [1,1 &x]
+	"&x, 3 kids, mid inc" spl [1,&x] pov [1,1] spl*pov [1,1 &x]
 	parityd [1,4] spl*parityd [1,4 &x],
 	%end;
-	"44, 1 kid, mid inc" spl [1,44] pov [1,1] spl*pov [1,1 44]
+	"44, 3 kids, mid inc" spl [1,44] pov [1,1] spl*pov [1,1 44]
 	parityd [1,4] spl*parityd [1,4 44]
 	%mend;
 
 %macro iud_3kid_hiinc;
 %do x=23 %to 43 %by 1;
-	"&x, 2 kids, hi inc" spl [1,&x] pov [1,2] spl*pov [1,2 &x]
+	"&x, 3 kids, hi inc" spl [1,&x] pov [1,2] spl*pov [1,2 &x]
 	parityd [1,4] spl*parityd [1,4 &x],
 	%end;
-	"44, 2 kids, hi inc" spl [1,44] pov [1,2] spl*pov [1,2 44]
+	"44, 3 kids, hi inc" spl [1,44] pov [1,2] spl*pov [1,2 44]
 	parityd [1,4] spl*parityd [1,4 44]
 	%mend;
 
@@ -853,27 +853,117 @@ cluster panelvar;
 effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 							knotmethod=percentiles(5) details);
 model iud = spl &confounders spl*pov spl*parityd;
-/*estimate %iud_0kid_loinc / exp cl;
+estimate %iud_0kid_loinc / exp cl;
 estimate %iud_0kid_midinc / exp cl;
 estimate %iud_0kid_hiinc / exp cl;
-estimate "40, low income, 2 kids" spl [1,40] pov [1,3] spl*pov [1,3 40] 
-parityd [1,3] spl*parityd [1,3 40]/ exp cl;
-estimate %iud_2kid_hiinc / exp cl;*/
-estimate %iud_1kid / exp cl;
-ods output estimates=e;
+estimate %iud_1kid_loinc / exp cl;
+estimate %iud_1kid_midinc / exp cl;
+estimate %iud_1kid_hiinc / exp cl;
+estimate %iud_2kid_loinc / exp cl;
+estimate %iud_2kid_midinc / exp cl;
+estimate %iud_2kid_hiinc / exp cl;
+estimate %iud_3kid_loinc / exp cl;
+estimate %iud_3kid_midinc / exp cl;
+estimate %iud_3kid_hiinc / exp cl;
+ods output estimates=iud_kidsxincome;
 run;
 
-proc freq data=a; tables pov parityd; run;
-proc freq data=a; tables rscrage*iud; where pov=1 and parityd=0; run;
-proc freq data=a; tables rscrage*iud; where pov=2 and parityd=0; run;
-proc freq data=a; tables rscrage*iud; where pov=3 and parityd=0; run;
+*figuring out why the 0 kid ones won't estimate;
+	proc freq data=a; tables pov parityd; run;
+	proc freq data=a; tables rscrage*iud; where pov=1 and parityd=0; run;
+	proc freq data=a; tables rscrage*iud; where pov=2 and parityd=0; run;
+	proc freq data=a; tables rscrage*iud; where pov=3 and parityd=0; run;
 
-proc freq data=a; tables iud; where rscrage=40 and pov=1 and parityd=0; run;
-proc print data=a; var iud; where rscrage=40 and pov=1 and parityd=0; run;
-proc freq data=a; tables parityd; where rscrage=40 and pov=1; run;
+	proc freq data=a; tables iud; where rscrage=40 and pov=1 and parityd=0; run;
+	proc print data=a; var iud; where rscrage=40 and pov=1 and parityd=0; run;
+	proc freq data=a; tables parityd; where rscrage=40 and pov=1; run;
 
-proc export data=e
-	outfile="U:\Dissertation\xls_graphs\test.xlsx"
-	dbms=xlsx
-	replace;
+	proc freq data=a; tables rscrage; where parityd = 0; run;
+	proc freq data=a; tables rscrage*iud; where parityd = 0; run;
+	proc freq data=a; tables rscrage*iud; where parityd = 1; run;
+	title;
+	proc freq data=a; tables rscrage*iud; where parityd = 2; run;
+	proc freq data=a; tables rscrage*iud; where parityd = 3; run;
+
+	proc export data=e
+		outfile="U:\Dissertation\xls_graphs\test.xlsx"
+		dbms=xlsx
+		replace;
+		run;
+
+proc print data=iud_kidsxincome; run;
+data iud; set iud_kidsxincome;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno = 1 or stmtno = 2 or stmtno = 3 then delete;
+	Label2 = substr(Label,1,2);
 	run;
+
+proc print data=iud; run;
+
+title1 "IUD Use by Age, for Women with 1 Live Birth";
+title2 "4 = Low Income, 5 = Mid Income, 6 = High Income";
+proc sgplot data=iud;
+	where stmtno = 4 or stmtno = 5 or stmtno = 6;
+	band x=Label2 lower=LowerExp upper=UpperExp/ group=stmtno;
+	series x=Label2 y=ExpEstimate / group=stmtno datalabel=Label2 groupdisplay=overlay;
+	xaxis label="Age";
+	yaxis label="Odds Ratio"
+	type=log logbase=e;
+	run;
+
+	*running the plot code without the confidence intervals to look at the estimates more
+	closely;
+	title1 "IUD Use by Age, for Women with 1 Live Birth";
+	title2 "4 = Low Income, 5 = Mid Income, 6 = High Income";
+	proc sgplot data=iud;
+		where stmtno = 4 or stmtno = 5 or stmtno = 6;
+		series x=Label2 y=ExpEstimate / group=stmtno datalabel=ExpEstimate groupdisplay=overlay;
+		xaxis label="Age";
+		yaxis label="Odds Ratio"
+		type=log logbase=e;
+		run;
+
+title1 "IUD Use by Age, for Women with 2 Live Births";
+title2 "7 = Low Income, 8 = Mid Income, 9 = High Income";
+proc sgplot data=iud;
+	where stmtno = 7 or stmtno = 8 or stmtno = 9;
+	band x=Label2 lower=LowerExp upper=UpperExp/ group=stmtno;
+	series x=Label2 y=ExpEstimate / group=stmtno datalabel=Label2 groupdisplay=overlay;
+	xaxis label="Age";
+	yaxis label="Odds Ratio"
+	type=log logbase=e;
+	run;
+
+	*again running without CL bands;
+	title1 "IUD Use by Age, for Women with 2 Live Births";
+	title2 "7 = Low Income, 8 = Mid Income, 9 = High Income";
+	proc sgplot data=iud;
+		where stmtno = 7 or stmtno = 8 or stmtno = 9;
+		series x=Label2 y=ExpEstimate / group=stmtno datalabel=Label2 groupdisplay=overlay;
+		xaxis label="Age";
+		yaxis label="Odds Ratio"
+		type=log logbase=e;
+		run;
+
+title1 "IUD Use by Age, for Women with 3 or more Live Births";
+title2 "10 = Low Income, 11 = Mid Income, 12 = High Income";
+proc sgplot data=iud;
+	where stmtno = 10 or stmtno = 11 or stmtno = 12;
+	band x=Label2 lower=LowerExp upper=UpperExp/ group=stmtno;
+	series x=Label2 y=ExpEstimate / group=stmtno datalabel=Label2 groupdisplay=overlay;
+	xaxis label="Age";
+	yaxis label="Odds Ratio"
+	type=log logbase=e;
+	run;
+
+	*again running without CL bands;
+	title1 "IUD Use by Age, for Women with 3 or more Live Births";
+	title2 "10 = Low Income, 11 = Mid Income, 12 = High Income";
+	proc sgplot data=iud;
+		where stmtno = 10 or stmtno = 11 or stmtno = 12;
+		series x=Label2 y=ExpEstimate / group=stmtno datalabel=ExpEstimate groupdisplay=overlay;
+		xaxis label="Age";
+		yaxis label="Odds Ratio"
+		type=log logbase=e;
+		run;
+
