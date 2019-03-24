@@ -722,6 +722,34 @@ proc print data=a (obs=20); var rscrage; format _all_; run;
 			dbms=xlsx;
 			run;*/
 
+%macro iud_0kid_loinc;
+%do x=23 %to 43 %by 1;
+	"&x, 0 kids, lo inc" spl [1,&x] pov [1,3] spl*pov [1,3 &x]
+	parityd [1,1] spl*parityd [1,1 &x],
+	%end;
+	"44, 0 kids, lo inc" spl [1,44] pov [1,3] spl*pov [1,3 44]
+	parityd [1,1] spl*parityd [1,1 44]
+	%mend;
+
+%macro iud_0kid_midinc;
+%do x=23 %to 43 %by 1;
+	"&x, 0 kids, mid inc" spl [1,&x] pov [1,1] spl*pov [1,1 &x]
+	parityd [1,1] spl*parityd [1,1 &x],
+	%end;
+	"44, 0 kids, mid inc" spl [1,44] pov [1,1] spl*pov [1,1 44]
+	parityd [1,1] spl*parityd [1,1 44]
+	%mend;
+
+%macro iud_0kid_hiinc;
+%do x=23 %to 43 %by 1;
+	"&x, 0 kids, hi inc" spl [1,&x] pov [1,2] spl*pov [1,2 &x]
+	parityd [1,1] spl*parityd [1,1 &x],
+	%end;
+	"44, 0 kids, hi inc" spl [1,44] pov [1,2] spl*pov [1,2 44]
+	parityd [1,1] spl*parityd [1,1 44]
+	%mend;
+	
+
 proc surveylogistic data=a;
 class &class / param=ref;
 weight weightvar;
@@ -730,7 +758,7 @@ cluster panelvar;
 effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 							knotmethod=percentiles(5) details);
 model iud = spl &confounders spl*pov spl*parityd;
-estimate "40, low income, 2 kids" spl [1,40] pov [1,3] spl*pov [1,3 40] 
+/*estimate "40, low income, 2 kids" spl [1,40] pov [1,3] spl*pov [1,3 40] 
 parityd [1,3] spl*parityd [1,3 40]/ exp cl;
 estimate "40, mid income, 2 kids" spl [1,40] pov [1,1] spl*pov [1,1 40] 
 parityd [1,3] spl*parityd [1,3 40]/ exp cl;
@@ -747,7 +775,7 @@ parityd [1,1] spl*parityd [1,1 40] / exp cl;
 estimate "40, low income, 1 kid" spl [1,40] pov [1,3] spl*pov [1,3 40]
 parityd [1,2] spl*parityd [1,2 40] / exp cl;
 estimate "40, low income, 2 kids" spl [1,40] pov [1,3] spl*pov [1,3 40]
-parityd [1,3] spl*parityd [1,3 40] / exp cl;
+parityd [1,3] spl*parityd [1,3 40] / exp cl;*/
 ods output estimates=e;
 run;
 
@@ -757,5 +785,6 @@ proc freq data=a; tables parityd; where rscrage=40 and pov=1; run;
 
 proc export data=e
 	outfile="U:\Dissertation\xls_graphs\test.xlsx"
-	dbms=xlsx;
+	dbms=xlsx
+	replace;
 	run;
