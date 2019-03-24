@@ -722,6 +722,10 @@ proc print data=a (obs=20); var rscrage; format _all_; run;
 			dbms=xlsx;
 			run;*/
 
+*************** MAKING MACROS FOR ESTIMATE STATEMENTS ***************;
+
+** NO KIDS **;
+
 %macro iud_0kid_loinc;
 %do x=23 %to 43 %by 1;
 	"&x, 0 kids, lo inc" spl [1,&x] pov [1,3] spl*pov [1,3 &x]
@@ -748,6 +752,97 @@ proc print data=a (obs=20); var rscrage; format _all_; run;
 	"44, 0 kids, hi inc" spl [1,44] pov [1,2] spl*pov [1,2 44]
 	parityd [1,1] spl*parityd [1,1 44]
 	%mend;
+
+** 1 KID **;
+
+%macro iud_1kid_loinc;
+%do x=23 %to 43 %by 1;
+	"&x, 1 kid, lo inc" spl [1,&x] pov [1,3] spl*pov [1,3 &x]
+	parityd [1,2] spl*parityd [1,2 &x],
+	%end;
+	"44, 1 kid, lo inc" spl [1,44] pov [1,3] spl*pov [1,3 44]
+	parityd [1,2] spl*parityd [1,2 44]
+	%mend;
+
+%macro iud_1kid_midinc;
+%do x=23 %to 43 %by 1;
+	"&x, 1 kid, mid inc" spl [1,&x] pov [1,1] spl*pov [1,1 &x]
+	parityd [1,2] spl*parityd [1,2 &x],
+	%end;
+	"44, 1 kid, mid inc" spl [1,44] pov [1,1] spl*pov [1,1 44]
+	parityd [1,2] spl*parityd [1,2 44]
+	%mend;
+
+%macro iud_1kid_hiinc;
+%do x=23 %to 43 %by 1;
+	"&x, 1 kid, mid inc" spl [1,&x] pov [1,2] spl*pov [1,2 &x]
+	parityd [1,2] spl*parityd [1,2 &x],
+	%end;
+	"44, 1 kid, mid inc" spl [1,44] pov [1,2] spl*pov [1,2 44]
+	parityd [1,2] spl*parityd [1,2 44]
+	%mend;
+
+** 2 KIDS **;
+
+%macro iud_2kid_loinc;
+%do x=23 %to 43 %by 1;
+	"&x, 1 kid, lo inc" spl [1,&x] pov [1,3] spl*pov [1,3 &x]
+	parityd [1,3] spl*parityd [1,3 &x],
+	%end;
+	"44, 1 kid, lo inc" spl [1,44] pov [1,3] spl*pov [1,3 44]
+	parityd [1,3] spl*parityd [1,3 44]
+	%mend;
+
+%macro iud_2kid_midinc;
+%do x=23 %to 43 %by 1;
+	"&x, 1 kid, mid inc" spl [1,&x] pov [1,1] spl*pov [1,1 &x]
+	parityd [1,3] spl*parityd [1,3 &x],
+	%end;
+	"44, 1 kid, mid inc" spl [1,44] pov [1,1] spl*pov [1,1 44]
+	parityd [1,3] spl*parityd [1,3 44]
+	%mend;
+
+%macro iud_2kid_hiinc;
+%do x=23 %to 43 %by 1;
+	"&x, 2 kids, hi inc" spl [1,&x] pov [1,2] spl*pov [1,2 &x]
+	parityd [1,3] spl*parityd [1,3 &x],
+	%end;
+	"44, 2 kids, hi inc" spl [1,44] pov [1,2] spl*pov [1,2 44]
+	parityd [1,3] spl*parityd [1,3 44]
+	%mend;
+
+** 3+ KIDS **;
+
+%macro iud_3kid_loinc;
+%do x=23 %to 43 %by 1;
+	"&x, 1 kid, lo inc" spl [1,&x] pov [1,3] spl*pov [1,3 &x]
+	parityd [1,4] spl*parityd [1,4 &x],
+	%end;
+	"44, 1 kid, lo inc" spl [1,44] pov [1,3] spl*pov [1,3 44]
+	parityd [1,4] spl*parityd [1,4 44]
+	%mend;
+
+%macro iud_3kid_midinc;
+%do x=23 %to 43 %by 1;
+	"&x, 1 kid, mid inc" spl [1,&x] pov [1,1] spl*pov [1,1 &x]
+	parityd [1,4] spl*parityd [1,4 &x],
+	%end;
+	"44, 1 kid, mid inc" spl [1,44] pov [1,1] spl*pov [1,1 44]
+	parityd [1,4] spl*parityd [1,4 44]
+	%mend;
+
+%macro iud_3kid_hiinc;
+%do x=23 %to 43 %by 1;
+	"&x, 2 kids, hi inc" spl [1,&x] pov [1,2] spl*pov [1,2 &x]
+	parityd [1,4] spl*parityd [1,4 &x],
+	%end;
+	"44, 2 kids, hi inc" spl [1,44] pov [1,2] spl*pov [1,2 44]
+	parityd [1,4] spl*parityd [1,4 44]
+	%mend;
+
+%PUT _USER_;
+%PUT _ALL_;
+%PUT _GLOBAL_;
 	
 
 proc surveylogistic data=a;
@@ -758,26 +853,20 @@ cluster panelvar;
 effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 							knotmethod=percentiles(5) details);
 model iud = spl &confounders spl*pov spl*parityd;
-/*estimate "40, low income, 2 kids" spl [1,40] pov [1,3] spl*pov [1,3 40] 
+/*estimate %iud_0kid_loinc / exp cl;
+estimate %iud_0kid_midinc / exp cl;
+estimate %iud_0kid_hiinc / exp cl;
+estimate "40, low income, 2 kids" spl [1,40] pov [1,3] spl*pov [1,3 40] 
 parityd [1,3] spl*parityd [1,3 40]/ exp cl;
-estimate "40, mid income, 2 kids" spl [1,40] pov [1,1] spl*pov [1,1 40] 
-parityd [1,3] spl*parityd [1,3 40]/ exp cl;
-estimate "40, high income, 2 kids" spl [1,40] pov [1,2] spl*pov [1,2 40]
-parityd [1,3] spl*parityd [1,3 40]/ exp cl;
-estimate "35, low income, 2 kids" spl [1,35] pov [1,3] spl*pov [1,3 35] 
-parityd [1,3] spl*parityd [1,3 35]/ exp cl;
-estimate "35, mid income, 2 kids" spl [1,35] pov [1,1] spl*pov [1,1 35] 
-parityd [1,3] spl*parityd [1,3 35]/ exp cl;
-estimate "35, high income, 2 kids" spl [1,35] pov [1,2] spl*pov [1,2 35]
-parityd [1,3] spl*parityd [1,3 35]/ exp cl;
-estimate "40, low income, 0 kids" spl [1,40] pov [1,3] spl*pov [1,3 40]
-parityd [1,1] spl*parityd [1,1 40] / exp cl;
-estimate "40, low income, 1 kid" spl [1,40] pov [1,3] spl*pov [1,3 40]
-parityd [1,2] spl*parityd [1,2 40] / exp cl;
-estimate "40, low income, 2 kids" spl [1,40] pov [1,3] spl*pov [1,3 40]
-parityd [1,3] spl*parityd [1,3 40] / exp cl;*/
+estimate %iud_2kid_hiinc / exp cl;*/
+estimate %iud_1kid / exp cl;
 ods output estimates=e;
 run;
+
+proc freq data=a; tables pov parityd; run;
+proc freq data=a; tables rscrage*iud; where pov=1 and parityd=0; run;
+proc freq data=a; tables rscrage*iud; where pov=2 and parityd=0; run;
+proc freq data=a; tables rscrage*iud; where pov=3 and parityd=0; run;
 
 proc freq data=a; tables iud; where rscrage=40 and pov=1 and parityd=0; run;
 proc print data=a; var iud; where rscrage=40 and pov=1 and parityd=0; run;
