@@ -22,7 +22,7 @@ data a; set a;
 
 ods trace on;
 ods graphics on / reset=index imagename="doc_age";
-ods listing gpath = "U:\Dissertation\sas_graphs_doc";
+ods listing gpath = "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\Analytic Files\sas_graphs_doc";
 
 proc freq data=a; tables bc; ods output onewayfreqs=bcfreq; run;
 proc print data=bcfreq; format bc 3.1; run;
@@ -882,3 +882,161 @@ proc surveylogistic data=a;
 	run;
 
 	proc print data=coef_all; run;
+
+	/*quickly checking for significant interactions, using macros from other programs;
+
+	proc surveylogistic data=a;
+		class &class / param=ref;
+		weight weightvar;
+		strata stratvar;
+		cluster panelvar;
+		effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+									knotmethod=percentiles(5) details);
+		model doc = spl &confounders spl*edud spl*hisprace2 spl*pov spl*parityd;
+		run;*/
+
+
+** Running a few descriptives here to confirm which interactions I want to use;
+	proc sort data=a; by edud; run;
+	proc freq data=a; tables bcc*agecat; by edud; run;
+	proc surveylogistic data=a;
+	class tub(ref=first) / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tub = spl;
+	output out=tub pred=pred;
+	run;
+
+	proc contents data=tub; run;
+
+	proc sgplot data=tub;
+	scatter y=pred x=rscrage;
+	by edud;
+	run;
+
+	*going to try another multinomial model just to see;
+	proc surveylogistic data=a;
+	class &class / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model bcc = &confounders spl*agebabycat spl*edud spl*pov spl*hisprace2 spl*parity;
+	run;
+
+	proc freq data=a; tables agecat*agebabycat; run;
+
+proc surveylogistic data=a;
+	class doc;
+	model doc=rscrage; run;
+
+************************************
+*** FINAL MODEL WITH INTERACTION ***
+************************************;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 15-19 vs >24/0" intercept 0 spl [0,&x] earlybirth [1,1] [-1,3] 
+		spl*earlybirth [1,1 &x] [-1,3 &x],
+	%end;
+	"44, 15-19 vs >24/0" intercept 0 spl [0,44] earlybirth [1,1] [-1,3] 
+		spl*earlybirth [1,1 44] [-1,3 44]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 20-24 vs >24/0" intercept 0 spl [0,&x] earlybirth [1,2] [-1,3] 
+		spl*earlybirth [1,2 &x] [-1,3 &x],
+	%end;
+	"44, 20-24 vs >24/0" intercept 0 spl [0,44] earlybirth [1,2] [-1,3] 
+		spl*earlybirth [1,2 44] [-1,3 44]
+	%mend;
+
+proc surveylogistic data=a;
+	class doc edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model doc = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl;
+	estimate %earlytwenties / exp cl;
+	ods output Estimates=e2;
+	run;
+
+data e_doc; set e2;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	Label2=substr(Label,1,2);
+	run;
+
+title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
+title2 "By Age & Age at First Birth";
+proc sgplot data=e_doc;
+	band x=Label2 lower=LowerExp upper=UpperExp / group=earlybirth 
+	transparency=.5;
+	series x=Label2 y=ExpEstimate / group=earlybirth datalabel=ExpEstimate
+	/*groupdisplay=overlay*/;
+	refline 1 / axis=y label="OR=1.0";
+	xaxis label="Age";
+	yaxis label="Odds Ratio"
+	type=log logbase=e logstyle=linear values=(0.1 0.5 1 2 3 5);
+	run;
+
+*Fill attributes:
+https://documentation.sas.com/?docsetId=grstatproc&docsetTarget=p1jzx3nmuupe74n1qy54onbwjoem.htm&docsetVersion=9.4&locale=en;
+
+*Since I know I'll want to add this later, 
+	here is the model with main effects only;
+
+%macro main;
+%do x=23 %to 43 %by 1;
+	"&x" intercept 1 spl [1,&x],
+	%end;
+	"44, 15-19 vs >24/0" intercept 1 spl [0,44]
+	%mend;
+
+
+proc surveylogistic data=a;
+	class doc edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model doc = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins;
+	estimate %main / exp cl;
+	ods output Estimates=e3;
+	run;
+
+data e_main; set e3;
+	drop estimate stderr df tvalue alpha lower upper;
+	Label2=Label;
+	run;
+
+title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
+title2 "By Age";
+proc sgplot data=e_main;
+	band x=Label2 lower=LowerExp upper=UpperExp /
+	transparency=.5;
+	series x=Label2 y=ExpEstimate / datalabel=ExpEstimate
+	/*groupdisplay=overlay*/;
+	refline 1 / axis=y label="OR=1.0";
+	xaxis label="Age";
+	yaxis label="Odds Ratio"
+	type=log logbase=e logstyle=linear values=(0.1 0.5 1 2 3 5);
+	run;
