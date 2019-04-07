@@ -84,53 +84,40 @@ proc freq; tables elig; run;
 
 *########### TABLE 1 ###########;
 
-proc sort; by ster; run;
+*using bcc for table 1, it's general enough to properly describe
+the sample and specific enough to provide context for all four
+models;
 
-title 'table 1, no weights';
-proc freq data=a;
-	tables (agecat poverty edu)*ster / missing nofreq nopercent nocol; 
+proc freq data=a; tables bcc; run;
+proc sort data=a; by bcc; run;
+
+%let confounders = edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
+
+%macro tableone;
+	%let i=1;
+	%do %until(not %length(%scan(&confounders,&i)));
+proc freq data=a; 
+	tables (%scan(&confounders,&i))*bcc / missing; 
+	ods output crosstabfreqs=ct_bcc_%scan(&confounders,&i); 
 	run;
+	%let i=%eval(&i+1);
+	%end;
+	%mend tableone;
 
-	/*tried to output the table for easier manipulation but abandoned it;
-	proc freq data=a; 
-		tables agecat poverty edu / missing out=table1; by ster;
-		run;
+	%tableone;
 
-	proc print data=table1; run;*/
-
-	/*changing lengths because the scientific notation is messing up
-		my denominators;
-	data a; set a;
-		length agecat 8 poverty 8 edu 8 ster 8 hisprace2 8;
-		run;
-	*that didn't work;*/
-
-title 'table 1, weighted';
-proc freq data=a;
-	tables (agecat poverty edu)*ster / missing nopercent nocol;
-	weight weightvar; 
+proc print data=ct_bcc_agebabycat; run;
+data test; set ct_bcc_agebabycat;
+	drop _type_ _table_ table;
 	run;
+proc print data=test; where bcc=1; run;
 
-title 'table 1, weighted, adding race, then need to check out dataset for full-digit counts';
-proc freq data=a;
-	tables ster*hisprace2 / missing norow nopercent nocol out=hisprace2;
-	weight weightvar;
-	run;
+proc sort data=ct_bcc_agebabycat; by bcc; run;
 
-	proc print data=hisprace2; run;
+proc freq data=a; tables bcc*edud; ods output crosstabfreqs=c; run;
+proc print data=c; run;
 
-title 'checking totals with out dataset';
-proc freq data=a;
-	tables ster / missing norow nopercent nocol out=ster;
-	weight weightvar;
-	run;
-
-	proc print data=ster; run;
-
-	title;
-
-
-
+%let ds = 
 
 *########### SAMPLING WEIGHTS ###########;
 
