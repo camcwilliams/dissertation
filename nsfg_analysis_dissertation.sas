@@ -69,7 +69,25 @@ data a; set a;
 	if rscrage = 97 then delete;
 	run;*/
 
-*Briefly exploring the sampling corrections;
+*** Numbers for chapter 2 flow chart;
+
+*Full analytic sample;
+	libname full "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\Archive";
+	proc contents data=full.nsfg_females_2011_2015; run;
+
+*Women under 23;
+	proc means data=full.nsfg_females_2011_2015; var rscrage; where rscrage > 22; run;
+
+*One individual whose age was not ascertained;
+	proc print data=full.nsfg_females_2011_2015; var rscrage constat1 caseid; where rscrage > 44; run;
+
+*Double-checking how I recoded individuals with "other" as contraceptive method;
+	proc means data=a; var rscrage; run;
+	proc means data=a; var bcc; where constat1=22; run;
+	*Yep, those are kept in and I'm happy with my choices;
+
+
+*** Briefly exploring the sampling corrections;
 proc means; var stratvar panelvar weightvar; run;
 
 proc freq; tables rscrage; run;
@@ -91,7 +109,10 @@ models;
 proc freq data=a; tables bcc; run;
 proc sort data=a; by bcc; run;
 
-%let confounders = edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
+*I wanted to write code to create a nice table 1 but I'm at the critical 
+point where hard coding would have taken significantly less time, so commenting
+out the code to automate and going with several proc freqs;
+/*%let confounders = edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
 
 %macro tableone;
 	%let i=1;
@@ -115,9 +136,10 @@ proc print data=test; where bcc=1; run;
 proc sort data=ct_bcc_agebabycat; by bcc; run;
 
 proc freq data=a; tables bcc*edud; ods output crosstabfreqs=c; run;
-proc print data=c; run;
+proc print data=c; run;*/
 
-%let ds = 
+proc freq data=a; tables edud*bcc; run;
+
 
 *########### SAMPLING WEIGHTS ###########;
 
