@@ -22,7 +22,7 @@ not include code to pull in the datasets and formats, those can happen from
 		if rscrage>29 and rscrage<35 then agecat = 4 ;
 		if rscrage>34 and rscrage<40 then agecat = 5 ;
 		if rscrage>39 and rscrage<45 then agecat = 6 ;
-		label agecat="5yr age categories, 1=15-19, 6=40-44";
+		label agecat="5yr age categories";
 		run;
 
 	* creating a new age variable for dealing with education;
@@ -314,6 +314,36 @@ not include code to pull in the datasets and formats, those can happen from
 			if during ne . then allr = 2;
 			run;
 
+		data a; set a;
+			multi = .;
+			if meth = 1 then multi = 1;
+			if meth = 2 then multi = 2;
+			if meth = 3 then multi = 3;
+			if meth = 12 then multi = .;
+			if meth >=4 and meth <= 11 then multi = 4;
+			run;
+
+			proc freq data=a; tables multi*meth / missing; run;
+			proc freq data=a; tables multi; run;
+
+*Eligibility flag - postpartum is considered not at risk of unintended pregnancy here,
+I'm not sure I agree with that but from what I can tell women <6 weeks postpartum
+are not asked about contraceptive method in the current month;
+	data a; set a;
+		if constat1 = 30 then elig = 0; *currently pregnant;
+		if constat1 = 31 then elig = 0; *seeking pregnancy;
+		if constat1 = 32 or
+		constat1 = 33 or 
+		constat1 = 34 or
+		constat1 = 35 or
+		constat1 = 36 then elig = 0; *noncontraceptive sterility;
+		if constat1 = 38 then elig = 0; *sterile--unknown reasons -male;
+		if constat1 = 40 then elig = 0; *no intercourse since menarche;
+		if constat1 = 41 then elig = 0; *no intercourse in last 3 months;
+		label elig="at risk of UIP, according to standard practice";
+		run;
+
+
 
 *** Subfecundity;
 
@@ -423,6 +453,15 @@ not include code to pull in the datasets and formats, those can happen from
 				if agefirstbirth < 45 and agefirstbirth >= 40 then agebabycat = 6;
 				label agebabycat = "age at first birth, .=0, 1=<20, 6=40-44";
 				run;
+
+			data a; set a;
+				if agebabycat = 1 then earlybirth = 1;
+				if agebabycat = 2 then earlybirth = 2;
+				if agebabycat >= 3 then earlybirth = 3;
+				if agebabycat = 0 then earlybirth = 3;
+				label earlybirth = "3-cat early childbearing";
+				run;
+
 			
 			/* trying to figure out why agebabycat wasn't working, of course it was
 			because i made a stupid coding mistake. glad the troubleshooting worked!;

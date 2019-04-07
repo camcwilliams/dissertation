@@ -85,7 +85,10 @@ data a; set a;
 		*that is also fine, showing 2081 not at risk of uip;
 	proc freq data=a; tables constat1; where bcc=.; run;
 		*OK, THE PROBLEM IS 79 POSTPARTUM INDIVIDUALS;
-		proc freq data=a; tables constat2; where constat1=32; run;
+		
+		*I figured it out, the <6 weeks postpartum individuals were coded as eligible.
+		I believe this was an oversight, I created the elig variable while I was considering
+		the postpartum issue, fixed now;
 
 *** Briefly exploring the sampling corrections;
 proc means; var stratvar panelvar weightvar; run;
