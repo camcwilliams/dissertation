@@ -82,42 +82,6 @@ proc freq; tables elig; run;
 *#### DESCRIPTIVES ####*
 *######################*;
 
-
-/*########### CORRELATION ###########;
-
-	proc corr data = a outp=CorrOutp; var &varlist; run;
-	proc print data=CorrOutp; run;
-	proc export data=CorrOutp outfile='outcorr' dbms=xlsx;
-		run;*/
-
-	proc corr data=a;
-		var poverty rscrage edu hisprace2;
-		run;
-
-	proc corr data = a outp=CorrOutp2;
-		var 
-			rscrage
-			agebaby1
-			allrepro
-			bc
-			curr_ins
-			edu
-			fecund
-			intend
-			jintend
-			parity
-			poverty
-			prevcohb
-			rmarital
-			religion
-			nchildhh
-		; 
-		run;
-	proc print data=CorrOutp2; run;
-	proc export data=CorrOutp2 outfile='outcorr2' dbms=xlsx;
-		run;
-
-
 *########### TABLE 1 ###########;
 
 proc sort; by ster; run;
