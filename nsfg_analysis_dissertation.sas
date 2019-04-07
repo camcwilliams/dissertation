@@ -41,27 +41,9 @@ proc sgplot data=a;
 
 *######### WORKING ON SAMPLE #########;
 
-/*Commenting out eligibility flag and removal of case where
-	age was not ascertained, they are already part of the permanent 
+/*Commenting out removal of case where
+	age was not ascertained, already part of the permanent 
 	dataset;
-* Flag for eligible cases (according to standard practice);
-
-data a; set a;
-	elig = 1;
-	run;
-
-	data a; set a;
-		if constat1 = 30 then elig = 0; *currently pregnant;
-		if constat1 = 31 then elig = 0; *seeking pregnancy;
-		if constat1 = 33 or 
-		constat1 = 34 or
-		constat1 = 35 or
-		constat1 = 36 then elig = 0; *noncontraceptive sterility;
-		if constat1 = 38 then elig = 0; *sterile--unknown reasons -male;
-		if constat1 = 40 then elig = 0; *no intercourse since menarche;
-		if constat1 = 41 then elig = 0; *no intercourse in last 3 months;
-		label elig="at risk of UIP, according to standard practice";
-		run;
 
 * Removing case where age was not ascertained;
 
@@ -76,16 +58,34 @@ data a; set a;
 	proc contents data=full.nsfg_females_2011_2015; run;
 
 *Women under 23;
-	proc means data=full.nsfg_females_2011_2015; var rscrage; where rscrage > 22; run;
+	proc means data=full.nsfg_females_2011_2015; var rscrage; where rscrage < 23; run;
 
 *One individual whose age was not ascertained;
 	proc print data=full.nsfg_females_2011_2015; var rscrage constat1 caseid; where rscrage > 44; run;
+
+*Not at risk of UIP;
+	proc means data=a; var rscrage; where elig=0; run;
 
 *Double-checking how I recoded individuals with "other" as contraceptive method;
 	proc means data=a; var rscrage; run;
 	proc means data=a; var bcc; where constat1=22; run;
 	*Yep, those are kept in and I'm happy with my choices;
 
+*Non-users;
+	proc freq data=a; tables bcc*constat1; run;
+
+*Final sample size;
+	proc freq data=a; tables bcc; where bcc=1 or bcc=2 or bcc=3; run;
+	*Hmm, this should be 5406 according to the flow chart but is 5327;
+
+	proc freq data=a; tables bcc; run;
+	proc freq data=a; tables bcc*constat1; where rscrage > 22; run;
+		*age is fine but the number of missings is too high (2160);
+	proc freq data=a; tables constat1; where elig=0 and rscrage > 22; run;
+		*that is also fine, showing 2081 not at risk of uip;
+	proc freq data=a; tables constat1; where bcc=.; run;
+		*OK, THE PROBLEM IS 79 POSTPARTUM INDIVIDUALS;
+		proc freq data=a; tables constat2; where constat1=32; run;
 
 *** Briefly exploring the sampling corrections;
 proc means; var stratvar panelvar weightvar; run;
