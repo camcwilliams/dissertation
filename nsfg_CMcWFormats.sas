@@ -7,8 +7,7 @@
 
 proc format;
 	value agecat
-		1="15-19"
-		2="20-24"
+		2="23-24"
 		3="25-29"
 		4="30-34"
 		5="35-39"
@@ -102,6 +101,10 @@ proc format;
 		4="30-34"
 		5="35-39"
 		6="40-44";
+	value earlybirth
+		1 = "15-19"
+		2 = "20-24"
+		3 = ">24 or no live births";
 	value mard
 		1 = "currently married to a person of the opposite sex"
         2 = "not married but living with opp sex partner"
@@ -129,6 +132,11 @@ proc format;
 		10 = "spermicide alone"
 		11 = "withdrawal"
 		12 = "not using contraception";
+	value multi
+		1 = "tubal ligation"
+		2 = "vasectomy"
+		3 = "LARC"
+		4 = "non-permanent, non-LARC";
 	value perm
 		1 = "tubal ligation"
 		2 = "vasectomy";
@@ -193,6 +201,7 @@ data a; set a;
 			allrepro allrepro.
 			elig elig.
 			agebabycat agebabycat.
+			earlybirth earlybirth.
 			mard mard.
 			doc doc.
 			curr_ins curr_ins.
@@ -215,5 +224,6 @@ data a; set a;
 			eduo eduo.
 			edud edud.
 			pov pov.
+			multi multi.
 ;
 ;run;
