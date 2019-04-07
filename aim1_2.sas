@@ -576,8 +576,8 @@ proc surveylogistic data=a;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
 	model iud = spl hisprace2 spl*hisprace2 pov spl*pov;
-	estimate "black, 40" intercept 1 spl [1,40] hisprace2[1,2] spl*hisprace2 [1, 2 40];
-	estimate "white, 40" intercept 1 spl [1,40] hisprace2[1,4] spl*hisprace2 [1, 4 40]; 
+	estimate "black, 40" intercept 1 spl [1,40] hisprace2[1,2] spl*hisprace2 [1, 2 40] / exp cl;
+	estimate "white, 40" intercept 1 spl [1,40] hisprace2[1,4] spl*hisprace2 [1, 4 40] / exp cl; 
 	estimate "black vs white, 40" intercept 0 spl [0,40] hisprace2 [1,2] [-1,4] spl*hisprace2 [1,2 40] [-1,4 40] / exp cl e;
 	estimate "black vs white, 30" hisprace2 0 1 0 -1 spl*hisprace2 [1,2 30] [-1,4 30] / exp cl;
 	run;
@@ -967,3 +967,60 @@ proc sgplot data=iud;
 		type=log logbase=e;
 		run;
 
+
+** Using age at first birth as the interacting variable;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 15-19 vs >24/0" intercept 0 spl [0,&x] earlybirth [1,1] [-1,3] 
+		spl*earlybirth [1,1 &x] [-1,3 &x],
+	%end;
+	"44, 15-19 vs >24/0" intercept 0 spl [0,44] earlybirth [1,1] [-1,3] 
+		spl*earlybirth [1,1 44] [-1,3 44]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 20-24 vs >24/0" intercept 0 spl [0,&x] earlybirth [1,2] [-1,3] 
+		spl*earlybirth [1,2 &x] [-1,3 &x],
+	%end;
+	"44, 20-24 vs >24/0" intercept 0 spl [0,44] earlybirth [1,2] [-1,3] 
+		spl*earlybirth [1,2 44] [-1,3 44]
+	%mend;
+
+proc surveylogistic data=a;
+	class iud(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl;
+	estimate %earlytwenties / exp cl;
+	ods output Estimates=e;
+	run;
+
+	proc print data=e; run;
+
+
+data e_early; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	Label2=substr(Label,1,2);
+	run;
+
+title1 "IUD Use by Age & Age at First Birth";
+proc sgplot data=e_early;
+	band x=Label2 lower=LowerExp upper=UpperExp / group=earlybirth;
+	series x=Label2 y=ExpEstimate / group=earlybirth datalabel=ExpEstimate
+	groupdisplay=overlay;
+	yaxis label="Age";
+	yaxis label="Odds Ratio"
+	type=log logbase=e logstyle=linear;
+	run;
