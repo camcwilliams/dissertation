@@ -4,13 +4,13 @@
 *######### IUD Use vs Anything Else #########*
 *############################################*;
 
-libname library "U:\Dissertation";
-%include "U:\Dissertation\nsfg_CMcWFormats.sas";
+libname library "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\nsfg_CMcWFormats.sas";
 data a; set library.nsfg; run;
 
 ods trace on;
 ods graphics on / reset=index imagename="iud_age";
-ods listing gpath = "U:\Dissertation\sas_graphs_iud";
+ods listing gpath = "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\sas_graphs_iud";
 
 %let class = iud(ref=first) edud(ref="hs degree or ged") 
 	hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
@@ -1012,15 +1012,21 @@ data e_early; set e;
 	drop estimate stderr df tvalue alpha lower upper;
 	if stmtno=1 then earlybirth = "15-19";
 	if stmtno=2 then earlybirth = "20-24";
+	ORR=round(ExpEstimate,.1);
+	LCLR=round(LowerExp,.1);
+	UCLR=round(UpperExp,.1);
 	Label2=substr(Label,1,2);
 	run;
 
 title1 "IUD Use by Age & Age at First Birth";
 proc sgplot data=e_early;
-	band x=Label2 lower=LowerExp upper=UpperExp / group=earlybirth;
-	series x=Label2 y=ExpEstimate / group=earlybirth datalabel=ExpEstimate
-	groupdisplay=overlay;
-	yaxis label="Age";
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+	transparency = .5;
+	series x=Label2 y=ORR / group=earlybirth datalabel=ORR
+	/*groupdisplay=overlay*/;
+	refline 1 / axis=y label="OR=1.0";
+	xaxis label="Age";
 	yaxis label="Odds Ratio"
-	type=log logbase=e logstyle=linear;
+	type=log logbase=e logstyle=linear
+	values=(0.1 0.5 1 2 3 5 7.5 10 15 20);
 	run;
