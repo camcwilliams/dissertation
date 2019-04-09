@@ -4,8 +4,8 @@
 *# IUD vs Anything Else, No Sterilized Individuals in Sample #*
 *############################################*;
 
-libname library "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\Analytic Files";
-%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\Analytic Files\nsfg_CMcWFormats.sas";
+libname library "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\nsfg_CMcWFormats.sas";
 data a; set library.nsfg; run;
 
 *** The following code sets people using sterilization to missing, 
@@ -16,9 +16,6 @@ data a; set a;
 	if bc = 2 then iud = .;
 	if bc = 42 then iud = .;
 	run;
-
-proc freq data=a; tables bc*iud; run;
-proc freq data=a; tables iud; run;
 
 ods trace on;
 ods graphics on / reset=index imagename="iud2_age";
@@ -794,3 +791,6 @@ proc sgplot data=e_iud2;
 	type=log logbase=e logstyle=linear 
 	values=(0.1 0.5 1 2 3 5 7.5 10 15 20);
 	run;
+
+
+
