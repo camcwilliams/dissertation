@@ -4,14 +4,12 @@
 *# IUD vs Anything Else, No Sterilized Individuals in Sample #*
 *############################################*;
 
-libname library "U:\Dissertation";
-%include "U:\Dissertation\nsfg_CMcWFormats.sas";
+libname library "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\Analytic Files";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\Analytic Files\nsfg_CMcWFormats.sas";
 data a; set library.nsfg; run;
 
-*Removing respondents under 23;
-data a; set a;
-	if rscrage < 23 then delete;
-	run;
+*** The following code sets people using sterilization to missing, 
+which is a critical componentof this model;
 
 data a; set a;
 	if bc = 1 then iud = .;
@@ -24,7 +22,7 @@ proc freq data=a; tables iud; run;
 
 ods trace on;
 ods graphics on / reset=index imagename="iud2_age";
-ods listing gpath = "U:\Dissertation\sas_graphs_iud2";
+ods listing gpath = "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\sas_graphs_iud2";
 
 *DESCRIPTIVES FOR iud VS NOT;
 proc freq data=a; tables iud; ods output onewayfreqs=iudfreq; run;
@@ -559,6 +557,7 @@ proc surveylogistic data=a;
 
 * Making graphs with estimates;
 %let estimates = e_iud_final0kid e_iud_final2kid;
+%let estimates = e_iud2_1 e_iud2_2;
 
 *change output estimates so the data labels fit;
 %macro rounding1;
@@ -657,4 +656,141 @@ data iud;
 	yaxis label="Odds Ratio"
 	type=log logbase=e max=20;
 	title1 "IUD Use vs Other Contraceptive Use";
+	run;
+
+
+title 'iud Use, Final Model, parity set to 2 kids, looking @ povlev 1';
+proc surveylogistic data=a;
+	class iud (ref=first) edu (ref="hs degree or ged") 
+	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
+	agebabycat parity (ref="1 BABY") rwant (ref="YES")
+	mard (ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl &full edu*hisprace2 edu*agebabycat hisprace2*agebabycat
+	spl*parity;
+	estimate '23 vs 28' spl [1,23] [-1,28] povlev 6 spl*parity [1, 3 23] [-1,3 28] / exp cl;
+	estimate '24 vs 28' spl [1,24] [-1,28] povlev 6 spl*parity [1, 3 24] [-1,3 28] / exp cl;
+	estimate '25 vs 28' spl [1,25] [-1,28] povlev 6 spl*parity [1, 3 25] [-1,3 28] / exp cl;
+	estimate '26 vs 28' spl [1,26] [-1,28] povlev 6 spl*parity [1, 3 26] [-1,3 28] / exp cl;
+	estimate '27 vs 28' spl [1,27] [-1,28] povlev 6 spl*parity [1, 3 27] [-1,3 28] / exp cl;
+	estimate '28 vs 28' spl [1,28] [-1,28] povlev 6 spl*parity [1, 3 28] [-1,3 28] / exp cl;
+	estimate '29 vs 28' spl [1,29] [-1,28] povlev 6 spl*parity [1, 3 29] [-1,3 28] / exp cl;
+	estimate '30 vs 28' spl [1,30] [-1,28] povlev 6 spl*parity [1, 3 30] [-1,3 28] / exp cl;
+	estimate '31 vs 28' spl [1,31] [-1,28] povlev 6 spl*parity [1, 3 31] [-1,3 28] / exp cl;
+	estimate '32 vs 28' spl [1,32] [-1,28] povlev 6 spl*parity [1, 3 32] [-1,3 28] / exp cl;
+	estimate '33 vs 28' spl [1,33] [-1,28] povlev 6 spl*parity [1, 3 33] [-1,3 28] / exp cl;
+	estimate '34 vs 28' spl [1,34] [-1,28] povlev 6 spl*parity [1, 3 34] [-1,3 28] / exp cl;
+	estimate '35 vs 28' spl [1,35] [-1,28] povlev 6 spl*parity [1, 3 35] [-1,3 28] / exp cl;
+	estimate '36 vs 28' spl [1,36] [-1,28] povlev 6 spl*parity [1, 3 36] [-1,3 28] / exp cl;
+	estimate '37 vs 28' spl [1,37] [-1,28] povlev 6 spl*parity [1, 3 37] [-1,3 28] / exp cl;
+	estimate '38 vs 28' spl [1,38] [-1,28] povlev 6 spl*parity [1, 3 38] [-1,3 28] / exp cl;
+	estimate '39 vs 28' spl [1,39] [-1,28] povlev 6 spl*parity [1, 3 39] [-1,3 28] / exp cl;
+	estimate '40 vs 28' spl [1,40] [-1,28] povlev 6 spl*parity [1, 3 40] [-1,3 28] / exp cl;
+	estimate '41 vs 28' spl [1,41] [-1,28] povlev 6 spl*parity [1, 3 41] [-1,3 28] / exp cl;
+	estimate '42 vs 28' spl [1,42] [-1,28] povlev 6 spl*parity [1, 3 42] [-1,3 28] / exp cl;
+	estimate '43 vs 28' spl [1,43] [-1,28] povlev 6 spl*parity [1, 3 43] [-1,3 28] / exp cl;
+	estimate '44 vs 28' spl [1,44] [-1,28] povlev 6 spl*parity [1, 3 44] [-1,3 28] / exp cl;
+	ods output Estimates=e_iud2_1;
+	run;
+
+	title 'iud Use, Final Model, parity set to 2 kids, looking @ povlev 1';
+proc surveylogistic data=a;
+	class iud (ref=first) edu (ref="hs degree or ged") 
+	hisprace2 (ref="NON-HISPANIC WHITE, SINGLE RACE") povlev (ref="100-199% PL") 
+	agebabycat parity (ref="1 BABY") rwant (ref="YES")
+	mard (ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl &full edu*hisprace2 edu*agebabycat hisprace2*agebabycat
+	spl*parity;
+	estimate '23 vs 28' spl [1,23] [-1,28] povlev 5 spl*parity [1, 3 23] [-1,3 28] / exp cl;
+	estimate '24 vs 28' spl [1,24] [-1,28] povlev 5 spl*parity [1, 3 24] [-1,3 28] / exp cl;
+	estimate '25 vs 28' spl [1,25] [-1,28] povlev 5 spl*parity [1, 3 25] [-1,3 28] / exp cl;
+	estimate '26 vs 28' spl [1,26] [-1,28] povlev 5 spl*parity [1, 3 26] [-1,3 28] / exp cl;
+	estimate '27 vs 28' spl [1,27] [-1,28] povlev 5 spl*parity [1, 3 27] [-1,3 28] / exp cl;
+	estimate '28 vs 28' spl [1,28] [-1,28] povlev 5 spl*parity [1, 3 28] [-1,3 28] / exp cl;
+	estimate '29 vs 28' spl [1,29] [-1,28] povlev 5 spl*parity [1, 3 29] [-1,3 28] / exp cl;
+	estimate '30 vs 28' spl [1,30] [-1,28] povlev 5 spl*parity [1, 3 30] [-1,3 28] / exp cl;
+	estimate '31 vs 28' spl [1,31] [-1,28] povlev 5 spl*parity [1, 3 31] [-1,3 28] / exp cl;
+	estimate '32 vs 28' spl [1,32] [-1,28] povlev 5 spl*parity [1, 3 32] [-1,3 28] / exp cl;
+	estimate '33 vs 28' spl [1,33] [-1,28] povlev 5 spl*parity [1, 3 33] [-1,3 28] / exp cl;
+	estimate '34 vs 28' spl [1,34] [-1,28] povlev 5 spl*parity [1, 3 34] [-1,3 28] / exp cl;
+	estimate '35 vs 28' spl [1,35] [-1,28] povlev 5 spl*parity [1, 3 35] [-1,3 28] / exp cl;
+	estimate '36 vs 28' spl [1,36] [-1,28] povlev 5 spl*parity [1, 3 36] [-1,3 28] / exp cl;
+	estimate '37 vs 28' spl [1,37] [-1,28] povlev 5 spl*parity [1, 3 37] [-1,3 28] / exp cl;
+	estimate '38 vs 28' spl [1,38] [-1,28] povlev 5 spl*parity [1, 3 38] [-1,3 28] / exp cl;
+	estimate '39 vs 28' spl [1,39] [-1,28] povlev 5 spl*parity [1, 3 39] [-1,3 28] / exp cl;
+	estimate '40 vs 28' spl [1,40] [-1,28] povlev 5 spl*parity [1, 3 40] [-1,3 28] / exp cl;
+	estimate '41 vs 28' spl [1,41] [-1,28] povlev 5 spl*parity [1, 3 41] [-1,3 28] / exp cl;
+	estimate '42 vs 28' spl [1,42] [-1,28] povlev 5 spl*parity [1, 3 42] [-1,3 28] / exp cl;
+	estimate '43 vs 28' spl [1,43] [-1,28] povlev 5 spl*parity [1, 3 43] [-1,3 28] / exp cl;
+	estimate '44 vs 28' spl [1,44] [-1,28] povlev 5 spl*parity [1, 3 44] [-1,3 28] / exp cl;
+	ods output Estimates=e_iud2_2;
+	run;
+
+
+************************************
+*** FINAL MODEL WITH INTERACTION ***
+************************************;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 15-19 vs >24/0" intercept 0 spl [0,&x] earlybirth [1,1] [-1,3] 
+		spl*earlybirth [1,1 &x] [-1,3 &x],
+	%end;
+	"44, 15-19 vs >24/0" intercept 0 spl [0,44] earlybirth [1,1] [-1,3] 
+		spl*earlybirth [1,1 44] [-1,3 44]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 20-24 vs >24/0" intercept 0 spl [0,&x] earlybirth [1,2] [-1,3] 
+		spl*earlybirth [1,2 &x] [-1,3 &x],
+	%end;
+	"44, 20-24 vs >24/0" intercept 0 spl [0,44] earlybirth [1,2] [-1,3] 
+		spl*earlybirth [1,2 44] [-1,3 44]
+	%mend;
+
+proc surveylogistic data=a;
+	class iud(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl;
+	estimate %earlytwenties / exp cl;
+	ods output Estimates=e;
+	run;
+
+data e_iud2; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	ORR=round(ExpEstimate,.1);
+	LCLR=round(LowerExp,.1);
+	UCLR=round(UpperExp,.1);
+	Label2=substr(Label,1,2);
+	run;
+
+title1 "IUD Use by Age & Age at First Birth";
+title2 "Among Women Not Using Tubal or Vasectomy";
+proc sgplot data=e_iud2;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+	transparency = .5;
+	series x=Label2 y=ORR / group=earlybirth datalabel=ORR
+	/*groupdisplay=overlay*/;
+	refline 1 / axis=y label="OR=1.0";
+	xaxis label="Age";
+	yaxis label="Odds Ratio"
+	type=log logbase=e logstyle=linear 
+	values=(0.1 0.5 1 2 3 5 7.5 10 15 20);
 	run;
