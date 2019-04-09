@@ -10,7 +10,7 @@ data a; set library.nsfg; run;
 
 ods trace on;
 ods graphics on / reset=index imagename="tub_age";
-ods listing gpath = "U:\Dissertation\sas_graphs_tub";
+ods listing gpath = "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\sas_graphs_tub";
 
 *DESCRIPTIVES FOR tub VS NOT;
 proc freq data=a; tables tub; ods output onewayfreqs=tubfreq; run;
@@ -1090,29 +1090,6 @@ proc surveylogistic data=a;
 
 				*estimates still ginormous;
 
-** I'm going to try creating a variable about 'early first birth' to see if that
-	works;
-
-data a; set a;
-	if agebabycat = 0 then earlybirth = 0;
-	if agebabycat = 1 then earlybirth = 1;
-	if agebabycat = 2 then earlybirth = 2;
-	if agebabycat >= 3 then earlybirth = 3;
-	label earlybirth = "4-cat early childbearing";
-	run;
-
-	proc format;
-		value earlybirth
-			0 = "no births"
-			1 = "15-19"
-			2 = "20-24"
-			3 = ">24";
-		run;
-
-	data a; set a;
-		format earlybirth earlybirth.;
-		run;
-
 proc surveylogistic data=a;
 	class &class / param=ref;
 	weight weightvar;
@@ -1331,8 +1308,30 @@ proc surveylogistic data=a;
 
 ** Now trying it after flipping the reference group for tubal, since values over
 	1 are more intuitive to me;
+
+* First trying just spline estimates;
 proc surveylogistic data=a;
 	class tub(ref="using tubal ligation") edud(ref="hs degree or ged") 
+	hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=effect;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tub = spl edud hisprace2 pov parityd rwant mard 
+	curr_ins spl*edud;
+	estimate "30, bachelors vs HS" intercept 1 spl [1,30] / exp cl e;
+	estimate "40, bachelors vs HS" intercept 1 spl [1,40] / exp cl;
+	ods output ClassLevelInfo = cli;
+	run;
+
+	proc print data=cli; run;
+	*Reference group for education is HS degree or GED;
+
+proc surveylogistic data=a;
+	class tub(ref=first) edud(ref="hs degree or ged") 
 	hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
 	parityd(ref="0") rwant(ref="YES")
 	mard(ref="never been married") curr_ins / param=ref;
@@ -1343,8 +1342,158 @@ proc surveylogistic data=a;
 								knotmethod=percentiles(5) details);
 	model tub = spl edud hisprace2 pov parityd rwant mard 
 	curr_ins spl*edud;
-	estimate "30, bachelors vs HS" intercept 1 spl [1,30] edud [1,1] [-1,2] spl*edud [1,1 30] [-1,2 30] / exp cl;
-	estimate "40, bachelors vs HS" intercept 1 spl [1,40] edud [1,1] [-1,2] spl*edud [1,1 40] [-1,2 40]/ exp cl;
+	estimate "30, bachelors vs HS" intercept 0 spl [0,30] edud [1,1] [-1,2] spl*edud [1,1 30] [-1,2 30] / e exp cl;
+	estimate "40, bachelors vs HS" intercept 0 spl [0,40] edud [1,1] [-1,2] spl*edud [1,1 40] [-1,2 40]  / exp cl;
+	ods output classlevelinfo=cli3;
 	run;
 
-	*Yeah, these are huge;
+*############ ^^^ THIS IS THE CORRECT SYNTAX FOR INTERACTIONS ##############;
+
+	proc print data=cli3; run;
+
+** Hoping I have this figured out now;
+
+** Now trying with age at first birth interaction;
+proc surveylogistic data=a;
+	class tub(ref=first) edud(ref="hs degree or ged") 
+	agebabycat hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tub = spl edud agebabycat hisprace2 pov parityd rwant mard
+	curr_ins spl*agebabycat;
+	estimate "30, 15-19 vs 20-24" intercept 0 spl [0,30] agebabycat [1,1] [-1,2] 
+	spl*agebabycat [1,1 30] [-1,2 30] / e exp cl;
+	estimate "40, 15-19 vs 20-24" intercept 0 spl [0,40] agebabycat [1,1] [-1,2] 
+	spl*agebabycat [1,1 40] [-1,2 40]  / exp cl;
+	ods output ClassLevelInfo=cli_agebabycat;
+	run;
+
+	proc print data=cli_agebabycat; run;
+
+	proc export data=cli_agebabycat
+		outfile="U:\Dissertation\xls_graphs\cli_agebabycat.xlsx"
+		dbms=xlsx
+		replace;
+		run;
+
+**The age at first birth interaction worked well above, but now I'm going to 
+	test it with the categories SAS has set to 0;
+
+proc surveylogistic data=a;
+	class tub(ref=first) edud(ref="hs degree or ged") 
+	agebabycat hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tub = spl edud agebabycat hisprace2 pov parityd rwant mard
+	curr_ins spl*agebabycat;
+	estimate "40, 35-39 vs 0" intercept 0 spl [0,40] agebabycat [1,4] [-1,1] 
+	spl*agebabycat [1,4 40] [-1,1 40] / exp cl;
+	estimate "44, 35-39 vs 0" intercept 0 spl [0,44] agebabycat [1,4] [-1,1] 
+	spl*agebabycat [1,4 44] [-1,1 44] / exp cl;
+	run;
+
+	*I'm getting a lot of non-estimable results or huge estimates and confidence
+	intervals;
+
+	*Since what I'm really interested in is whether a person had an early first
+	birth, I created an 'earlybirth' group, trying here;
+
+proc surveylogistic data=a;
+	class tub(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tub = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate "40, 15-19 vs older" intercept 0 spl [0,40] earlybirth [1,1] [-1,3] 
+	spl*earlybirth [1,1 40] [-1,3 40] / e exp cl;
+	estimate "44, 15-19 vs older" intercept 0 spl [0,44] earlybirth [1,1] [-1,3] 
+	spl*earlybirth [1,1 44] [-1,3 44] / exp cl;
+	ods output ClassLevelInfo=cli_earlybirth;
+	run;
+
+	*Hot damn, it worked!;
+
+proc export data=cli_earlybirth
+		outfile="U:\Dissertation\xls_graphs\cli_earlybirth.xlsx"
+		dbms=xlsx
+		replace;
+		run;
+
+	proc freq data=a; tables earlybirth; run;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 15-19 vs >24/0" intercept 0 spl [0,&x] earlybirth [1,1] [-1,3] 
+		spl*earlybirth [1,1 &x] [-1,3 &x],
+	%end;
+	"44, 15-19 vs >24/0" intercept 0 spl [0,44] earlybirth [1,1] [-1,3] 
+		spl*earlybirth [1,1 44] [-1,3 44]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 20-24 vs >24/0" intercept 0 spl [0,&x] earlybirth [1,2] [-1,3] 
+		spl*earlybirth [1,2 &x] [-1,3 &x],
+	%end;
+	"44, 20-24 vs >24/0" intercept 0 spl [0,44] earlybirth [1,2] [-1,3] 
+		spl*earlybirth [1,2 44] [-1,3 44]
+	%mend;
+
+proc surveylogistic data=a;
+	class tub(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tub = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl;
+	estimate %earlytwenties / exp cl;
+	ods output Estimates=e;
+	run;
+
+	/*proc print data=e; run;*/
+
+
+data e_early; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	ORR=round(ExpEstimate,.1);
+	LCLR=round(LowerExp,.1);
+	UCLR=round(UpperExp,.1);
+	Label2=substr(Label,1,2);
+	run;
+
+title1 "Tubal Ligation Use by Age & Age at First Birth";
+proc sgplot data=e_early;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+	transparency = .5;
+	series x=Label2 y=ORR / group=earlybirth datalabel=ORR
+	/*groupdisplay=overlay*/;
+	refline 1 / axis=y label="OR=1.0";
+	xaxis label="Age";
+	yaxis label="Odds Ratio"
+	type=log logbase=e logstyle=linear
+	values=(0.1 0.5 1 2 3 5 7.5 10 15 20);
+	run;
