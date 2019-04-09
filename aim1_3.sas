@@ -1497,3 +1497,55 @@ proc sgplot data=e_early;
 	type=log logbase=e logstyle=linear
 	values=(0.1 0.5 1 2 3 5 7.5 10 15 20);
 	run;
+
+*********
+** 	Running the above model with vasectomy users removed to assess whether variation in tubal use by age
+	is due to vasectomy increasing among affluent women.
+*********;
+
+data a; set a;
+	if bc=2 then tub=.;
+	run;
+
+proc surveylogistic data=a;
+	class tub(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tub = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl;
+	estimate %earlytwenties / exp cl;
+	ods output Estimates=e_tubnovas;
+	run;
+
+data e_tubnovas; set e_tubnovas;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	ORR=round(ExpEstimate,.1);
+	LCLR=round(LowerExp,.1);
+	UCLR=round(UpperExp,.1);
+	Label2=substr(Label,1,2);
+	run;
+
+title1 "Tubal Ligation Use by Age & Age at First Birth";
+title2 "Vasectomies Removed";
+proc sgplot data=e_tubnovas;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+	transparency = .5;
+	series x=Label2 y=ORR / group=earlybirth datalabel=ORR
+	/*groupdisplay=overlay*/;
+	refline 1 / axis=y label="OR=1.0";
+	xaxis label="Age";
+	yaxis label="Odds Ratio"
+	type=log logbase=e logstyle=linear
+	values=(0.1 0.5 1 2 3 5 7.5 10 15 20);
+	run;
+
+*** VERY interesting, does not appear to change the shape;
