@@ -934,6 +934,51 @@ proc surveylogistic data=a;
 	class doc;
 	model doc=rscrage; run;
 
+*Final model with main effects only;
+
+%macro main;
+%do x=23 %to 43 %by 1;
+	"&x" intercept 1 spl [1,&x],
+	%end;
+	"44, 15-19 vs >24/0" intercept 1 spl [0,44]
+	%mend;
+
+
+proc surveylogistic data=a;
+	class doc edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model doc = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins;
+	estimate %main / exp cl;
+	ods output Estimates=e3;
+	run;
+
+data e_main; set e3;
+	drop estimate stderr df tvalue alpha lower upper;
+	Label2=Label;
+	run;
+
+title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
+title2 "By Age";
+proc sgplot data=e_main;
+	band x=Label2 lower=LowerExp upper=UpperExp /
+	transparency=.5;
+	series x=Label2 y=ExpEstimate / datalabel=ExpEstimate
+	/*groupdisplay=overlay*/;
+	refline 1 / axis=y label="OR=1.0";
+	xaxis label="Age";
+	yaxis label="Odds Ratio"
+	type=log logbase=e logstyle=linear values=(0.1 0.5 1 2 3 5);
+	run;
+
+
 ************************************
 *** FINAL MODEL WITH INTERACTION ***
 ************************************;
@@ -999,16 +1044,17 @@ proc sgplot data=e_doc;
 *Fill attributes:
 https://documentation.sas.com/?docsetId=grstatproc&docsetTarget=p1jzx3nmuupe74n1qy54onbwjoem.htm&docsetVersion=9.4&locale=en;
 
-*Since I know I'll want to add this later, 
-	here is the model with main effects only;
+*********
+** 	Running the above model with sterilization users removed to assess the impact of sterilizations in
+	the comparison group on variation by age.
+*********;
 
-%macro main;
-%do x=23 %to 43 %by 1;
-	"&x" intercept 1 spl [1,&x],
-	%end;
-	"44, 15-19 vs >24/0" intercept 1 spl [0,44]
-	%mend;
+*Removes sterilization users - ;
 
+data a; set a;
+	if bc = 1 then doc = .;
+	if bc = 2 then doc = .;
+	run;
 
 proc surveylogistic data=a;
 	class doc edud(ref="hs degree or ged") 
@@ -1021,25 +1067,35 @@ proc surveylogistic data=a;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
 	model doc = spl edud earlybirth hisprace2 pov parityd rwant mard
-	curr_ins;
-	estimate %main / exp cl;
-	ods output Estimates=e3;
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl;
+	estimate %earlytwenties / exp cl;
+	ods output Estimates=e_docnoster;
 	run;
 
-data e_main; set e3;
+data e_docnoster; set e_docnoster;
 	drop estimate stderr df tvalue alpha lower upper;
-	Label2=Label;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	ORR=round(ExpEstimate,.01);
+	LCLR=round(LowerExp,.01);
+	UCLR=round(UpperExp,.01);
+	Label2=substr(Label,1,2);
 	run;
 
 title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
-title2 "By Age";
-proc sgplot data=e_main;
-	band x=Label2 lower=LowerExp upper=UpperExp /
+title2 "By Age & Age at First Birth";
+title3 "Sterilized Individuals Removed";
+proc sgplot data=e_docnoster;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth 
 	transparency=.5;
-	series x=Label2 y=ExpEstimate / datalabel=ExpEstimate
+	series x=Label2 y=ORR / group=earlybirth datalabel=ORR
 	/*groupdisplay=overlay*/;
 	refline 1 / axis=y label="OR=1.0";
 	xaxis label="Age";
 	yaxis label="Odds Ratio"
 	type=log logbase=e logstyle=linear values=(0.1 0.5 1 2 3 5);
 	run;
+
+*Wowza, that changes things considerably;
+
