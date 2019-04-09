@@ -22,7 +22,7 @@ data a; set a;
 
 ods trace on;
 ods graphics on / reset=index imagename="doc_age";
-ods listing gpath = "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\Analytic Files\sas_graphs_doc";
+ods listing gpath = "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\sas_graphs_doc";
 
 proc freq data=a; tables bc; ods output onewayfreqs=bcfreq; run;
 proc print data=bcfreq; format bc 3.1; run;
@@ -977,15 +977,18 @@ data e_doc; set e2;
 	drop estimate stderr df tvalue alpha lower upper;
 	if stmtno=1 then earlybirth = "15-19";
 	if stmtno=2 then earlybirth = "20-24";
+	ORR=round(ExpEstimate,.01);
+	LCLR=round(LowerExp,.01);
+	UCLR=round(UpperExp,.01);
 	Label2=substr(Label,1,2);
 	run;
 
 title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
 title2 "By Age & Age at First Birth";
 proc sgplot data=e_doc;
-	band x=Label2 lower=LowerExp upper=UpperExp / group=earlybirth 
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth 
 	transparency=.5;
-	series x=Label2 y=ExpEstimate / group=earlybirth datalabel=ExpEstimate
+	series x=Label2 y=ORR / group=earlybirth datalabel=ORR
 	/*groupdisplay=overlay*/;
 	refline 1 / axis=y label="OR=1.0";
 	xaxis label="Age";
