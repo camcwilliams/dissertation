@@ -161,6 +161,17 @@ proc freq data=a; tables edud*bcc; run;
 		run;
 	title;
 
+*Just checking strata and panel variables as well for kicks;
+	title "Strata";
+	proc sgplot data=a;
+		histogram stratvar / binstart=250 showbins;
+		run;
+
+	title;
+	proc sgplot data=a;
+		histogram panelvar;
+		run;
+
 
 *########### IMPUTED POVERTY ###########;
 
