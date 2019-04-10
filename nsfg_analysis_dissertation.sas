@@ -8,8 +8,8 @@
 on aims 1 and 2. In order to stay organized, I eventually
 created separate programs for each model. This file is
 now used specifically for doing general descriptives for aim 1.
-As of 4/7/19, I am doing as much cleaning as possible as I 
-re-run descriptives for writing aim 1 methods;
+As of 4/7/19, I am doing as much cleaning of this program as possible 
+as I re-run descriptives for writing aim 1 methods;
 *##############################################################;
 
 *CREATING TEMPORARY DATASET FROM PERMANENT;
@@ -136,12 +136,14 @@ data test; set ct_bcc_agebabycat;
 	run;
 proc print data=test; where bcc=1; run;
 
+
 proc sort data=ct_bcc_agebabycat; by bcc; run;
+proc print data=ct_bcc_agebabycat; run;
 
 proc freq data=a; tables bcc*edud; ods output crosstabfreqs=c; run;
-proc print data=c; run;*/
+proc print data=c; run;
 
-proc freq data=a; tables edud*bcc; run;
+proc freq data=a; tables edud*bcc; run;*/
 
 
 *########### SAMPLING WEIGHTS ###########;
@@ -232,6 +234,14 @@ proc freq data=a; tables edud*bcc; run;
 	proc surveylogistic data=a;
 		class edu (ref="hs degree or ged") hisprace2;
 		model poverty_i = rscrage edu hisprace2;
+		run;
+
+	title 'imputed poverty regressed on final model covariates';
+	%let iconfounders = edud hisprace2 agebabycat parityd rwant 
+	mard curr_ins;
+	proc surveylogistic data=a;
+		class &class;
+		model poverty_i = &iconfounders;
 		run;
 
 
