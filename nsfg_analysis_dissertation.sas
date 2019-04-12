@@ -115,7 +115,7 @@ proc sort data=a; by bcc; run;
 *I wanted to write code to create a nice table 1 but I'm at the critical 
 point where hard coding would have taken significantly less time, so commenting
 out the code to automate and going with several proc freqs;
-/*%let confounders = edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
+%let confounders = edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
 
 %macro tableone;
 	%let i=1;
@@ -132,8 +132,37 @@ proc freq data=a;
 
 proc print data=ct_bcc_agebabycat; run;
 data test; set ct_bcc_agebabycat;
+	if _type_ = 10 then delete;
 	drop _type_ _table_ table;
 	run;
+
+data test; set test;
+	bc_group = bcc;
+	if bcc = . then bc_group = 5;
+	if agebabycat = . then agebabycat = 8;
+	if agebabycat = 8 and frequency = 8148 then delete;
+	run;
+
+proc print data=test; run;
+
+proc transpose data=test out=testtranspose;
+	by agebabycat;
+	id bc_group;
+	run;
+proc print data=testtranspose; run;
+
+data testtranspose; set testtranspose;
+	if agebabycat = 8 and _name_ = "RowPercent" then delete;
+	if agebabycat = 8 and _name_ = "ColPercent" then delete;
+	if agebabycat = 8 and _name_ = "Percent" then _name_ = "RowPercent";
+	run; 
+
+data testtranspose; set testtranspose;
+	if _name_ ne "RowPercent" then delete;
+	run;
+
+proc freq data=a; tables agebabycat*bcc / missing; run;
+
 proc print data=test; where bcc=1; run;
 
 
