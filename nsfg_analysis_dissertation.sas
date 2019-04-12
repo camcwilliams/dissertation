@@ -266,11 +266,23 @@ data %scan(&confounders,&i); set %scan(&confounders,&i);
 	if %scan(&confounders,&i) = 10 and _name_ = "Percent" then _name_ = "RowPercent";
 	run;
 
-proc print data=%scan(&confounders,&i); run;
-
 *deleting unnecessary rows;
 data %scan(&confounders,&i); set %scan(&confounders,&i);
 	if _name_ ne "RowPercent" then delete;
+	run;
+
+*renaming each variable column so they can be appended;
+data %scan(&confounders,&i); set %scan(&confounders,&i);
+	if %scan(&confounders,&i) = 1 then covariate = "%scan(&confounders,&i)_1";
+	if %scan(&confounders,&i) = 2 then covariate = "%scan(&confounders,&i)_2";
+	if %scan(&confounders,&i) = 3 then covariate = "%scan(&confounders,&i)_3";
+	if %scan(&confounders,&i) = 4 then covariate = "%scan(&confounders,&i)_4";
+	if %scan(&confounders,&i) = 5 then covariate = "%scan(&confounders,&i)_5";
+	if %scan(&confounders,&i) = 6 then covariate = "%scan(&confounders,&i)_6";
+	if %scan(&confounders,&i) = 7 then covariate = "%scan(&confounders,&i)_7";
+	if %scan(&confounders,&i) = 8 then covariate = "%scan(&confounders,&i)_8";
+	if %scan(&confounders,&i) = 9 then covariate = "%scan(&confounders,&i)_9";
+	if %scan(&confounders,&i) = 10 then covariate = "%scan(&confounders,&i)_0";
 	run;
 
 *checking;
@@ -284,6 +296,23 @@ proc freq data=a; tables %scan(&confounders,&i)*bcc / missing; run;
 	%tableonetwo;
 
 proc print data=pov; run;
+
+data test4; set pov;
+	if pov = 1 then covariate = "pov_1";
+	if pov = 2 then covariate = "pov_2";
+	if pov = 3 then covariate = "pov_3";
+	if pov = 4 then covariate = "pov_4";
+	if pov = 5 then covariate = "pov_5";
+	if pov = 6 then covariate = "pov_6";
+	if pov = 7 then covariate = "pov_7";
+	if pov = 8 then covariate = "pov_8";
+	if pov = 9 then covariate = "pov_9";
+	if pov = 10 then covariate = "pov_0";
+	run;
+
+	proc print data=test4; run;
+
+	proc print data=pov; format _all_; run;
 
 *there is some kind of problem with pov that needs to be corrected,
 otherwise things are looking good!;
