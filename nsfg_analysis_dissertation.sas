@@ -112,11 +112,13 @@ models;
 proc freq data=a; tables bcc; run;
 proc sort data=a; by bcc; run;
 
-*I wanted to write code to create a nice table 1 but I'm at the critical 
-point where hard coding would have taken significantly less time, so commenting
-out the code to automate and going with several proc freqs;
+*One last attempt at creating table 1 in SAS rather than doing a lot of
+outputting to and messing around in excel;
+
+*first creating macro variable with all my variables of interest;
 %let confounders = edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
 
+*creating frequency for each variable with 4-cat outcome;
 %macro tableone;
 	%let i=1;
 	%do %until(not %length(%scan(&confounders,&i)));
@@ -130,11 +132,16 @@ proc freq data=a;
 
 	%tableone;
 
+*testing reformatting on one dataset, agebabycat*bcc;
+*first deleting some extraneous variables so the dataset is easier to comprehend;
+
 proc print data=ct_bcc_agebabycat; run;
 data test; set ct_bcc_agebabycat;
 	if _type_ = 10 then delete;
 	drop _type_ _table_ table;
 	run;
+
+*removing a couple of unnecessary rows;
 
 data test; set test;
 	bc_group = bcc;
@@ -145,11 +152,15 @@ data test; set test;
 
 proc print data=test; run;
 
+*transposing dataset to make the 4-cat outcome the columns;
+
 proc transpose data=test out=testtranspose;
 	by agebabycat;
 	id bc_group;
 	run;
 proc print data=testtranspose; run;
+
+*renaming some rows to make the 'total' column work;
 
 data testtranspose; set testtranspose;
 	if agebabycat = 8 and _name_ = "RowPercent" then delete;
@@ -157,23 +168,134 @@ data testtranspose; set testtranspose;
 	if agebabycat = 8 and _name_ = "Percent" then _name_ = "RowPercent";
 	run; 
 
+*deleting unnecessary rows;
+
 data testtranspose; set testtranspose;
 	if _name_ ne "RowPercent" then delete;
 	run;
 
+*checking numbers against proc freq to confirm no coding mistakes;
+
+proc print data=testtranspose; run;
 proc freq data=a; tables agebabycat*bcc / missing; run;
 
-proc print data=test; where bcc=1; run;
+	*now trying to put all of the variables together to process into full
+	table 1;
+	/*actually you need to process them first, there are different columns
+	for each variable, so commenting this out;
+	data tableone;
+		set ct_bcc_agebabycat ct_bcc_curr_ins ct_bcc_edud ct_bcc_hisprace2
+			ct_bcc_mard ct_bcc_parityd ct_bcc_pov ct_bcc_rwant;
+		run;
 
 
-proc sort data=ct_bcc_agebabycat; by bcc; run;
-proc print data=ct_bcc_agebabycat; run;
+	proc print data=tableone; run;*/
 
-proc freq data=a; tables bcc*edud; ods output crosstabfreqs=c; run;
-proc print data=c; run;
+*now trying to create processing for current insurance variable that can be made
+into a macro to do the rest of the datasets;
 
-proc freq data=a; tables edud*bcc; run;*/
+proc print data=ct_bcc_curr_ins; run;
 
+*removing unnecessary rows and columns, creating new outcome variable to make
+transposing easier;
+data curr_ins; set ct_bcc_curr_ins;
+	if _type_ = 10 then delete;
+	drop _table_ table;
+	bc_group = bcc;
+	if bcc = . then bc_group = 5;
+	if curr_ins = . then curr_ins = 10;
+	if frequency = 8148 then delete;
+	run;
+
+proc print data=curr_ins; run;
+
+*transposing;
+proc transpose data=curr_ins out=curr_ins;
+	by curr_ins;
+	id bc_group;
+	run;
+
+proc print data=curr_ins; run;
+
+*renaming rows to make a 'total' row;
+data curr_ins; set curr_ins;
+	if curr_ins = 10 and _name_ = "RowPercent" then delete;
+	if curr_ins = 10 and _name_ = "ColPercent" then delete;
+	if curr_ins = 10 and _name_ = "Percent" then _name_ = "RowPercent";
+	run;
+
+*deleting unnecessary rows;
+data curr_ins; set curr_ins;
+	if _name_ ne "RowPercent" then delete;
+	run;
+
+*checking;
+proc print data=curr_ins; run;
+proc freq data=a; tables curr_ins*bcc / missing; run;
+
+*NOW creating a macro;
+
+%macro tableonetwo;
+	%let i=1;
+	%do %until(not %length(%scan(&confounders,&i)));
+*removing unnecessary rows and columns, creating new outcome variable to make
+transposing easier;
+data %scan(&confounders,&i); set ct_bcc_%scan(&confounders,&i);
+	if _type_ = 10 then delete;
+	drop _table_ table;
+	bc_group = bcc;
+	if bcc = . then bc_group = 5;
+	if %scan(&confounders,&i) = . then %scan(&confounders,&i) = 10;
+	if frequency = 8148 then delete;
+	run;
+
+proc print data=%scan(&confounders,&i); run;
+
+*transposing;
+proc transpose data=%scan(&confounders,&i) out=%scan(&confounders,&i);
+	by %scan(&confounders,&i);
+	id bc_group;
+	run;
+
+proc print data=%scan(&confounders,&i); run;
+
+*renaming rows to make a 'total' row;
+data %scan(&confounders,&i); set %scan(&confounders,&i);
+	if %scan(&confounders,&i) = 10 and _name_ = "RowPercent" then delete;
+	if %scan(&confounders,&i) = 10 and _name_ = "ColPercent" then delete;
+	if %scan(&confounders,&i) = 10 and _name_ = "Percent" then _name_ = "RowPercent";
+	run;
+
+proc print data=%scan(&confounders,&i); run;
+
+*deleting unnecessary rows;
+data %scan(&confounders,&i); set %scan(&confounders,&i);
+	if _name_ ne "RowPercent" then delete;
+	run;
+
+*checking;
+proc print data=%scan(&confounders,&i); run;
+proc freq data=a; tables %scan(&confounders,&i)*bcc / missing; run;
+
+	%let i=%eval(&i+1);
+	%end;
+	%mend tableonetwo;
+
+	%tableonetwo;
+
+proc print data=pov; run;
+
+*there is some kind of problem with pov that needs to be corrected,
+otherwise things are looking good!;
+
+	/*probing pov;
+	proc freq data=a; tables pov / missing; run;
+
+	proc print data=a; where pov=.; var constat1 bcc poverty; format _all_; run;
+	proc freq data=a; tables pov*poverty / missing; run;
+
+	*oh for goodness sake, it was a stupid </> coding mistake in my variable
+	treatment program. fixed there, now rerunning the above code;*/
 
 *########### SAMPLING WEIGHTS ###########;
 
