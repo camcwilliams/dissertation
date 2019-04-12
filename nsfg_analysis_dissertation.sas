@@ -249,15 +249,11 @@ data %scan(&confounders,&i); set ct_bcc_%scan(&confounders,&i);
 	if frequency = 8148 then delete;
 	run;
 
-proc print data=%scan(&confounders,&i); run;
-
 *transposing;
 proc transpose data=%scan(&confounders,&i) out=%scan(&confounders,&i);
 	by %scan(&confounders,&i);
 	id bc_group;
 	run;
-
-proc print data=%scan(&confounders,&i); run;
 
 *renaming rows to make a 'total' row;
 data %scan(&confounders,&i); set %scan(&confounders,&i);
@@ -273,21 +269,18 @@ data %scan(&confounders,&i); set %scan(&confounders,&i);
 
 *renaming each variable column so they can be appended;
 data %scan(&confounders,&i); set %scan(&confounders,&i);
-	if %scan(&confounders,&i) = 1 then covariate = "%scan(&confounders,&i)_1";
-	if %scan(&confounders,&i) = 2 then covariate = "%scan(&confounders,&i)_2";
-	if %scan(&confounders,&i) = 3 then covariate = "%scan(&confounders,&i)_3";
-	if %scan(&confounders,&i) = 4 then covariate = "%scan(&confounders,&i)_4";
-	if %scan(&confounders,&i) = 5 then covariate = "%scan(&confounders,&i)_5";
-	if %scan(&confounders,&i) = 6 then covariate = "%scan(&confounders,&i)_6";
-	if %scan(&confounders,&i) = 7 then covariate = "%scan(&confounders,&i)_7";
-	if %scan(&confounders,&i) = 8 then covariate = "%scan(&confounders,&i)_8";
-	if %scan(&confounders,&i) = 9 then covariate = "%scan(&confounders,&i)_9";
-	if %scan(&confounders,&i) = 10 then covariate = "%scan(&confounders,&i)_0";
+	if %scan(&confounders,&i) = 0 then covariate = "0%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 1 then covariate = "1%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 2 then covariate = "2%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 3 then covariate = "3%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 4 then covariate = "4%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 5 then covariate = "5%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 6 then covariate = "6%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 7 then covariate = "7%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 8 then covariate = "8%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 9 then covariate = "9%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 10 then covariate = "10%scan(&confounders,&i)";
 	run;
-
-*checking;
-proc print data=%scan(&confounders,&i); run;
-proc freq data=a; tables %scan(&confounders,&i)*bcc / missing; run;
 
 	%let i=%eval(&i+1);
 	%end;
@@ -295,24 +288,21 @@ proc freq data=a; tables %scan(&confounders,&i)*bcc / missing; run;
 
 	%tableonetwo;
 
-proc print data=pov; run;
-
-data test4; set pov;
-	if pov = 1 then covariate = "pov_1";
-	if pov = 2 then covariate = "pov_2";
-	if pov = 3 then covariate = "pov_3";
-	if pov = 4 then covariate = "pov_4";
-	if pov = 5 then covariate = "pov_5";
-	if pov = 6 then covariate = "pov_6";
-	if pov = 7 then covariate = "pov_7";
-	if pov = 8 then covariate = "pov_8";
-	if pov = 9 then covariate = "pov_9";
-	if pov = 10 then covariate = "pov_0";
+*concatenating datasets;
+data tableone;
+	set edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
 	run;
 
-	proc print data=test4; run;
+data tableone; set tableone;
+	drop edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
+	run;
 
-	proc print data=pov; format _all_; run;
+	proc print data=tableone; run;
+
+proc export data=tableone
+	dbms = xlsx
+	outfile="C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\xls_graphs\aim1table1final.xlsx";
+	run;
 
 *there is some kind of problem with pov that needs to be corrected,
 otherwise things are looking good!;
@@ -325,6 +315,24 @@ otherwise things are looking good!;
 
 	*oh for goodness sake, it was a stupid </> coding mistake in my variable
 	treatment program. fixed there, now rerunning the above code;*/
+
+	/*testing renames;
+	data test4; set pov;
+		if pov = 1 then covariate = "pov_1";
+		if pov = 2 then covariate = "pov_2";
+		if pov = 3 then covariate = "pov_3";
+		if pov = 4 then covariate = "pov_4";
+		if pov = 5 then covariate = "pov_5";
+		if pov = 6 then covariate = "pov_6";
+		if pov = 7 then covariate = "pov_7";
+		if pov = 8 then covariate = "pov_8";
+		if pov = 9 then covariate = "pov_9";
+		if pov = 10 then covariate = "pov_0";
+		run;
+
+		proc print data=test4; run;
+
+		proc print data=pov; format _all_; run;*/
 
 *########### SAMPLING WEIGHTS ###########;
 
