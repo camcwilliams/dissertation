@@ -248,13 +248,20 @@ data curr_ins; set curr_ins;
 
 	proc print data=test; run;
 
-data test; set curr_ins;
+data test (rename = (_5=NARUIP _4=sterilization _3=reversdoc
+	_2=reversnodoc _1=nouse)); set curr_ins;
 	drop count_5 count_4 count_3 count_2 count_1;
-	rename = (_5=NARUIP _4=sterilization _3=reversdoc
-	_2=reversnodoc _1=nouse);
+	if _name_ = "Frequency" then delete;
 	run;
 
-	proc print data=test; run;
+data test; 
+	format covariate curr_ins count5 naruip count4 sterilization 
+	count3 reversdoc count2 reversnodoc count1 nouse;
+	set test;
+	drop _name_;
+	run;
+
+proc freq data=a; tables curr_ins*bcc / missing; run;
 
 
 *checking;
