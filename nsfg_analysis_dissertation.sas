@@ -282,6 +282,7 @@ data %scan(&confounders,&i); set ct_bcc_%scan(&confounders,&i);
 	if _type_ = 10 then delete;
 	drop _table_ table;
 	bc_group = bcc;
+	format bc_group bcc.;
 	if bcc = . then bc_group = 5;
 	if %scan(&confounders,&i) = . then %scan(&confounders,&i) = 10;
 	if frequency = 8148 then delete;
@@ -343,7 +344,7 @@ data %scan(&confounders,&i); set %scan(&confounders,&i);
 	run;
 
 data %scan(&confounders,&i); 
-	format covariate curr_ins count5 naruip count4 sterilization 
+	format covariate count5 naruip count4 sterilization 
 	count3 reversdoc count2 reversnodoc count1 nouse;
 	set %scan(&confounders,&i);
 	drop _name_;
@@ -354,6 +355,13 @@ data %scan(&confounders,&i);
 	%mend tableonetwo;
 
 	%tableonetwo;
+
+	*** ^^ NEED TO FIX THE ORDERING, OTHERWISE THE MACRO IS GOOD (4/13/19);
+
+	proc print data=mard; run;
+	proc print data=curr_ins; run;
+
+	proc print data=ct_bcc_curr_ins; run;
 
 *concatenating datasets;
 data tableone;
