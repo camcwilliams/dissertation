@@ -207,7 +207,7 @@ data curr_ins; set ct_bcc_curr_ins;
 	if frequency = 8148 then delete;
 	run;
 
-proc print data=curr_ins; run;
+/*proc print data=curr_ins; run;*/
 
 *transposing;
 proc transpose data=curr_ins out=curr_ins;
@@ -215,7 +215,7 @@ proc transpose data=curr_ins out=curr_ins;
 	id bc_group;
 	run;
 
-proc print data=curr_ins; run;
+/*proc print data=curr_ins; run;*/
 
 *renaming rows to make a 'total' row;
 data curr_ins; set curr_ins;
@@ -226,8 +226,36 @@ data curr_ins; set curr_ins;
 
 *deleting unnecessary rows;
 data curr_ins; set curr_ins;
-	if _name_ ne "RowPercent" then delete;
+	if _name_ ne "RowPercent" and _name_ ne "Frequency" then delete;
+	if _name_ = "Frequency" then Count_5=_5;
+	if _name_ = "Frequency" then Count_4=_4;
+	if _name_ = "Frequency" then Count_3=_3;
+	if _name_ = "Frequency" then Count_2=_2;
+	if _name_ = "Frequency" then Count_1=_1;
 	run;
+
+	proc print data=curr_ins; run;
+
+data curr_ins; set curr_ins;
+	retain Count5 Count4 Count3 Count2 Count1;
+	output;
+	Count5 = Count_5;
+	Count4 = Count_4;
+	Count3 = Count_3;
+	Count2 = Count_2;
+	Count1 = Count_1;
+	run;
+
+	proc print data=test; run;
+
+data test; set curr_ins;
+	drop count_5 count_4 count_3 count_2 count_1;
+	rename = (_5=NARUIP _4=sterilization _3=reversdoc
+	_2=reversnodoc _1=nouse);
+	run;
+
+	proc print data=test; run;
+
 
 *checking;
 proc print data=curr_ins; run;
@@ -264,7 +292,13 @@ data %scan(&confounders,&i); set %scan(&confounders,&i);
 
 *deleting unnecessary rows;
 data %scan(&confounders,&i); set %scan(&confounders,&i);
-	if _name_ ne "RowPercent" then delete;
+	if _name_ ne "RowPercent" and _name_ ne "Frequency" then delete;
+	if _name_ = "Frequency" then Count_5=_5;
+	if _name_ = "Frequency" then Count_4=_4;
+	if _name_ = "Frequency" then Count_3=_3;
+	if _name_ = "Frequency" then Count_2=_2;
+	if _name_ = "Frequency" then Count_1=_1;
+	drop bcc _type_ frequency percent rowpercent colpercent missing bc_group;
 	run;
 
 *renaming each variable column so they can be appended;
