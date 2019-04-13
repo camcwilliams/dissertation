@@ -202,6 +202,7 @@ data curr_ins; set ct_bcc_curr_ins;
 	if _type_ = 10 then delete;
 	drop _table_ table;
 	bc_group = bcc;
+	format bc_group bcc.;
 	if bcc = . then bc_group = 5;
 	if curr_ins = . then curr_ins = 10;
 	if frequency = 8148 then delete;
@@ -227,39 +228,41 @@ data curr_ins; set curr_ins;
 *deleting unnecessary rows;
 data curr_ins; set curr_ins;
 	if _name_ ne "RowPercent" and _name_ ne "Frequency" then delete;
-	if _name_ = "Frequency" then Count_5=_5;
-	if _name_ = "Frequency" then Count_4=_4;
-	if _name_ = "Frequency" then Count_3=_3;
-	if _name_ = "Frequency" then Count_2=_2;
-	if _name_ = "Frequency" then Count_1=_1;
+	if _name_ = "Frequency" then Count_naruip=_5;
+	if _name_ = "Frequency" then Count_sterilized=sterilized;
+	if _name_ = "Frequency" then Count_reversdoc=reversible__needs_doc;
+	if _name_ = "Frequency" then Count_reversnodoc=reversible__doesn_t_need_doc;
+	if _name_ = "Frequency" then Count_nouse=not_using_contraception;
 	run;
 
 	proc print data=curr_ins; run;
 
 data curr_ins; set curr_ins;
-	retain Count5 Count4 Count3 Count2 Count1;
+	retain CountNARUIP CountSTERILIZED CountREVERSDOC 
+	CountREVERSNODOC CountNOUSE;
 	output;
-	Count5 = Count_5;
-	Count4 = Count_4;
-	Count3 = Count_3;
-	Count2 = Count_2;
-	Count1 = Count_1;
+	CountNARUIP = Count_naruip;
+	CountSTERILIZED = Count_sterilized;
+	CountREVERSDOC = Count_reversdoc;
+	CountREVERSNODOC = Count_reversnodoc;
+	CountNOUSE = Count_nouse;
 	run;
 
-	proc print data=test; run;
+	proc print data=curr_ins; run;
 
-data test (rename = (_5=NARUIP _4=sterilization _3=reversdoc
-	_2=reversnodoc _1=nouse)); set curr_ins;
-	drop count_5 count_4 count_3 count_2 count_1;
+data curr_ins; set curr_ins;
+	drop Count_naruip Count_sterilized Count_reversdoc Count_reversnodoc Count_nouse;
 	if _name_ = "Frequency" then delete;
 	run;
 
 data test; 
 	format covariate curr_ins count5 naruip count4 sterilization 
 	count3 reversdoc count2 reversnodoc count1 nouse;
-	set test;
+	set curr_ins;
 	drop _name_;
 	run;
+
+	proc print data=test; run;
 
 proc freq data=a; tables curr_ins*bcc / missing; run;
 
@@ -300,15 +303,15 @@ data %scan(&confounders,&i); set %scan(&confounders,&i);
 *deleting unnecessary rows;
 data %scan(&confounders,&i); set %scan(&confounders,&i);
 	if _name_ ne "RowPercent" and _name_ ne "Frequency" then delete;
-	if _name_ = "Frequency" then Count_5=_5;
-	if _name_ = "Frequency" then Count_4=_4;
-	if _name_ = "Frequency" then Count_3=_3;
-	if _name_ = "Frequency" then Count_2=_2;
-	if _name_ = "Frequency" then Count_1=_1;
+	if _name_ = "Frequency" then Count_naruip=_5;
+	if _name_ = "Frequency" then Count_sterilized=sterilized;
+	if _name_ = "Frequency" then Count_reversdoc=reversible__needs_doc;
+	if _name_ = "Frequency" then Count_reversnodoc=reversible__doesn_t_need_doc;
+	if _name_ = "Frequency" then Count_nouse=not_using_contraception;
 	drop bcc _type_ frequency percent rowpercent colpercent missing bc_group;
 	run;
 
-*renaming each variable column so they can be appended;
+*making a new variable column so datasets can be concatenated;
 data %scan(&confounders,&i); set %scan(&confounders,&i);
 	if %scan(&confounders,&i) = 0 then covariate = "0%scan(&confounders,&i)";
 	if %scan(&confounders,&i) = 1 then covariate = "1%scan(&confounders,&i)";
@@ -321,6 +324,29 @@ data %scan(&confounders,&i); set %scan(&confounders,&i);
 	if %scan(&confounders,&i) = 8 then covariate = "8%scan(&confounders,&i)";
 	if %scan(&confounders,&i) = 9 then covariate = "9%scan(&confounders,&i)";
 	if %scan(&confounders,&i) = 10 then covariate = "10%scan(&confounders,&i)";
+	run;
+
+data %scan(&confounders,&i); set %scan(&confounders,&i);
+	retain CountNARUIP CountSTERILIZED CountREVERSDOC 
+	CountREVERSNODOC CountNOUSE;
+	output;
+	CountNARUIP = Count_naruip;
+	CountSTERILIZED = Count_sterilized;
+	CountREVERSDOC = Count_reversdoc;
+	CountREVERSNODOC = Count_reversnodoc;
+	CountNOUSE = Count_nouse;
+	run;
+
+data %scan(&confounders,&i); set %scan(&confounders,&i);
+	drop Count_naruip Count_sterilized Count_reversdoc Count_reversnodoc Count_nouse;
+	if _name_ = "Frequency" then delete;
+	run;
+
+data %scan(&confounders,&i); 
+	format covariate curr_ins count5 naruip count4 sterilization 
+	count3 reversdoc count2 reversnodoc count1 nouse;
+	set %scan(&confounders,&i);
+	drop _name_;
 	run;
 
 	%let i=%eval(&i+1);
