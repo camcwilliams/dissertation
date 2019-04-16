@@ -372,7 +372,7 @@ data tableone; set tableone;
 	drop edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
 	run;
 
-	proc print data=tableone; ods output print=ref; run;
+	proc print data=tableone; run;
 
 proc export data=tableone
 	dbms = xlsx
@@ -381,6 +381,8 @@ proc export data=tableone
 
 *For the most part, the output table looks good. For some reason pov did
 	not get created appropriately so I will be doing that by hand in excel;
+
+proc freq data=a; tables pov*bcc / missing; run;
 
 *there is some kind of problem with pov that needs to be corrected,
 otherwise things are looking good!;
