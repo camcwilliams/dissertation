@@ -372,12 +372,15 @@ data tableone; set tableone;
 	drop edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
 	run;
 
-	proc print data=tableone; run;
+	proc print data=tableone; ods output print=ref; run;
 
 proc export data=tableone
 	dbms = xlsx
 	outfile="C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\xls_graphs\aim1table1final.xlsx";
 	run;
+
+*For the most part, the output table looks good. For some reason pov did
+	not get created appropriately so I will be doing that by hand in excel;
 
 *there is some kind of problem with pov that needs to be corrected,
 otherwise things are looking good!;
