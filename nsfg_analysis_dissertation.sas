@@ -559,6 +559,15 @@ otherwise things are looking good!;
 		weight weightvar;
 		run;
 
+	* Calculating appropriate proportions to present a stacked bar chart by my final
+		crude contraceptive use measure (for descriptives);
+
+	title 'crude contraceptive use by age';
+	proc freq data=a;
+		tables rscrage*bcc / missing nofreq nopercent nocol;
+		weight weightvar;
+		run;
+
 
 *########### PROBING CONFOUNDERS ###########;
 
