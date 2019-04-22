@@ -34,6 +34,17 @@ ods graphics on / reset=index imagename="descriptives";
 ods listing gpath = "C:\Users\Christine McWilliams\Box Sync\
 Education\Dissertation\AnalyticFiles\sas_graphs_descrip";
 
+
+*** IF WORKING FROM MSC OFC, MUST USE THESE COMMANDS;
+	libname library "C:\Users\camcwilliams\Box Sync\Education\Dissertation\AnalyticFiles";
+	%include "C:\Users\camcwilliams\Box Sync\Education\Dissertation\AnalyticFiles\nsfg_CMcWFormats.sas";
+	data a; set library.nsfg; run;
+
+	ods trace on;
+	ods graphics on / reset=index imagename="descriptives";
+	ods listing gpath = "C:\Users\camcwilliams\Box Sync\
+	Education\Dissertation\AnalyticFiles\sas_graphs_descrip";
+
 proc sgplot data=a;
 	histogram edud;
 	run;
@@ -1391,5 +1402,3 @@ proc freq data=a;
 	weight weightvar; 
 	ods output CrossTabFreqs=bcc_parity;
 	run;
-
-	*testing again;
