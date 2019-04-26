@@ -45,6 +45,8 @@ Education\Dissertation\AnalyticFiles\sas_graphs_descrip";
 	ods listing gpath = "C:\Users\camcwilliams\Box Sync\
 	Education\Dissertation\AnalyticFiles\sas_graphs_descrip";
 
+***;
+
 proc sgplot data=a;
 	histogram edud;
 	run;
@@ -119,6 +121,9 @@ proc freq; tables elig; run;
 *using bcc for table 1, it's general enough to properly describe
 the sample and specific enough to provide context for all four
 models;
+
+*the first pass here is creating a table 1 describing the whole nsfg
+sample. subsequent aim-specific tables are made below;
 
 proc freq data=a; tables bcc; run;
 proc sort data=a; by bcc; run;
@@ -395,6 +400,12 @@ proc export data=tableone
 
 proc freq data=a; tables pov*bcc / missing; run;
 
+*Somehow I managed to forget to include age in table 1, so doing the freq here to add
+into the spreadsheet by hand;
+
+proc freq data=a; tables agecat*bcc / missing nopercent nofreq nocol; run;
+proc freq data=a; tables agecat*bcc / missing nopercent norow nocol; run;
+
 *there is some kind of problem with pov that needs to be corrected,
 otherwise things are looking good!;
 
@@ -424,6 +435,146 @@ otherwise things are looking good!;
 		proc print data=test4; run;
 
 		proc print data=pov; format _all_; run;*/
+
+
+******** TABLE 1 FOR CONTRACEPTORS ONLY ********;
+
+*first creating macro variable with all my variables of interest;
+%let confounders = edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
+
+*creating frequency for each variable with 4-cat outcome;
+%macro tableone;
+	%let i=1;
+	%do %until(not %length(%scan(&confounders,&i)));
+proc freq data=a; 
+	tables (%scan(&confounders,&i))*bcc_cont; 
+	ods output crosstabfreqs=ct_cont_%scan(&confounders,&i); 
+	run;
+	%let i=%eval(&i+1);
+	%end;
+	%mend tableone;
+
+	%tableone;
+
+	proc print data=ct_cont_edud; run;
+	proc print data=ct_cont_edud; where _type_ = "00"; run;
+
+*NOW creating a macro;
+
+%macro tableonetwo;
+	%let i=1;
+	%do %until(not %length(%scan(&confounders,&i)));
+*removing unnecessary rows and columns, creating new outcome variable to make
+transposing easier;
+data %scan(&confounders,&i); set ct_cont_%scan(&confounders,&i);
+	if _type_ = 10 then delete;
+	drop _table_ table;
+	bc_group = bcc_cont;
+	format bc_group bcc.;
+	if bcc_cont = . then bc_group = 5;
+	if %scan(&confounders,&i) = . then %scan(&confounders,&i) = 10;
+	if _type_ = "00" then delete;
+	run;
+
+*transposing;
+proc transpose data=%scan(&confounders,&i) out=%scan(&confounders,&i);
+	by %scan(&confounders,&i);
+	id bc_group;
+	run;
+
+*renaming rows to make a 'total' row;
+data %scan(&confounders,&i); set %scan(&confounders,&i);
+	if %scan(&confounders,&i) = 10 and _name_ = "RowPercent" then delete;
+	if %scan(&confounders,&i) = 10 and _name_ = "ColPercent" then delete;
+	if %scan(&confounders,&i) = 10 and _name_ = "Percent" then _name_ = "RowPercent";
+	run;
+
+*deleting unnecessary rows;
+data %scan(&confounders,&i); set %scan(&confounders,&i);
+	if _name_ ne "RowPercent" and _name_ ne "Frequency" then delete;
+	/*if _name_ = "Frequency" then Count_naruip=_5;*/
+	if _name_ = "Frequency" then Count_sterilized=sterilized;
+	if _name_ = "Frequency" then Count_reversdoc=reversible__needs_doc;
+	if _name_ = "Frequency" then Count_reversnodoc=reversible__doesn_t_need_doc;
+	/*if _name_ = "Frequency" then Count_nouse=not_using_contraception;*/
+	drop bcc_cont _type_ frequency percent rowpercent colpercent missing bc_group;
+	run;
+
+*making a new variable column so datasets can be concatenated;
+data %scan(&confounders,&i); set %scan(&confounders,&i);
+	if %scan(&confounders,&i) = 0 then covariate = "0%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 1 then covariate = "1%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 2 then covariate = "2%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 3 then covariate = "3%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 4 then covariate = "4%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 5 then covariate = "5%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 6 then covariate = "6%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 7 then covariate = "7%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 8 then covariate = "8%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 9 then covariate = "9%scan(&confounders,&i)";
+	if %scan(&confounders,&i) = 10 then covariate = "10%scan(&confounders,&i)";
+	run;
+
+data %scan(&confounders,&i); set %scan(&confounders,&i);
+	retain CountSTERILIZED CountREVERSDOC 
+	CountREVERSNODOC;
+	output;
+	CountSTERILIZED = Count_sterilized;
+	CountREVERSDOC = Count_reversdoc;
+	CountREVERSNODOC = Count_reversnodoc;
+	run;
+
+data %scan(&confounders,&i); set %scan(&confounders,&i);
+	drop Count_naruip Count_sterilized Count_reversdoc Count_reversnodoc Count_nouse;
+	if _name_ = "Frequency" then delete;
+	run;
+
+data %scan(&confounders,&i); 
+	format covariate count5 naruip count4 sterilization 
+	count3 reversdoc count2 reversnodoc count1 nouse;
+	set %scan(&confounders,&i);
+	drop _name_;
+	run;
+
+	%let i=%eval(&i+1);
+	%end;
+	%mend tableonetwo;
+
+	%tableonetwo;
+
+	*** ^^ NEED TO FIX THE ORDERING, OTHERWISE THE MACRO IS GOOD (4/13/19);
+
+	proc print data=mard; run;
+	proc print data=curr_ins; run;
+
+	proc print data=ct_bcc_curr_ins; run;
+
+*concatenating datasets;
+data tableone;
+	set edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
+	run;
+
+data tableone; set tableone;
+	drop edud hisprace2 pov agebabycat parityd rwant mard curr_ins;
+	run;
+
+	proc print data=tableone; run;
+
+proc export data=tableone
+	dbms = xlsx
+	outfile="C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\xls_graphs\aim1table1final_contraceptors.xlsx";
+	run;
+
+*Managed to forget age again;
+
+proc freq data=a; tables agecat*bcc_cont / missing nopercent nofreq nocol; run;
+proc freq data=a; tables agecat*bcc_cont / missing nopercent norow nocol; run;
+
+proc freq data=a; tables agecat*bcc_cont / norow nocol nofreq; run;
+
+*I want to add group percents for every covariate;
+proc freq data=a; tables agecat / norow nocol nofreq; run;
+proc freq data=a; tables &confounders / norow nocol nofreq; run;
 
 *########### SAMPLING WEIGHTS ###########;
 
