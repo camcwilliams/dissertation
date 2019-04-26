@@ -177,6 +177,15 @@ not include code to pull in the datasets and formats, those can happen from
 		proc freq data=a; tables bccd*allrepro / missing; run;
 		proc freq data=a; tables bccd*ster; run;*/
 
+	*creating a variable to make a table 1 for only contraceptors;
+		proc freq data=a; tables bcc; run;
+	data a; set a;
+		bcc_cont = bcc;
+		if bcc = 4 or bcc = . then delete;
+		format bcc_cont bcc.;
+		run;
+		proc freq data=a; tables bcc*bcc_cont bcc_cont; run;
+
 	data a; set a;
 		withd = bc;
 		if bc ne . then withd = 0;
@@ -627,7 +636,7 @@ are not asked about contraceptive method in the current month;
 	data a; set a;
 		pov = .;
 		if poverty <=138 then pov = 1;
-		if poverty >138 and poverty <307 then pov = 2;
+		if poverty >138 and poverty <308 then pov = 2;
 		if poverty >=308 then pov = 3;
 		label pov = "3-category percent FPL";
 		run;
