@@ -4,8 +4,8 @@
 *########## Tubal vs Anything Else ##########*
 *############################################*;
 
-libname library "U:\Dissertation";
-%include "U:\Dissertation\nsfg_CMcWFormats.sas";
+libname library "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\nsfg_CMcWFormats.sas";
 data a; set library.nsfg; run;
 
 ods trace on;
@@ -30,10 +30,29 @@ proc freq data=a; tables tub; weight weightvar; run;
 proc freq data=a; tables rscrage*tub; weight weightvar; ods output CrossTabFreqs=tub_age;
 run;
 proc print data=tub_age; run;
+
 proc sgplot data=tub_age;
 	vbar rscrage / Response=RowPercent;
+	format rscrage _all_;
 	where tub = 1;
+	xaxis label = "Age";
+	yaxis label = "Percent";
 	run;
+
+proc freq data=a; tables pov*tub; weight weightvar; ods output CrossTabFreqs=tub_pov; run;
+proc print data=tub_pov; run;
+
+proc sgplot data=tub_pov;
+	vbar pov / Response=RowPercent;
+	where tub=1;
+	xaxis label = "Household Income, % FPL";
+	yaxis label = "Percent";
+	run;
+
+*doing cross tab to move to excel and plot age and poverty;
+proc freq data=a; tables agecat*pov; weight weightvar; ods output CrossTabFreqs=age_pov; run;
+proc print data=age_pov; run;
+
 
 * Adding a graph that includes vasectomy for good measure;
 proc freq data=a; tables vas; weight weightvar; run;
@@ -1523,6 +1542,7 @@ proc surveylogistic data=a;
 	estimate %earlytwenties / exp cl;
 	ods output Estimates=e_tubnovas;
 	run;
+
 
 data e_tubnovas; set e_tubnovas;
 	drop estimate stderr df tvalue alpha lower upper;
