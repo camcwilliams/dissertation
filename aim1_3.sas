@@ -1570,6 +1570,8 @@ proc sgplot data=e_tubnovas;
 
 *** VERY interesting, does not appear to change the shape;
 
+
+
 ***************************************************
 *** FINAL MODEL WITH INTERACTION, PROBABILITIES ***
 ***************************************************;
@@ -1647,7 +1649,7 @@ proc sgplot data=e_early;
 	xaxis label="Age";
 	yaxis label="Probability"
 	/*type=log logbase=e logstyle=linear*/
-	values=(0 0.1 0.2 0.3 0.4 0.5 0.6);
+	values=(0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8);
 	run;
 
 *Again repeating this analysis after removing vasectomies
@@ -1700,4 +1702,59 @@ proc sgplot data=e_tubnovas;
 	yaxis label="Probability"
 	/*type=log logbase=e logstyle=linear*/
 	values=(0 0.1 0.2 0.3 0.4 0.5 0.6 0.7);
+	run;
+
+** Doing one model with tubal & vasectomy (all permanent methods) included;
+
+data a; set a;
+	tubvas = tub;
+	if ster = 1 then tubvas = 1;
+	run;
+
+	proc freq data=a; tables tubvas; run;
+	proc freq data=a; tables tub; run;
+
+	proc surveylogistic data=a;
+	class tubvas(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tubvas = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %laterbirth / exp cl ilink;
+	ods output Estimates=e;
+	run;
+
+	/*proc print data=e; run;*/
+
+
+data e_early; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	if stmtno=3 then earlybirth = ">24/0";
+	PROBR=round(mu,.01);
+	LCLR=round(lowermu,.01);
+	UCLR=round(uppermu,.01);
+	Label2=substr(Label,1,2);
+	run;
+
+title1 "Tubal ligation & vasectomy by age & age at first birth";
+proc sgplot data=e_early;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+	transparency = .5;
+	series x=Label2 y=probr / group=earlybirth datalabel=probr
+	/*groupdisplay=overlay*/;
+	/*refline 1 / axis=y label="OR=1.0";*/
+	xaxis label="Age";
+	yaxis label="Probability"
+	/*type=log logbase=e logstyle=linear*/
+	values=(0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8);
 	run;
