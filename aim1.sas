@@ -64,10 +64,67 @@ proc surveyfreq data=a;
 
 	proc print data=docsf; run;
 
+	proc freq data=a; tables doc*bcc; run;
+
+	proc print data=a;
+		where doc = 1 and bcc = 3;
+		var bcc doc constat1 caseid;
+		run;
+
 *plotting the relationship between outcome and age, no adjustment;
 title 'simple relationship between outcome and age';
 
-*creating dataset and plotting in SAS;
+proc freq data=a; 
+	tables rscrage*doc; 
+	weight weightvar; 
+	ods output CrossTabFreqs=doc_age;
+	run;
+
+proc sgplot data=doc_age;
+	vbar rscrage / Response=RowPercent;
+	format rscrage _all_;
+	where doc = 2;
+	xaxis label = "Age";
+	yaxis label = "Percent";
+	run;
+	
+	*Per Jenny's recommendation, plotting condoms 
+	to see if 'not requiring a hcp' is really just condoms;
+
+	data a; set a;
+		cond = 0;
+		if constat1 = 12 then cond = 1;
+		if allrepro >= 1 and allrepro <= 3 then cond = 0;
+		if allrepro >= 6 and allrepro <= 9 then cond = 0;
+		if allrepro = 4 and cond ne 1 then cond = 0;
+		if allrepro >10 then cond = .;
+		run;
+
+		proc freq data=a; tables allrepro*cond; run;
+
+		proc freq data=a;
+			tables rscrage*cond;
+			weight weightvar;
+			ods output CrossTabFreqs=cond_age;
+			run;
+
+		proc sgplot data=cond_age;
+			vbar rscrage / Response=RowPercent;
+			format rscrage _all_;
+			where cond = 1;
+			xaxis label = "Age";
+			yaxis label = "Percent";
+			run;
+
+		proc freq data=a; tables rscrage*cond; where allrepro = 4; run;
+
+		proc freq data=a; tables doc*cond; run;
+		proc freq data=a; tables doc*bc; run;
+
+	proc freq data=a;
+	tables 
+
+/*creating dataset and plotting in SAS;
 proc freq data=a;
 	tables doc*rscrage / nofreq nopercent norow;
 	ods output CrossTabFreqs=docage;
@@ -79,7 +136,7 @@ data docage; set docage;
 proc sgplot data=docage;
 	vbar rscrage / response = ColPercent;
 	where doc = 1;
-	run;
+	run;*/
 
 	*creating dataset and plotting in SAS, using weight, stratum, and panel vars;
 	proc surveyfreq data=a;
@@ -1187,8 +1244,9 @@ data e_doc; set e2;
 	Label2=substr(Label,1,2);
 	run;
 
-title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
-title2 "By Age & Age at First Birth";
+/*title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
+title2 "By Age & Age at First Birth";*/
+	title;
 proc sgplot data=e_doc;
 	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth 
 	transparency=.5;
@@ -1227,8 +1285,9 @@ proc surveylogistic data=a;
 								knotmethod=percentiles(5) details);
 	model doc = spl edud earlybirth hisprace2 pov parityd rwant mard
 	curr_ins spl*earlybirth;
-	estimate %teen / exp cl;
-	estimate %earlytwenties / exp cl;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %laterbirth / exp cl ilink;
 	ods output Estimates=e_docnoster;
 	run;
 
@@ -1236,24 +1295,26 @@ data e_docnoster; set e_docnoster;
 	drop estimate stderr df tvalue alpha lower upper;
 	if stmtno=1 then earlybirth = "15-19";
 	if stmtno=2 then earlybirth = "20-24";
-	ORR=round(ExpEstimate,.01);
-	LCLR=round(LowerExp,.01);
-	UCLR=round(UpperExp,.01);
+	if stmtno=3 then earlybirth = ">24/0";
+	PROBR=round(mu,.0001);
+	LCLR=round(lowermu,.0001);
+	UCLR=round(uppermu,.0001);
 	Label2=substr(Label,1,2);
 	run;
 
-title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
+/*title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
 title2 "By Age & Age at First Birth";
-title3 "Sterilized Individuals Removed";
+title3 "Sterilized Individuals Removed";*/
+	title;
 proc sgplot data=e_docnoster;
 	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth 
 	transparency=.5;
-	series x=Label2 y=ORR / group=earlybirth datalabel=ORR
+	series x=Label2 y=probr / group=earlybirth datalabel=probr
 	/*groupdisplay=overlay*/;
-	refline 1 / axis=y label="OR=1.0";
+	/*refline 1 / axis=y label="OR=1.0";*/
 	xaxis label="Age";
-	yaxis label="Odds Ratio"
-	type=log logbase=e logstyle=linear values=(0.1 0.5 1 2 3 5);
+	yaxis label="Probability"
+	/*type=log logbase=e logstyle=linear*/ values=(0 0.1 0.2 0.3 0.4 0.5);
 	run;
 
 *Wowza, that changes things considerably;
