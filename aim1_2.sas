@@ -1108,7 +1108,8 @@ data e_early; set e;
 proc sgplot data=e_early;
 	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
 	transparency = .5;
-	series x=Label2 y=probr / group=earlybirth /*datalabel=probr*/
+	series x=Label2 y=probr / group=earlybirth datalabel=probr;
+	format probr 3.2;
 	/*groupdisplay=overlay*/;
 	/*refline 1 / axis=y label="OR=1.0";*/
 	xaxis label="Age";
@@ -1169,6 +1170,7 @@ proc sgplot data=e_early;
 	transparency = .5;
 	series x=Label2 y=probr / group=earlybirth datalabel=probr
 	/*groupdisplay=overlay*/;
+	format probr 3.2;
 	/*refline 1 / axis=y label="OR=1.0";*/
 	xaxis label="Age";
 	yaxis label="Probability"
