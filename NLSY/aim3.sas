@@ -288,6 +288,7 @@ data b; set a;
 	if tub96 = . then delete;
 	if tub98 = . then delete;
 	if tub00 = . then delete;
+	if tub02 = . then delete;
 	if tub04 = . then delete;
 	if tub06 = . then delete;
 	if tub08 = . then delete;
@@ -313,6 +314,46 @@ proc print data=b;
 *Changing tub vars to include ever previously reporting tubal;
 
 data b; set b;
+	if tub82 = 1 then tub84 = 1;
+	if tub84 = 1 then tub85 = 1;
+	if tub85 = 1 then tub86 = 1;
+	if tub86 = 1 then tub88 = 1;
+	if tub88 = 1 then tub90 = 1;
+	if tub90 = 1 then tub92 = 1;
+	if tub92 = 1 then tub94 = 1;
+	if tub94 = 1 then tub96 = 1;
+	if tub96 = 1 then tub98 = 1;
+	if tub98 = 1 then tub00 = 1;
+	if tub00 = 1 then tub02 = 1;
+	if tub02 = 1 then tub04 = 1;
+	if tub04 = 1 then tub06 = 1;
+	if tub06 = 1 then tub08 = 1;
+	if tub08 = 1 then tub10 = 1;
+	if tub10 = 1 then tub12 = 1;
+	if tub12 = 1 then tub14 = 1;
+	if tub14 = 1 then tub16 = 1;
+	run;
 
+proc print data=b (obs=30);
+	var 'CASEID_1979'n tub:;
+	where tub04 = 1;
+	run;
 
+proc freq data=b; tables tub:; 
+	ods output OneWayFreqs = t; run;
+
+	proc print data=t; run;
+
+	data t; set t;
+		if Percent > 50 then delete;
+		run;
+
+	proc sgplot data=t;
+		scatter x=Table y=Percent;
+		run;
+
+	*does not appear to have a sharp change at 2002;
+
+ods trace on;
+	
 
