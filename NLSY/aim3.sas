@@ -476,10 +476,129 @@ proc freq data=a; tables 'SAMPLE_ID_1979'n; run;
 			tables race;
 			run;
 
-	
-	
+* INCOME;
+proc contents data=a; run;
+proc freq data=a; tables tnfi_trunc_1982; run;
+proc means data=a; var tnfi_trunc_1982; format _all_; run;
 
-	
+proc print data=a (obs=50);
+	var caseid tnfi:;
+	format _all_;
+	run;
+
+data a; set a;
+	rename
+	tnfi_trunc_1982 = income82
+	tnfi_trunc_1984 = income84
+	tnfi_trunc_1985 = income85
+	tnfi_trunc_1986 = income86
+	tnfi_trunc_1988 = income88
+	tnfi_trunc_1990 = income90
+	tnfi_trunc_1992 = income92
+	tnfi_trunc_1994 = income94
+	tnfi_trunc_1996 = income96
+	tnfi_trunc_1998 = income98
+	tnfi_trunc_2000 = income00
+	tnfi_trunc_2002 = income02
+	tnfi_trunc_2004 = income04
+	tnfi_trunc_2006 = income06
+	tnfi_trunc_2008 = income08
+	tnfi_trunc_2010 = income10
+	tnfi_trunc_2012 = income12
+	tnfi_trunc_2014 = income14
+	tnfi_trunc_2016 = income16;
+	run;
 
 
+	proc means data=a; var income:; 
+	ods output summary = i; run;
 
+	proc print data=i; run;
+
+	proc transpose data=i out =i_tran;
+		id vname:;
+		run;
+		proc print data=i_tran; run;
+
+	data i_tran; set i_tran;
+	if _label_ ne "Mean" then delete;
+	if _name_ = 'INCOME-24_1980_Mean'n then delete;
+	if _name_ = 'INCOME-24_1981_Mean'n then delete;
+	if _name_ = 'INCOME-24_1982_Mean'n then delete;
+	rename 'INCOME-24_1980INCOME-24_1981INCO'n = income_mean;
+	run;
+
+	title 'mean family income by survey year';
+	proc sgplot data=i_tran;
+		scatter x=_name_ y=income_mean;
+		run;
+
+	* there are jumps at 92 and 96, there may be outliers;
+
+	* checking plots;
+
+	proc sgplot data=a;
+		vbox income82;
+		format _all_;
+		run;
+
+		proc sgplot data=a;
+		vbox income90;
+		format _all_;
+		run;
+
+		proc sgplot data=a;
+		vbox income92;
+		format _all_;
+		run;
+
+		proc sgplot data=a;
+		vbox income96;
+		format _all_;
+		run;
+
+		proc sgplot data=a;
+		vbox income00;
+		format _all_;
+		run;
+
+	proc sgplot data=a;
+		histogram income82;
+		format _all_;
+		run;
+
+	*yeah, it appears there is an outlier with close to $1m family income that is likely
+		contributing disproportionately to the mean;
+
+	proc print data=a;
+		var caseid income:;
+		where income92 > 800000;
+		/*format _all_;*/
+		run;
+
+	*apparently it's several cases. there is a note in the codebook that there are some
+		questionable responses, but the cases identified in that note don't align with
+		the cases identified here;
+	*i thought the problem wasn't a questionable value so much
+		as the folks with very high incomes are coded the same d/t assigning the midpoint
+		to the question asked categorically, but qx enters actual values 
+		(https://www.nlsinfo.org/sites/nlsinfo.org/files/attachments/121211/NLSY79_1992_Quex.pdf);
+
+	*checking frequencies to identify cases that are identical;
+	proc freq data=a;
+		tables income82 income92 income00;
+		format _all_;
+		run;
+
+	*ok, figured it out (kinda) - respondents are being top-coded, i can't figure out
+		how the top value is being selected (although detailed code is here
+		https://www.nlsinfo.org/content/cohorts/nlsy79/other-documentation/codebook-supplement/nlsy79-appendix-2-total-net-family-0#1983
+		but each highest group has many more respondents
+		than any other group. regardless, need to categorize income, i think;
+
+	proc freq data=a;
+		tables income16;
+		run;
+
+	*definitely need to create my own categories since the formatted categories provided
+		have the top-coded group anyone greater than 50k;
