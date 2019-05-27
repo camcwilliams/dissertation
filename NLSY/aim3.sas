@@ -681,3 +681,131 @@ data test; set a; run;
 	proc freq data=a;
 		tables pov;
 		run;
+
+	proc contents data=test; run;
+
+* abandoning the macro for now;
+
+data a; set a;
+	pov82 = ((famsize_1982 - 1)*1380)+4310; label pov82 = 'FPL for Rs family size 1982';
+	pov84 = ((famsize_1984 - 1)*1540)+4680; label pov84 = 'FPL for Rs family size 1984';
+	pov85 = ((famsize_1985 - 1)*1680)+4860; label pov85 = 'FPL for Rs family size 1985';
+	pov86 = ((famsize_1986 - 1)*1800)+5250; label pov86 = 'FPL for Rs family size 1986';
+	pov88 = ((famsize_1988 - 1)*1900)+5500; label pov88 = 'FPL for Rs family size 1988';
+	pov90 = ((famsize_1990 - 1)*2040)+5980; label pov90 = 'FPL for Rs family size 1990';
+	pov92 = ((famsize_1992 - 1)*2260)+6620; label pov92 = 'FPL for Rs family size 1992';
+	pov94 = ((famsize_1994 - 1)*2460)+6970; label pov94 = 'FPL for Rs family size 1994';
+	pov96 = ((famsize_1996 - 1)*2560)+7470; label pov96 = 'FPL for Rs family size 1996';
+	pov98 = ((famsize_1998 - 1)*2720)+7890; label pov98 = 'FPL for Rs family size 1998';
+	pov00 = ((famsize_2000 - 1)*2820)+8240; label pov00 = 'FPL for Rs family size 2000';
+	pov02 = ((famsize_2002 - 1)*3020)+8590; label pov02 = 'FPL for Rs family size 2002';
+	pov04 = ((famsize_2004 - 1)*3140)+8980; label pov04 = 'FPL for Rs family size 2004';
+	pov06 = ((famsize_2006 - 1)*3260)+9570; label pov06 = 'FPL for Rs family size 2006';
+	pov08 = ((famsize_2008 - 1)*3480)+10210; label pov08 = 'FPL for Rs family size 2008';
+	pov10 = ((famsize_2010 - 1)*3740)+10830; label pov10 = 'FPL for Rs family size 2010';
+	pov12 = ((famsize_2012 - 1)*3820)+10890; label pov12 = 'FPL for Rs family size 2012';
+	pov14 = ((famsize_2014 - 1)*4060)+11670; label pov14 = 'FPL for Rs family size 2014';
+	pov16 = ((famsize_2016 - 1)*4160)+11770; label pov16 = 'FPL for Rs family size 2016';
+	run;
+
+	data a; set a;
+		fpl82 = income82/pov82; label fpl82 = 'Rs HH % fpl 1982';
+		fpl84 = income84/pov84; label fpl84 = 'Rs HH % fpl 1984';
+		fpl85 = income85/pov85; label fpl85 = 'Rs HH % fpl 1985';
+		fpl86 = income86/pov86; label fpl86 = 'Rs HH % fpl 1986';
+		fpl88 = income88/pov88; label fpl88 = 'Rs HH % fpl 1988';
+		fpl90 = income90/pov90; label fpl90 = 'Rs HH % fpl 1990';
+		fpl92 = income92/pov92; label fpl92 = 'Rs HH % fpl 1992';
+		fpl94 = income94/pov94; label fpl94 = 'Rs HH % fpl 1994';
+		fpl96 = income96/pov96; label fpl96 = 'Rs HH % fpl 1996';
+		fpl98 = income98/pov98; label fpl98 = 'Rs HH % fpl 1998';
+		fpl00 = income00/pov00; label fpl00 = 'Rs HH % fpl 2000';
+		fpl02 = income02/pov02; label fpl02 = 'Rs HH % fpl 2002';
+		fpl04 = income04/pov04; label fpl04 = 'Rs HH % fpl 2004';
+		fpl06 = income06/pov06; label fpl06 = 'Rs HH % fpl 2006';
+		fpl08 = income08/pov08; label fpl08 = 'Rs HH % fpl 2008';
+		fpl10 = income10/pov10; label fpl10 = 'Rs HH % fpl 2010';
+		fpl12 = income12/pov12; label fpl12 = 'Rs HH % fpl 2012';
+		fpl14 = income14/pov14; label fpl14 = 'Rs HH % fpl 2014';
+		fpl16 = income16/pov16; label fpl16 = 'Rs HH % fpl 2016';
+		run;
+
+	proc freq data=a; tables famsize:; run;
+	proc freq data=a; tables income:; run;
+	proc freq data=a; tables fpl:; run;
+
+	proc means data=a missing; var income:; run;
+
+	proc print data=a (obs=50); var income:; run;
+
+	proc print data=a (obs=50); var income:; where income88 = .I; run;
+
+	proc freq data=a; 
+		tables income: / missing; 
+		ods output onewayfreqs=incmissing; run;
+		run;
+
+	proc print data=incmissing; run;
+
+	data incmissing; set incmissing;
+		if table = "Table INCOME-24_1980" or table = "Table INCOME-24_1981"
+		or table = "Table INCOME-24_1982"
+		then delete;
+		run;
+
+	data incmissing; set incmissing;
+		val = income82;
+		if val = . then val = income84;
+		if val = . then val = income85;
+		if val = . then val = income86;
+		if val = . then val = income88;
+		if val = . Then val = income90;
+		if val = . Then val = income92;
+		if val = . Then val = income94;
+		if val = . Then val = income96;
+		if val = . Then val = income98;
+		if val = . Then val = income00;
+		if val = . Then val = income02;
+		if val = . Then val = income04;
+		if val = . Then val = income06;
+		if val = . Then val = income08;
+		if val = . Then val = income10;
+		if val = . Then val = income12;
+		if val = . Then val = income14;
+		if val = . Then val = income16;
+		run;
+
+	data incmissing; set incmissing;
+		if val = .D then miss = 1;
+		if val = .I then miss = 2;
+		if val = .N then miss = 3;
+		if val = .R then miss = 4;
+		if val = 0 then miss = val;
+		run;
+
+	data incmissing; set incmissing;
+		keep val miss frequency percent cumfrequency cumpercent table;
+		run;
+
+	proc format;
+		value miss
+			1 = "Don't Know"
+			2 = "Invalid Missing"
+			3 = "Non-Interview"
+			4 = "Refused"
+			0 = "No Income";
+		run;
+
+		data incmissing; set incmissing;
+			format miss miss.;
+			run;
+
+	data incmissing; set incmissing;
+		year = substr(table,7,8);
+		run;
+		
+	
+	proc sgplot data=incmissing;
+		series x=year y=percent / group=miss datalabel;
+		where miss ne . ;
+		run;
