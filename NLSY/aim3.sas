@@ -17,7 +17,7 @@ libname library "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\A
 proc contents data=library.nlsy; run;
 
 data work.nlsy;
-	merge new_data new_ster add_ageb; 
+	merge new_data new_ster add_ageb add_famsize; 
 	by 'CASEID_1979'n; 
 	run;
 
@@ -602,3 +602,82 @@ data a; set a;
 
 	*definitely need to create my own categories since the formatted categories provided
 		have the top-coded group anyone greater than 50k;
+
+title;
+
+	* FAMILY SIZE;
+
+	proc freq data=a;
+		tables famsize:;
+		run;
+
+	proc contents data=a; run;
+
+	data a; set a;
+		pov = .;
+		pov = ((famsize_1982 - 1)*1380)+4310;
+		label pov = "FPL for R's family size";
+		run;
+
+		proc freq data=a; tables pov; run;
+
+	data a; set a;
+		povlev = income82/pov;
+		label povlev = "proportion of FPL for survey year";
+		run;
+
+		proc freq data=a; tables povlev; run;
+
+		proc means data=a; var povlev; where povlev <= 1.38; run;
+		proc means data=a; var povlev; where povlev > 1.38; run;
+
+	proc import datafile="C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\famsize_ds.csv"
+		out=fs
+		dbms=csv
+		replace;
+		getnames=yes;
+		run;
+
+		proc print data=fs; run;
+
+		data fs; set fs;
+			if mod(year,2) ne 0 then flag=1;
+			if flag=1 and year ne 1983 then delete;
+			run;
+
+		proc print data=fs noobs;
+			var year;
+			run;
+		proc print data=fs noobs; var first_person; run;
+		proc print data=fs noobs; var each_additional; run;
+
+data test; set a; run;
+
+	%let year = 1982 1983 1984 1986 1988 1990 1992 1994 1996 1998 2000 2002 2004 
+	2006 2008 2010 2012 2014;
+	%let first_person = 4310 4680 4860 5250 5500 5980 6620 6970 7470 7890 8240 
+	8590 8980 9570 10210 10830 10890 11670;
+	%let each_additional = 1380 1540 1680 1800 1900 2040 2260 2460 2560 2720 
+	2820 3020 3140 3260 3480 3740 3820 4060;
+
+
+%macro overthink;
+	%let i = 1;
+	%do %until(not %length(%scan(year,&i)));
+	data test; set test;
+		pov_%scan(&year,&i) = ((famsize_%scan(&year,&i)-1)*(%scan(&each_additional,&i)))+(%scan(&first_person,&i));
+		label pov = "FPL for R family size, %scan(&year,&i)";
+		run;
+	%let i=%eval(&i+1);
+	%end;
+	%mend overthink;
+
+%overthink;
+
+	proc freq data=test;
+		tables pov_:;
+		run;
+
+	proc freq data=a;
+		tables pov;
+		run;
