@@ -12,7 +12,9 @@ data a; set library.nsfg; run;
 /*Removing respondents under 23;
 data a; set a;
 	if rscrage < 23 then delete;
-	run;*/ *permanent dataset now does not include people over 23;
+	run;*/ 
+
+*commenting out, permanent dataset now does not include people over 23;
 
 *******************
 * LEVEL 1: HCP REQUIRED VS NOT;
@@ -44,12 +46,6 @@ proc freq data=a;
 	proc print data=docfreq1; run;
 	proc export data=docfreq1 dbms=xlsx outfile="U:\Dissertation\xls_graphs\docfreq2.xlsx";
 	run;
-
-	/*proc export data=allrfreq
-	dbms=xlsx
-	outfile="U:\Dissertation\xls_graphs\allrfreq.xlsx"
-	replace;
-	run;*/
 
 *Trying the freqs using strata and cluster variables, they do not
 	change the estimates;
@@ -121,14 +117,16 @@ proc sgplot data=doc_age;
 		proc freq data=a; tables doc*cond; run;
 		proc freq data=a; tables doc*bc; run;
 
-	proc freq data=a;
-	tables 
+		*oh jeez, of course it's not! includes withdrawal and nfp;
 
-/*creating dataset and plotting in SAS;
-proc freq data=a;
-	tables doc*rscrage / nofreq nopercent norow;
-	ods output CrossTabFreqs=docage;
-	run;
+*creating dataset and plotting in SAS, using weight, stratum, and panel vars;
+proc surveyfreq data=a;
+tables doc*rscrage / nofreq nopercent norow;
+weight weightvar;
+strata stratvar;
+cluster panelvar;
+ods output CrossTabFreqs=docage;
+run;
 data docage; set docage;
 	docp = doc/100;
 	run;
@@ -136,24 +134,7 @@ data docage; set docage;
 proc sgplot data=docage;
 	vbar rscrage / response = ColPercent;
 	where doc = 1;
-	run;*/
-
-	*creating dataset and plotting in SAS, using weight, stratum, and panel vars;
-	proc surveyfreq data=a;
-	tables doc*rscrage / nofreq nopercent norow;
-	weight weightvar;
-	strata stratvar;
-	cluster panelvar;
-	ods output CrossTabFreqs=docage;
 	run;
-	data docage; set docage;
-		docp = doc/100;
-		run;
-		proc print data=docage; run;
-	proc sgplot data=docage;
-		vbar rscrage / response = ColPercent;
-		where doc = 1;
-		run;
 
 title 'just bivariate using logistic reg, no spline';
 proc logistic data=a;
@@ -193,15 +174,10 @@ proc surveylogistic data=a;
 		
 		proc print data=edocage; run;
 
-		/*proc export data=Estimates
-			dbms=xlsx
-			outfile="U:\Dissertation\xls_graphs\Estimates.xlsx"
-			replace;
-			run;
-		proc contents data=Estimates; run;
-		proc print data=Estimates; run;*/
+***********************************
+FIRST EXPLORING USING ORIGINAL VARIABLE TREATMENTS
+***********************************;
 
-*first doing some stepwise work;
 title 'doc = age + demographics';
 proc surveylogistic data=a;
 	class 
@@ -629,7 +605,9 @@ proc export data=doc_strat
 		replace;
 		run;*/			
 
-*********** ESTIMATE STATEMENTS IN EARNEST;
+*********** 
+ESTIMATE STATEMENTS IN EARNEST
+************;
 
 proc freq data=a; tables agecat*parity; run;
 proc freq data=a; tables agecat*agebabycat; weight weightvar; run;
@@ -1075,15 +1053,6 @@ proc surveylogistic data=a;
 	estimate %earlytwenties / exp cl;
 	ods output Estimates=e2;
 	run;
-
-		/*proc sgplot data=doc;
-			scatter y=pred x=rscrage;
-			run;
-
-		proc print data=doc (obs=20);
-			where doc=1;
-			var pred1 caseid rscrage doc;
-			run;*/
 			
 
 data e_doc; set e2;
@@ -1222,17 +1191,6 @@ proc surveylogistic data=a;
 	ods output Estimates=e2;
 	run;
 
-		/*proc sgplot data=doc;
-			scatter y=pred x=rscrage;
-			run;
-
-		proc print data=doc (obs=20);
-			where doc=1;
-			var pred1 caseid rscrage doc;
-			run;*/
-		
-		proc print data=e2; run;	
-
 data e_doc; set e2;
 	drop estimate stderr df tvalue alpha lower upper;
 	if stmtno=1 then earlybirth = "15-19";
@@ -1316,5 +1274,3 @@ proc sgplot data=e_docnoster;
 	yaxis label="Probability"
 	/*type=log logbase=e logstyle=linear*/ values=(0 0.1 0.2 0.3 0.4 0.5);
 	run;
-
-*Wowza, that changes things considerably;
