@@ -5,21 +5,27 @@ USING NLSY
 
 **********************************;
 
-/*
-The name literals are making my usual approach difficult, so just going to run nlsy.sas
-and nlsy_ster by hand for now;
+
+/*libname library "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_famsize.sas";
+
+The name literals are making my usual approach difficult, so just going to run nlsy:.sas
+programs by hand for now;
 
 libname library "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY";
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy.sas";
 */
 
-*First exploring dataset;
-proc contents data=library.nlsy; run;
+
+* Merge datasets created using NLSY programs;
 
 data work.nlsy;
-	merge new_data new_ster add_ageb add_famsize; 
+	merge new_data new_ster add_ageb add_famsize new_educ new_edutwo; 
 	by 'CASEID_1979'n; 
 	run;
+
+
+*First exploring dataset;
 
 data a; set nlsy; run;
 
@@ -809,3 +815,356 @@ data a; set a;
 		series x=year y=percent / group=miss datalabel;
 		where miss ne . ;
 		run;
+
+	proc print data=a (obs=50);
+		var income:;
+		format income: _all_;
+		where income82 = .D;
+		run;
+
+ods html close; ods html;
+
+proc contents data=a; run;
+
+proc freq data=a; tables 'Q3-10B_1998'n; run;
+proc freq data=a; tables 'DEGREE-1A_1_1980'n; run;
+proc freq data=a; tables degree:; run;
+
+
+* EDUCATION;
+
+*making an intermediate education variable, highest grade completed
+	for ease of use later;
+
+data a; set a;
+	rename
+	'Q3-4_1979'n = xedu79
+	'Q3-4_1980'n = xedu80
+	'Q3-4_1981'n = xedu81
+	'Q3-4_1982'n = xedu82
+	'Q3-4_1983'n = xedu83
+	'Q3-4_1984'n = xedu84
+	'Q3-4_1985'n = xedu85
+	'Q3-4_1986'n = xedu86
+	'Q3-4_1987'n = xedu87
+	'Q3-4_1988'n = xedu88
+	'Q3-4_1989'n = xedu89
+	'Q3-4_1990'n = xedu90
+	'Q3-4_1991'n = xedu91
+	'Q3-4_1992'n = xedu92
+	'Q3-4_1993'n = xedu93
+	'Q3-4_1994'n = xedu94
+	'Q3-4_1996'n = xedu96
+	'Q3-4_1998'n = xedu98
+	'Q3-4_2000'n = xedu00
+	'Q3-4_2002'n = xedu02
+	'Q3-4_2004'n = xedu04
+	'Q3-4_2006'n = xedu06
+	'Q3-4_2008'n = xedu08
+	'Q3-4_2010'n = xedu10
+	'Q3-4_2012'n = xedu12
+	'Q3-4_2014'n = xedu14
+	'Q3-4_2016'n = xedu16;
+	run;
+
+	proc freq data=a; tables xedu:; run;
+
+*checking that valid skips are because the person did not complete more
+	school;
+	proc print data=a (obs=50);
+		var caseid xedu82 xedu84 xedu90 xedu10 xedu16;
+		run;
+		*it appears that is the case but for a few exceptions (see 
+		OneNote Education);
+
+*trying to work out the inconsistent naming and asking of questions
+about actual degrees;
+	proc print data=a (obs=50);
+		var caseid xedu79 'TRN-8E_1_M_1979'n 'TRN-8A_1_1979'n 
+		xedu82 xedu84 xedu90 'Q3-10B_1998'n xedu10 xedu16;
+		where 'Q3-10B_1998'n ne .V;
+		run;
+
+	proc freq data=a; tables 'Q3-10B_1998'n; run;
+
+	proc means data=a; var degree: trn:; run;
+
+	proc print data=a (obs=50);
+		var caseid  trn: degree: xedu:;
+		where caseid=174;
+		run;
+
+	proc freq data=a;
+		tables 
+			'Q3-4_1979'n 'TRN-8E_1_M_1979'n 'TRN-8A_1_1979'n 
+			xedu82 xedu84 xedu90 xedu10 xedu16;
+		run;
+
+*i'm going to start with the easy part and recode everyone to their
+highest education starting in 1988, when the consistent question about
+degrees is implemented;
+*creating 'degXX' for highest degree received;
+
+data a; set a;
+	rename
+	'Q3-10B_1988'n = deg88
+	'Q3-10B_1989'n = deg89
+	'Q3-10B_1990'n = deg90
+	'Q3-10B_1991'n = deg91
+	'Q3-10B_1992'n = deg92
+	'Q3-10B_1993'n = deg93
+	'Q3-10B_1994'n = deg94
+	'Q3-10B_1996'n = deg96
+	'Q3-10B_1998'n = deg98
+	'Q3-10B_2000'n = deg00
+	'Q3-10B_2002'n = deg02
+	'Q3-10B_2004'n = deg04
+	'Q3-10B_2006'n = deg06
+	'Q3-10B_2008'n = deg08
+	'Q3-10B_2010'n = deg10
+	'Q3-10B_2012'n = deg12
+	'Q3-10B_2014'n = deg14
+	'Q3-10B_2016'n = deg16;
+	run;
+
+	proc freq data=a;
+		tables deg88 deg94 deg02 deg12 / missing;
+		run;
+	*it appears everyone was asked in 1988, I believe the valid
+	missings are those who hav enot had formal schooling;
+	*checking here;
+	proc print data=a (obs=50);
+		var deg88 xedu79;
+		where deg88 = .V;
+		run;
+	*nope, the valid missings definitely have values for highest
+	grade achieved in 1979;
+
+	***from questionnaire (https://www.nlsinfo.org/sites/nlsinfo.org/
+		files/attachments/121211/NLSY79_1988_Quex.pdf), deg88 = .V
+		means person achieved less than HS degree;
+
+	*figuring out what 'other' degree is;
+	proc freq data=a;
+		tables xedu88;
+		where deg88 = 8;
+		run;
+
+	proc means data=a;
+		var 
+			xedu79
+			xedu80
+			xedu81
+			xedu82
+			xedu83
+			xedu84
+			xedu85
+			xedu86
+			xedu87
+			xedu88;
+		where deg88 = 8;
+		run;
+ 
+	proc print data=a;
+		var
+			caseid
+			xedu79
+			xedu80
+			xedu81
+			xedu82
+			xedu83
+			xedu84
+			xedu85
+			xedu86
+			xedu87
+			xedu88;
+		where deg88 = 8;
+		run;
+
+	*I can't, for the life of me, figure out what 'other' is,
+		so I will leave that as it's own group for now and 
+		come back to it after I determine education in the years
+		before 88;
+
+	*making new degXX vars to create education groups;
+	data a; set a;
+		if deg88 = .V then deg88 = 0;
+		if deg88 = 1 then deg88 = 1;
+		if deg88 = 2 then deg88 = 2;
+		if deg88 >=3 and deg88 <8 then deg88 = 3;
+		label deg88 = "highest education by degree 88";
+		run;
+
+		proc format;
+			value degf
+				0 = "no degree"
+				1 = "HS degree or GED"
+				2 = "associate"
+				3 = "bachelors or greater"
+				8 = "other";
+				run;
+
+		data a; set a;
+			format deg88 degf.;
+			run;
+
+			proc freq data=a;
+				tables deg88;
+				run;
+
+	*ok, deg88 is set so now assign new values to the subsequent
+	deg variables;
+
+	data a; set a;
+		array deg (16)
+			deg90
+			deg91
+			deg92
+			deg93
+			deg94
+			deg96
+			deg98
+			deg00
+			deg02
+			deg04
+			deg06
+			deg08
+			deg10
+			deg12
+			deg14
+			deg16
+			;
+		do i = 1 to 16;
+		if deg(i) =.V then deg(i) = deg88;
+		end;
+		run;
+
+		proc freq data=a; tables deg94;
+		run;
+		proc freq data=a; tables deg94; format _all_; run;
+	
+	data a; set a;
+		array deg (17)
+			deg89
+			deg90
+			deg91
+			deg92
+			deg93
+			deg94
+			deg96
+			deg98
+			deg00
+			deg02
+			deg04
+			deg06
+			deg08
+			deg10
+			deg12
+			deg14
+			deg16
+			;
+		do i = 1 to 17;
+		if deg(i) = .V then deg(i) = deg88;
+		if deg(i) >=3 and deg(i) <8 then deg(i) = 3;
+		end;
+		run;
+
+		proc freq data=a; tables deg94; format _all_; run;
+
+*assigning formats and labels;
+		
+	data a; set a;
+		format deg88 degf.;
+		format deg89 degf.;
+		format deg90 degf.;
+		format deg91 degf.;
+		format deg92 degf.;
+		format deg93 degf.;
+		format deg94 degf.;
+		format deg96 degf.;
+		format deg98 degf.;
+		format deg00 degf.;
+		format deg02 degf.;
+		format deg04 degf.;
+		format deg06 degf.;
+		format deg08 degf.;
+		format deg10 degf.;
+		format deg12 degf.;
+		format deg14 degf.;
+		format deg16 degf.;
+		label deg88 = 'highest education by degree 88';
+		label deg89 = 'highest education by degree 89';
+		label deg90 = 'highest education by degree 90';
+		label deg91 = 'highest education by degree 91';
+		label deg92 = 'highest education by degree 92';
+		label deg93 = 'highest education by degree 93';
+		label deg94 = 'highest education by degree 94';
+		label deg96 = 'highest education by degree 96';
+		label deg98 = 'highest education by degree 98';
+		label deg00 = 'highest education by degree 00';
+		label deg02 = 'highest education by degree 02';
+		label deg04 = 'highest education by degree 04';
+		label deg06 = 'highest education by degree 06';
+		label deg08 = 'highest education by degree 08';
+		label deg10 = 'highest education by degree 10';
+		label deg12 = 'highest education by degree 12';
+		label deg14 = 'highest education by degree 14';
+		label deg16 = 'highest education by degree 16';
+		run;
+
+	proc means data=a; var deg88--deg16; run;
+
+	*need to investigate Q3-10D_2008;
+
+
+* MARITAL STATUS;
+
+proc freq data=a; tables 'MARSTAT-KEY_1982'n / missing; run;
+proc freq data=a; tables marstat:; run;
+
+*these look pretty good as-is, except there are a few non-interview
+missing that should be in there;
+
+proc print data=a;
+	var caseid age82 'MARSTAT-KEY_1982'n tub82;
+	where 'MARSTAT-KEY_1982'n = .N;
+	run;
+
+	*all of these individuals are missing age as well, so some
+	non-interviews were retained in the dataset. will need to come
+	back and check after final sample is determined;
+
+*marstat variables are perfect as-is so just renaming;
+data a; set a;
+	rename
+	'MARSTAT-KEY_1979'n = mar79
+	'MARSTAT-KEY_1980'n = mar80
+	'MARSTAT-KEY_1981'n = mar81
+	'MARSTAT-KEY_1982'n = mar82
+	'MARSTAT-KEY_1983'n = mar83
+	'MARSTAT-KEY_1984'n = mar84
+	'MARSTAT-KEY_1985'n = mar85
+	'MARSTAT-KEY_1986'n = mar86
+	'MARSTAT-KEY_1987'n = mar87
+	'MARSTAT-KEY_1988'n = mar88
+	'MARSTAT-KEY_1989'n = mar89
+	'MARSTAT-KEY_1990'n = mar90
+	'MARSTAT-KEY_1991'n = mar91
+	'MARSTAT-KEY_1992'n = mar92
+	'MARSTAT-KEY_1993'n = mar93
+	'MARSTAT-KEY_1994'n = mar94
+	'MARSTAT-KEY_1996'n = mar96
+	'MARSTAT-KEY_1998'n = mar98
+	'MARSTAT-KEY_2000'n = mar00
+	'MARSTAT-KEY_2002'n = mar02
+	'MARSTAT-KEY_2004'n = mar04
+	'MARSTAT-KEY_2006'n = mar06
+	'MARSTAT-KEY_2008'n = mar08
+	'MARSTAT-KEY_2010'n = mar10
+	'MARSTAT-KEY_2012'n = mar12
+	'MARSTAT-KEY_2014'n = mar14
+	'MARSTAT-KEY_2016'n = mar16;
+	run;
+
+	proc means data=a; var mar:; run;
+	
