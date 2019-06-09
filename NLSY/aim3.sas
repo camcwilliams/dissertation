@@ -10,12 +10,13 @@ USING NLSY
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_famsize.sas";
 
 The name literals are making my usual approach difficult, so just going to run nlsy:.sas
-programs by hand for now;
+programs by hand for now;*/
 
-libname library "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY";
+/*libname library "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY";*/
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy.sas";
-*/
 
+proc means data=new_data; var 'CASEID_1979'n; run;
+proc contents data=new_data; run;
 
 * Merge datasets created using NLSY programs;
 
@@ -1116,6 +1117,12 @@ data a; set a;
 
 	*need to investigate Q3-10D_2008;
 
+* After discussing with Ron on 6/7/19, because of the differences in 
+question structure AND the difficulty of understanding how a bachelors
+degree affects 25 year olds and 40 year olds differently, it's best
+just to use years of completed education as a linear variable;
+
+
 
 * MARITAL STATUS;
 
@@ -1167,4 +1174,7 @@ data a; set a;
 	run;
 
 	proc means data=a; var mar:; run;
+
+
+
 	
