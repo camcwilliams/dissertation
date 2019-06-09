@@ -5,30 +5,24 @@ USING NLSY
 
 **********************************;
 
-
-/*libname library "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY";
-%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_famsize.sas";
-
-The name literals are making my usual approach difficult, so just going to run nlsy:.sas
-programs by hand for now;*/
-
-/*libname library "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY";*/
+*Running separate programs for each dataset, haven't been able to solve the formats problem with creating a permanent
+dataset, I think the name literals are the culprit;
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy.sas";
-
-proc means data=new_data; var 'CASEID_1979'n; run;
-proc contents data=new_data; run;
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_addster.sas";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_addagebirth.sas";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_famsize.sas";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_educ.sas";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_edu2.sas";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_ins.sas";
 
 * Merge datasets created using NLSY programs;
-
 data work.nlsy;
-	merge new_data new_ster add_ageb add_famsize new_educ new_edutwo; 
+	merge new_data new_ster add_ageb add_famsize new_educ new_edutwo new_ins; 
 	by 'CASEID_1979'n; 
 	run;
-
+data a; set nlsy; run;
 
 *First exploring dataset;
-
-data a; set nlsy; run;
 
 proc freq data=a; tables 'ageatint_2016'n; run;
 
@@ -1175,6 +1169,79 @@ data a; set a;
 
 	proc means data=a; var mar:; run;
 
+ods html close; ods html;
 
 
-	
+* HEALTH INSURANCE;
+
+*identifying the variables i want;
+proc means data=a; var q11:; run;
+proc freq data=a; tables 'Q11-80B_000003_1990'n; run;
+
+proc freq data=a; tables 'Q11-79_1990'n; run;
+
+*checking whether the source questions are sufficient to identify all sources
+as well as individuals who don't have coverage;
+proc freq data=a; tables 'Q11-80B_000007_1990'n*'Q11-79_1990'n; run;
+*no, will need to get yes/no information from lead-in questions;
+
+*checking frequencies for lead-in and source questions for 2000 as example;
+proc freq data=a;
+	tables
+	'Q11-79_2000'n
+	'Q11-80B~000001_2000'n
+	'Q11-80B~000002_2000'n
+	'Q11-80B~000003_2000'n
+	'Q11-80B~000004_2000'n
+	'Q11-80B~000005_2000'n
+	'Q11-80B~000006_2000'n
+	'Q11-80B~000007_2000'n;
+	run;
+
+proc freq data=a;
+	tables 'Q11-79_2000'n 'Q11-80B~000001_2000'n;
+	format _all_;
+	run;
+
+*presumably Rs can select more than one type of coverage?;
+proc freq data=a;
+	tables 'Q11-80B~000001_2000'n*'Q11-80B~000003_2000'n;
+	run;
+
+proc freq data=a;
+	tables 'Q11-80B~000001_2000'n*'Q11-80B~000006_2000'n;
+	run;
+
+*going to need to have just 3 categories - private, public, other;
+
+*setting up a test recode;
+data a; set a;
+	ins00 = 'Q11-79_2000'n;
+	if 'Q11-80B~000001_2000'n = 1 then ins00 = 1;
+	if 'Q11-80B~000002_2000'n = 1 then ins00 = 1;
+	if 'Q11-80B~000003_2000'n = 1 then ins00 = 1;
+	if 'Q11-80B~000004_2000'n = 1 then ins00 = 1;
+	if 'Q11-80B~000005_2000'n = 1 then ins00 = 1;
+	if 'Q11-80B~000006_2000'n = 1 then ins00 = 2;
+	if 'Q11-80B~000007_2000'n = 1 then ins00 = 3;
+	label ins00 = "current H ins status 00";
+	run;
+
+	proc format;
+		value insf
+		0 = 'no insurance'
+		1 = 'private insurance'
+		2 = 'public insurance'
+		3 = 'other insurance';
+		run;
+
+		data a; set a;
+			format ins00 insf.;
+			run;
+
+	proc freq data=a; tables ins00 / missing; run;
+
+*some years are separate variables for each response, and some appear to be
+one variable for all responses;
+
+proc freq data=a; tables 'Q11-79_2002'n; run;
