@@ -1167,9 +1167,58 @@ just to use years of completed education as a linear variable;
 	*some invalid missings, checking to see if they have values for the survey years
 	before and after;
 	proc print data=a;
-		var caseid 'HGCREV81_1981'n 'hgcrev82_1982'n 'HGCREV83_1983'n ;
-		where 'hgcrev82_1982'n = .I;
+		var caseid educ:;
+		where educ82 = .I;
 		run;
+
+	*many can be easily recoded because they didn't change completed education in the years
+	before and after, checking if this code works;
+	data a; set a;
+		if educ82 = .I and educ81 = educ83 then educ82 = educ81;
+		run;
+
+		proc print data=a;
+			var caseid educ81 educ82 educ83;
+			where caseid = 1766 or caseid = 1778 or caseid = 4683 or caseid = 6282;
+			run;
+
+		*welp, that worked;
+	
+	*ok, can do recodes this week for ones I'm confident about;
+	proc print data=a;
+		var caseid educ:;
+		where
+			educ06 = .I or
+			educ79 = .I or
+			educ80 = .I or
+			educ81 = .I or
+			educ82 = .I or
+			educ83 = .I or
+			educ84 = .I or
+			educ85 = .I or
+			educ86 = .I or
+			educ87 = .I or
+			educ88 = .I or
+			educ89 = .I or
+			educ90 = .I or
+			educ91 = .I or
+			educ92 = .I or
+			educ93 = .I or
+			educ94 = .I or
+			educ96 = .I or
+			educ98 = .I or
+			educ00 = .I or
+			educ02 = .I or
+			educ04 = .I or
+			educ08 = .I or
+			educ10 = .I or
+			educ12 = .I or
+			educ14 = .I or
+			educ16 = .I;
+		run;
+
+	*can use an array to create a flag for having any missing education data, but subsetting
+		with where command hardcoded was faster;
 
 * MARITAL STATUS;
 
