@@ -55,7 +55,7 @@ data a; set a;
 		'ageatint_2016'n=age16;
 		run;
 
-data test; set a;
+data a; set a;
 	if age82 = .N then delete;
 	if age84 = .N then delete;
 	if age85 = .N then delete;
@@ -77,10 +77,12 @@ data test; set a;
 	if age16 = .N then delete;
 	run;
 
+	*checking;
 	proc print data=test (obs=25);
 		var 'CASEID_1979'n age82 age00;
 		run;
 
+	*the listwise deletion removes so many people, but I think it's the only way in this case;
 
 *Identifying all tubal questions;
 
@@ -1119,11 +1121,55 @@ question structure AND the difficulty of understanding how a bachelors
 degree affects 25 year olds and 40 year olds differently, it's best
 just to use years of completed education as a linear variable;
 
-* NLSY provides a highest grade completed variable, hgcrevXX for each survey year,
-	checking to see if I have it;
-	proc freq data=a; tables hgc:; run;
-	*i don't have it;
+* Working with hgcrev var;
+	proc means data=a; var hgc:; run;
+	proc means data=a; var hgcrev:; run;
+	proc freq data=a; tables hgcrev:; run;
+	proc freq data=a; tables 'hgcrev82_1982'n / missing; run;
+	proc freq data=a; tables 'hgcrev82_1982'n; format _all_; run;
 
+* Renaming for ease of use;
+	data a; set a;
+	rename
+	'HGCREV06_2006'n = educ06
+	'HGCREV79_1979'n = educ79
+	'HGCREV80_1980'n = educ80
+	'HGCREV81_1981'n = educ81
+	'HGCREV82_1982'n = educ82
+	'HGCREV83_1983'n = educ83
+	'HGCREV84_1984'n = educ84
+	'HGCREV85_1985'n = educ85
+	'HGCREV86_1986'n = educ86
+	'HGCREV87_1987'n = educ87
+	'HGCREV88_1988'n = educ88
+	'HGCREV89_1989'n = educ89
+	'HGCREV90_1990'n = educ90
+	'HGCREV91_1991'n = educ91
+	'HGCREV92_1992'n = educ92
+	'HGCREV93_1993'n = educ93
+	'HGCREV94_1994'n = educ94
+	'HGCREV96_1996'n = educ96
+	'HGCREV98_1998'n = educ98
+	'HGCREV00_2000'n = educ00
+	'HGCREV02_2002'n = educ02
+	'HGCREV04_2004'n = educ04
+	'HGCREV08_2008'n = educ08
+	'HGCREV10_2010'n = educ10
+	'HGCREV12_2012'n = educ12
+	'HGCREV14_2014'n = educ14
+	'HGCREV16_2016'n = educ16;
+	run;
+
+	*checking for recode and label/format;
+	proc freq data=a;
+		tables educ88; run;
+
+	*some invalid missings, checking to see if they have values for the survey years
+	before and after;
+	proc print data=a;
+		var caseid 'HGCREV81_1981'n 'hgcrev82_1982'n 'HGCREV83_1983'n ;
+		where 'hgcrev82_1982'n = .I;
+		run;
 
 * MARITAL STATUS;
 
