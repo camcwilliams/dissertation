@@ -7,6 +7,7 @@ USING NLSY
 
 *Running separate programs for each dataset, haven't been able to solve the formats problem with creating a permanent
 dataset, I think the name literals are the culprit;
+
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy.sas";
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_addster.sas";
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_addagebirth.sas";
@@ -14,46 +15,72 @@ dataset, I think the name literals are the culprit;
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_educ.sas";
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_edu2.sas";
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_ins.sas";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\new_eduthree.sas";
 
-* Merge datasets created using NLSY programs;
+*** Merge datasets created using NLSY programs;
 data work.nlsy;
-	merge new_data new_ster add_ageb add_famsize new_educ new_edutwo new_ins; 
+	merge new_data new_ster add_ageb add_famsize new_educ new_edutwo new_ins new_eduthree; 
 	by 'CASEID_1979'n; 
 	run;
 data a; set nlsy; run;
 
-*First exploring dataset;
-
-proc freq data=a; tables 'ageatint_2016'n; run;
-
-proc freq data=a; tables 'ageatint_2014'n; run;
-
-proc print data=a (obs=20);
-	var
-	'CASEID_1979'n 
-	'sample_id_1979'n
-	'numkid12_2012'n
-	'ageatint_2012'n
-	'ageatint_2014'n
-	'ageatint_2016'n;
+*** Removing males;
+data a; set a;
+	if 'sample_sex_1979'n = 1 then delete;
 	run;
 
-proc print data=a (obs=20);
-	var
-	'CASEID_1979'n 
-	'sample_id_1979'n
-	'SAMPLE_SEX_1979'n 
-	'ageatint_2000'n
-	'Q9-64H_2000'n
-	'Q9-65~000009_2000'n
-	'numkid12_2012'n
-	'ageatint_2012'n
-	'ageatint_2014'n
-	'ageatint_2016'n;
-	where 'sample_sex_1979'n = 2;
+*** Listwise deletion of individuals with missing interviews;
+
+	*first need to recode age, using that as flag;
+	data a; set a;
+		rename
+		'ageatint_1982'n=age82
+		'ageatint_1984'n=age84
+		'ageatint_1985'n=age85
+		'ageatint_1986'n=age86
+		'ageatint_1988'n=age88
+		'ageatint_1990'n=age90
+		'ageatint_1992'n=age92
+		'ageatint_1994'n=age94
+		'ageatint_1996'n=age96
+		'ageatint_1998'n=age98
+		'ageatint_2000'n=age00
+		'ageatint_2002'n=age02
+		'ageatint_2004'n=age04
+		'ageatint_2006'n=age06
+		'ageatint_2008'n=age08
+		'ageatint_2010'n=age10
+		'ageatint_2012'n=age12
+		'ageatint_2014'n=age14
+		'ageatint_2016'n=age16;
+		run;
+
+data test; set a;
+	if age82 = .N then delete;
+	if age84 = .N then delete;
+	if age85 = .N then delete;
+	if age86 = .N then delete;
+	if age88 = .N then delete;
+	if age90 = .N then delete;
+	if age92 = .N then delete;
+	if age94 = .N then delete;
+	if age96 = .N then delete;
+	if age98 = .N then delete;
+	if age00 = .N then delete;
+	if age02 = .N then delete;
+	if age04 = .N then delete;
+	if age06 = .N then delete;
+	if age08 = .N then delete;
+	if age10 = .N then delete;
+	if age12 = .N then delete;
+	if age14 = .N then delete;
+	if age16 = .N then delete;
 	run;
 
-*Dataset already in wide format, yippee!;
+	proc print data=test (obs=25);
+		var 'CASEID_1979'n age82 age00;
+		run;
+
 
 *Identifying all tubal questions;
 
@@ -108,12 +135,8 @@ proc print data=a (obs=20);
 		tables tub82;
 		run;
 
-	*checking to see if SAS will let me select multiple vars using
-		the name literals and :;
-	proc freq data=test;
-		tables 'q9:'n;
-		run;
-	*sadly no;
+		*note, SAS will let you use : with name literals, you just leave off the single
+		quotes and n;
 
 
 proc freq data=a;
@@ -151,35 +174,6 @@ proc freq data=a;
 
 *** Changing vars so I can check if there is a spike in reported tubals in 2002;
 
-*Restricting sample to women only for ease of use as I explore;
-data a; set a;
-	if 'sample_sex_1979'n = 1 then delete;
-	run;
-
-
-*Creating easier to use age vars;
-data a; set a;
-	rename
-	'ageatint_1982'n=age82
-	'ageatint_1984'n=age84
-	'ageatint_1985'n=age85
-	'ageatint_1986'n=age86
-	'ageatint_1988'n=age88
-	'ageatint_1990'n=age90
-	'ageatint_1992'n=age92
-	'ageatint_1994'n=age94
-	'ageatint_1996'n=age96
-	'ageatint_1998'n=age98
-	'ageatint_2000'n=age00
-	'ageatint_2002'n=age02
-	'ageatint_2004'n=age04
-	'ageatint_2006'n=age06
-	'ageatint_2008'n=age08
-	'ageatint_2010'n=age10
-	'ageatint_2012'n=age12
-	'ageatint_2014'n=age14
-	'ageatint_2016'n=age16;
-	run;
 
 *Creating easier to use tubal vars;	
 
@@ -328,15 +322,20 @@ data a; set a;
 	if tub14 = 1 then tub16 = 1;
 	run;
 
-proc print data=a (obs=30);
-	var 'CASEID_1979'n tub:;
-	where tub04 = 1;
-	run;
+	*checking;
+	proc print data=a (obs=30);
+		var 'CASEID_1979'n tub:;
+		where tub04 = 1;
+		run;
 
+*graphing simple tubal percents;
+
+*turning on trace to save ods graphs;
 ods trace on;
 ods graphics on / reset=index imagename="ster";
 ods listing gpath = "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\graphs_ster";
 
+*creating, processing new dataset of tubal frequencies;
 proc freq data=a; tables tub:; 
 	ods output OneWayFreqs = t; run;
 
@@ -354,6 +353,7 @@ proc freq data=a; tables tub:;
 	*does not appear to have a sharp change at 2002;
 	
 proc means data=b; var age:; run;
+
 
 * NUMBER KIDS (NO PARITY VAR THAT I KNOW OF);
 proc contents data=a; run;
@@ -384,8 +384,10 @@ data a; set a;
 	'numkid16_2016'n = numkid16;
 	run;
 
+	*checking;
 	proc freq data=a; tables numkid00; run;
 
+	*transforming to make sure mean increases each year;
 	proc means data=a; var numkid:; 
 	ods output summary = n; run;
 
@@ -478,6 +480,7 @@ proc freq data=a; tables 'SAMPLE_ID_1979'n; run;
 			run;
 
 * INCOME;
+
 proc contents data=a; run;
 proc freq data=a; tables tnfi_trunc_1982; run;
 proc means data=a; var tnfi_trunc_1982; format _all_; run;
@@ -1116,6 +1119,10 @@ question structure AND the difficulty of understanding how a bachelors
 degree affects 25 year olds and 40 year olds differently, it's best
 just to use years of completed education as a linear variable;
 
+* NLSY provides a highest grade completed variable, hgcrevXX for each survey year,
+	checking to see if I have it;
+	proc freq data=a; tables hgc:; run;
+	*i don't have it;
 
 
 * MARITAL STATUS;
@@ -1245,3 +1252,4 @@ data a; set a;
 one variable for all responses;
 
 proc freq data=a; tables 'Q11-79_2002'n; run;
+
