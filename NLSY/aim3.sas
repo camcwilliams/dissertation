@@ -1413,5 +1413,20 @@ data traneduc; set traneduc (rename=(col1=educ));
 	if year = . then delete;
 	run;
 
+* Number kids;
+%let numkid = numkid82	numkid84	numkid85	numkid86	numkid88	numkid90	numkid92	
+numkid94	numkid96	numkid98	numkid00	numkid02	numkid04	numkid06	numkid08	
+numkid10	numkid12	numkid14	numkid16;
 
+proc transpose data=a out=trannumkid;
+	var caseid &numkid;
+	by caseid;
+	run;
 
+data trannumkid; set trannumkid (rename=(col1=numkid));
+	year=input(substr(_name_,7),5.);
+	drop _name_ _label_;
+	if year = . then delete;
+	run;
+
+	proc print data=trannumkid (obs=80); run;
