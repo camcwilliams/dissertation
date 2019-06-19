@@ -1348,3 +1348,70 @@ one variable for all responses;
 
 proc freq data=a; tables 'Q11-79_2002'n; run;
 
+proc print data=a;
+	var caseid tub82--tub16;
+	run;
+
+* LONG FORMAT DATASET;
+
+* Can probably do this with a macro, but trying individually first to make sure I
+	have the procedure down;
+
+* Tubal;
+proc transpose data=a out=trantub;
+	var caseid tub82--tub16;
+	by caseid;
+	run;
+
+data trantub; set trantub (rename=(col1=tub));
+	year=input(substr(_name_,4),5.);
+	drop _name_ _label_;
+	if year = . then delete;
+	run;
+
+* Age;
+proc transpose data=a out=tranage;
+	var caseid &age;
+	by caseid;
+	run;
+
+data tranage; set tranage (rename=(col1=age));
+	year=input(substr(_name_,4),5.);
+	drop _name_ _label_;
+	if year = . then delete;
+	run;
+
+* Marital status;
+%let mar = mar79	mar80	mar81	mar82	mar83	mar84	mar85	mar86	mar87	
+mar88	mar89	mar90	mar91	mar92	mar93	mar94	mar96	mar98	mar00	mar02	
+mar04	mar06	mar08	mar10	mar12	mar14	mar16;
+
+proc transpose data=a out=tranmar;
+	var caseid &mar;
+	by caseid;
+	run;
+
+data tranmar; set tranmar (rename=(col1=mar));
+	year=input(substr(_name_,4),5.);
+	drop _name_ _label_;
+	if year = . then delete;
+	run;
+
+* Education;
+%let educ = educ06	educ79	educ80	educ81	educ82	educ83	educ84	educ85	educ86	educ87	
+educ88	educ89	educ90	educ91	educ92	educ93	educ94	educ96	educ98	educ00	educ02	
+educ04	educ08	educ10	educ12	educ14	educ16;
+
+proc transpose data=a out=traneduc;
+	var caseid &educ;
+	by caseid;
+	run;
+
+data traneduc; set traneduc (rename=(col1=educ));
+	year=input(substr(_name_,5),5.);
+	drop _name_ _label_;
+	if year = . then delete;
+	run;
+
+
+
