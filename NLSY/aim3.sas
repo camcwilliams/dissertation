@@ -29,6 +29,12 @@ data a; set a;
 	if 'sample_sex_1979'n = 1 then delete;
 	run;
 
+*** Renaming caseid;
+data a; set a;
+	rename
+	'CASEID_1979'n = caseid;
+	run;
+
 *** Listwise deletion of individuals with missing interviews;
 
 	*first need to recode age, using that as flag;
@@ -77,105 +83,19 @@ data a; set a;
 	if age16 = .N then delete;
 	run;
 
-	*checking;
-	proc print data=test (obs=25);
-		var 'CASEID_1979'n age82 age00;
-		run;
+	*checked and deleted code for check;
 
 	*the listwise deletion removes so many people, but I think it's the only way in this case;
 
-*Identifying all tubal questions;
+* TUBAL;
 
-	*Checking out first few;
-
-	proc freq data=a; tables 'Q9-65~000009_1992'n; run;
-
-	proc freq data=a; tables 'Q9-65~000009_1982'n; run;
-
-	proc freq data=a; tables 'Q9-65F~000009_1984'n; run;
-
-	proc freq data=a; tables 'Q9-65F~000009_1985'n; run;
-
-	*These all have a number but with all others missing, need
-	to recode to only have nonrespondents missing?;
-
-	*Now looking to see if individuals who reported sterilization in 82
-	carry through the first few years;
-
-	proc print data=a;
-		var
-		'CASEID_1979'n 
-		'Q9-65~000009_1982'n
-		'Q9-65F~000009_1984'n
-		'Q9-65F~000009_1985'n
-		'Q9-65~000009_1992'n;
-		where 'Q9-65~000009_1982'n = 11 and 'sample_sex_1979'n = 2;
-		run;
-
-	*Many who reported female sterilization in 1982 have valid skips
-	or does not apply in subsequent years;
-
-	proc freq data=a; 
-		tables 'Q9-65~000009_1982'n;
-		where 'sample_sex_1979'n = 2;
-		run;
-	proc freq data=a;
-		tables 'Q9-65~000009_1982'n;
-		where 'Q9-65F~000009_1984'n = 9 and 'sample_sex_1979'n = 2;
-		run;
-
-*Of the 168 women who reported using female sterilization in 1982,
-		only 106 reported using it in 1984;
-
-	*quickly testing rename since i'm not familiar with literals;
-	data test; set a;
-		rename
-		'Q9-65~000009_1982'n = tub82;
-		run;
-
-	proc freq data=test;
-		tables tub82;
-		run;
-
-		*note, SAS will let you use : with name literals, you just leave off the single
-		quotes and n;
-
-
-proc freq data=a;
-	tables 'Q9-64H_2002'n;
-	run;
-
-proc freq data=a;
-	tables tub00; run;
-
-proc freq data=a;
-	where tub82 = 11;
-	tables tub00; run;
-
-	*maybe there's hope, it does appear that new tubals are being reported -
-	check qxq and questionnaires;
-
-* Added some variables to the dataset at top of program;
-
-* Checking out additional sterilization variables;
-proc freq data=a;
-	tables 'Q9-64GB_4_2002'n;
-	run;
-
-proc freq data=a;
-	tables 'Q9-64GC_2002'n;
-	run;
-
-proc freq data=a;
-	tables 'Q9-64GB_4_2002'n*'Q9-65F~000009_1988'n;
-	run;
-
-proc freq data=a;
-	tables 'AGEATINT_2000'n;
-	run;
+* Identified tubal vars and checked them, code is in previous program - basically
+	if a person has not used a new method in the previous year they have a valid
+	skip, so needed to do some recodes. Also, question changed in 2002, so did some
+	checking to see if there was a spike. Also, some people reported not using a 
+	method after reporting using tubal in a previous year, so need to account for that;
 
 *** Changing vars so I can check if there is a spike in reported tubals in 2002;
-
 
 *Creating easier to use tubal vars;	
 
@@ -195,20 +115,10 @@ data a; set a;
 	/* question structure changed in 2002 */
 	run;
 
-	proc freq data=a; tables tub84; run;
-	proc freq data=a; tables 'Q9-65F~000009_1984'; format _all_; run;
-	proc freq data=a; tables age84; format _all_; run;
-
-	proc freq data=a; tables age90 tub90; run;
+	*Checked and deleted check code;
 
 
 *Tackling 2002-2016;
-	*If R has reported prior sterilization procedure ('Q9-64GB_4_2002'n), then they skip
-	the sterilizing operation question ('Q9-64GC_2002'n). So in theory, 'Q9-64GC_2002'n
-	should be new procedures or those that were not previously reported;
-proc freq data=a;
-	tables 'Q9-64GB_4_2002'n 'Q9-64GC_2002'n;
-	run;
 
 *Setting 'tub' variable equal to the *new* tubals for now;
 data a; set a;
@@ -224,82 +134,6 @@ data a; set a;
 	tub16 = 0;	if age16 = .N then tub16 = .;	if 'Q9-64GC_2016'n = 1 or 'Q9-64GC_2016'n = 3 then tub16 = 1;
 	run;
 
-	proc freq data=a; tables age02 tub02 age12 tub12; run;
-	proc freq data=a; tables 'Q9-64GC_2014'n; format _all_; run;
-
-*Now looking at tub vars for each year to see how it looks;
-proc freq data=a; tables tub:; run;
-	*All vars are up to snuff, 2014 has no new tubals because all new tubals were among
-	males;
-
-	*There *were* 6 new tubals in 2016, ages are spread out;
-	proc print data=a; var tub16 age16; where tub16 = 1; run;
-
-	ODS HTML CLOSE; ODS HTML;
-
-proc freq data=a; tables tub:; run;
-
-proc sql outobs=10;
-	title 'test';
-	select age02
-		from a;
-
-%let age =
-	age82
-	age84
-	age85
-	age86
-	age88
-	age90
-	age92
-	age94
-	age96
-	age98
-	age00
-	age02
-	age04
-	age06
-	age08
-	age10
-	age12
-	age14
-	age16;
-
-*Just to check tubal numbers, deleting people with missing interviews;
-data a; set a;
-	if tub82 = . then delete;
-	if tub84 = . then delete;
-	if tub85 = . then delete;
-	if tub86 = . then delete;
-	if tub88 = . then delete;
-	if tub90 = . then delete;
-	if tub92 = . then delete;
-	if tub94 = . then delete;
-	if tub96 = . then delete;
-	if tub98 = . then delete;
-	if tub00 = . then delete;
-	if tub02 = . then delete;
-	if tub04 = . then delete;
-	if tub06 = . then delete;
-	if tub08 = . then delete;
-	if tub10 = . then delete;
-	if tub12 = . then delete;
-	if tub14 = . then delete;
-	if tub16 = . then delete;
-	run;
-
-proc print data=b (obs=30);
-	var 'CASEID_1979'n tub:;
-	where tub86 = 1;
-	run;
-
-proc print data=b;
-	where 'CASEID_1979'n = 979;
-	var tub88 'FFER-139_1988'n tub90 'FFER-139_1990'n tub92 'Q9-64G_1992'n tub94 'Q9-64G_1994'n;
-	run;
-
-	*^^ Demonstrates that some people with previously-reported tubals report not doing
-	anything to prevent pregnancy;
 
 *Changing tub vars to include ever previously reporting tubal;
 
@@ -324,13 +158,9 @@ data a; set a;
 	if tub14 = 1 then tub16 = 1;
 	run;
 
-	*checking;
-	proc print data=a (obs=30);
-		var 'CASEID_1979'n tub:;
-		where tub04 = 1;
-		run;
+	*checked and deleted check code;
 
-*graphing simple tubal percents;
+* GRAPHING SIMPLE TUBAL PERCENTS;
 
 *turning on trace to save ods graphs;
 ods trace on;
@@ -354,11 +184,8 @@ proc freq data=a; tables tub:;
 
 	*does not appear to have a sharp change at 2002;
 	
-proc means data=b; var age:; run;
-
 
 * NUMBER KIDS (NO PARITY VAR THAT I KNOW OF);
-proc contents data=a; run;
 
 proc freq data=a;
 	tables 'numkid00_2000'n; run;
@@ -386,10 +213,9 @@ data a; set a;
 	'numkid16_2016'n = numkid16;
 	run;
 
-	*checking;
-	proc freq data=a; tables numkid00; run;
+	*checked and deleted check code;
 
-	*transforming to make sure mean increases each year;
+	/*transforming to make sure mean increases each year;
 	proc means data=a; var numkid:; 
 	ods output summary = n; run;
 
@@ -410,17 +236,10 @@ data a; set a;
 	proc sgplot data=n_tran;
 		scatter x=_name_ y=numkid_mean;
 		run;
+	*/
 
 * AGE AT FIRST BIRTH;
 
-data a; set a;
-	rename
-	'CASEID_1979'n = caseid;
-	run;
-
-proc print data=a (obs=30);
-	var age:;
-	run;
 proc freq data=a;
 	tables age1b16_2016;
 	run;
@@ -1430,3 +1249,24 @@ data trannumkid; set trannumkid (rename=(col1=numkid));
 	run;
 
 	proc print data=trannumkid (obs=80); run;
+
+	%let age =
+	age82
+	age84
+	age85
+	age86
+	age88
+	age90
+	age92
+	age94
+	age96
+	age98
+	age00
+	age02
+	age04
+	age06
+	age08
+	age10
+	age12
+	age14
+	age16;
