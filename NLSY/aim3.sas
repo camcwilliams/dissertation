@@ -238,78 +238,62 @@ data a; set a;
 		run;
 	*/
 
+
 * AGE AT FIRST BIRTH;
 
-proc freq data=a;
-	tables age1b16_2016;
-	run;
+	*### Commenting out for now - between the discordant age at first birth between
+	survey years, and the difficulty in using this in a clog-log model, I'm not currently
+	planning to use age at first birth. I think using # kids at current age would
+	be both more impactful and easier mathematically;
 
-	*no first births in 420 respondents, which is same # as had 0 births
-	in numkids;
+	/*no first births in 420 respondents, which is same # as had 0 births
+		in numkids;
 
-*checking to make sure no individuals have different responses in different survey years;
-proc compare data=a;
-	var 'age1b16_2016'n;
-	with 'age1b00_2000'n;
-	id caseid;
-	run;
+	*checking to make sure no individuals have different responses in different survey years;
+	proc compare data=a;
+		var 'age1b16_2016'n;
+		with 'age1b00_2000'n;
+		id caseid;
+		run;
 
-	*all differences are valid;
+		*all differences are valid;
 
-*appears there was a numbering change at some point, need to check values;
+	*appears there was a numbering change at some point, need to check values;
 
-proc freq data=a;
-	tables age1b:;
-	format _all_;
-	run;
+	proc freq data=a;
+		tables age1b:;
+		format _all_;
+		run;
 
-	*values are whole numbers, formats are categories;
+		*values are whole numbers, formats are categories;
 
-*if values are categories then a couple of differences don't make sense;
+	*if values are categories then a couple of differences don't make sense;
 
-proc print data=a;
-	var caseid age1b:;
-	where caseid = 4176 or caseid = 6383;
-	format _all_;
-	run;
+	proc print data=a;
+		var caseid age1b:;
+		where caseid = 4176 or caseid = 6383;
+		format _all_;
+		run;
 
-	*there are respondents who have discordant age at first birth variables for different years;
-	*will need to come back to this, for now using age at first birth assigned to most recent
-	survey year;
-
-data a; set a;
-	rename
-	AGE1B16_2016 = age1b;
-	run;
-
-
-* RACE;
-proc contents data=a; run;
-proc freq data=a; tables SAMPLE_RACE_78SCRN; run;
-proc freq data=a; tables 'SAMPLE_ID_1979'n; run;
-
-	*goodness, needed to fix a lot of formatting problems with merging the datasets,
-	should be working now;
+		*there are respondents who have discordant age at first birth variables for different years;
+		*will need to come back to this, for now using age at first birth assigned to most recent
+		survey year;
 
 	data a; set a;
 		rename
-		SAMPLE_RACE_78SCRN = race;
-		run;
+		AGE1B16_2016 = age1b;
+		run;*/
 
-		proc freq data=a;
-			tables race;
-			run;
+
+* RACE;
+
+data a; set a;
+	rename
+	SAMPLE_RACE_78SCRN = race;
+	run;
+
 
 * INCOME;
-
-proc contents data=a; run;
-proc freq data=a; tables tnfi_trunc_1982; run;
-proc means data=a; var tnfi_trunc_1982; format _all_; run;
-
-proc print data=a (obs=50);
-	var caseid tnfi:;
-	format _all_;
-	run;
 
 data a; set a;
 	rename
