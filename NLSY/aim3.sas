@@ -318,7 +318,6 @@ data a; set a;
 	tnfi_trunc_2016 = income16;
 	run;
 
-
 	proc means data=a; var income:; 
 	ods output summary = i; run;
 
@@ -376,43 +375,96 @@ data a; set a;
 		format _all_;
 		run;
 
-	*yeah, it appears there is an outlier with close to $1m family income that is likely
-		contributing disproportionately to the mean;
+	*there is a top-coded group that the average of the highest income variables, I'm guessing
+	for privacy reasons, the documentation isn't super clear. There are notes on a couple of 
+	years that there are suspiciously high values for a few respondents and those are included
+	in the average (see codebook note for TNFI_TRUNC_1992 for example). I think to be safe I 
+	should do some winsorizing;
 
-	proc print data=a;
-		var caseid income:;
-		where income92 > 800000;
-		/*format _all_;*/
-		run;
+	*I'm going to winsorize all years to the top continuous value, i.e. the last value that's
+		not the averaged top-coded group;
 
-	*apparently it's several cases. there is a note in the codebook that there are some
-		questionable responses, but the cases identified in that note don't align with
-		the cases identified here;
-	*i thought the problem wasn't a questionable value so much
-		as the folks with very high incomes are coded the same d/t assigning the midpoint
-		to the question asked categorically, but qx enters actual values 
-		(https://www.nlsinfo.org/sites/nlsinfo.org/files/attachments/121211/NLSY79_1992_Quex.pdf);
-
-	*checking frequencies to identify cases that are identical;
 	proc freq data=a;
-		tables income82 income92 income00;
+		tables income82;
+		where income82 > 20000;
+		format _all_;
+		run;	
+
+	*I see some are already coded that way? This confirms winsorizing all years is better than
+		just doing the years with weird outliers;
+
+
+	*Identifying highest and second-highest income values for each survey year;
+	proc freq data=a;
+		tables income84;
+		where income84 > 60000;
 		format _all_;
 		run;
 
-	*ok, figured it out (kinda) - respondents are being top-coded, i can't figure out
-		how the top value is being selected (although detailed code is here
-		https://www.nlsinfo.org/content/cohorts/nlsy79/other-documentation/codebook-supplement/nlsy79-appendix-2-total-net-family-0#1983
-		but each highest group has many more respondents
-		than any other group. regardless, need to categorize income, i think;
-
+	%let income = income82	income84	income85	income86	income88	income90	
+	income92	income94	income96	income98	income00	income02	income04	
+	income06	income08	income10	income12	income14	income16;
+	
+	%macro income;
+	%let i=1;
+	%do %until(not %length(%scan(&income,&i)));
 	proc freq data=a;
-		tables income16;
+		tables %scan(&income,&i);
+		where %scan(&income,&i) > 75000;
+		format _all_;
+		title %scan(&income,&i);
+		ods output OneWayFreqs = %scan(&income,&i);
+		run;
+	%let i=%eval(&i+1);
+	%end;
+	%mend;
+
+	%income;
+
+	/*proc sql;
+		create table hi_inc as
+		select caseid, max(income82) from a
+		group by caseid;
+		quit;*/
+
+	data inc; set a;
+		incwin88 = income88;
+		incwin90 = income90;
+		incwin92 = income92;
+		incwin94 = income94;
+		incwin96 = income96;
+		incwin98 = income98;
+		incwin00 = income00;
+		incwin02 = income02;
+		incwin04 = income04;
+		incwin06 = income06;
+		incwin08 = income08;
+		incwin10 = income10;
+		incwin12 = income12;
+		incwin14 = income14;
+		incwin16 = income16;
+		if income16 = 922631 then incwin16 = 350001;
+		if income14 = 595986 then incwin14 = 308001;
+		if income12 = 497763 then incwin12 = 290000;
+		if income10 = 440692 then incwin10 = 268001;
+		if income08 = 454737 then incwin08 = 278001;
+		if income06 = 479983 then incwin06 = 273001;
+		if income04 = 408473 then incwin04 = 250001;
+		if income02 = 390662 then incwin02 = 224001;
+		if income00 = 332808 then incwin00 = 182001;
+		if income98 = 244343 then incwin98 = 161001;
+		if income96 = 974100 then incwin96 = 160085;
+		if income94 = 189918 then incwin94 = 155741;
+		if income92 = 839078 then incwin92 = 100001;
+		if income90 = 146942 then incwin90 = 99501;
+		if income88 = 100001 then incwin88 = 99301;
+		incwin86 = income86;
+		incwin85 = income85;
+		incwin84 = income84;
+		incwin82 = income82;
 		run;
 
-	*definitely need to create my own categories since the formatted categories provided
-		have the top-coded group anyone greater than 50k;
-
-title;
+		*checked and deleted check code;
 
 	* FAMILY SIZE;
 
