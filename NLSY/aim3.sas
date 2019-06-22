@@ -636,287 +636,6 @@ proc freq data=a; tables degree:; run;
 
 * EDUCATION;
 
-*making an intermediate education variable, highest grade completed
-	for ease of use later;
-
-data a; set a;
-	rename
-	'Q3-4_1979'n = xedu79
-	'Q3-4_1980'n = xedu80
-	'Q3-4_1981'n = xedu81
-	'Q3-4_1982'n = xedu82
-	'Q3-4_1983'n = xedu83
-	'Q3-4_1984'n = xedu84
-	'Q3-4_1985'n = xedu85
-	'Q3-4_1986'n = xedu86
-	'Q3-4_1987'n = xedu87
-	'Q3-4_1988'n = xedu88
-	'Q3-4_1989'n = xedu89
-	'Q3-4_1990'n = xedu90
-	'Q3-4_1991'n = xedu91
-	'Q3-4_1992'n = xedu92
-	'Q3-4_1993'n = xedu93
-	'Q3-4_1994'n = xedu94
-	'Q3-4_1996'n = xedu96
-	'Q3-4_1998'n = xedu98
-	'Q3-4_2000'n = xedu00
-	'Q3-4_2002'n = xedu02
-	'Q3-4_2004'n = xedu04
-	'Q3-4_2006'n = xedu06
-	'Q3-4_2008'n = xedu08
-	'Q3-4_2010'n = xedu10
-	'Q3-4_2012'n = xedu12
-	'Q3-4_2014'n = xedu14
-	'Q3-4_2016'n = xedu16;
-	run;
-
-	proc freq data=a; tables xedu:; run;
-
-*checking that valid skips are because the person did not complete more
-	school;
-	proc print data=a (obs=50);
-		var caseid xedu82 xedu84 xedu90 xedu10 xedu16;
-		run;
-		*it appears that is the case but for a few exceptions (see 
-		OneNote Education);
-
-*trying to work out the inconsistent naming and asking of questions
-about actual degrees;
-	proc print data=a (obs=50);
-		var caseid xedu79 'TRN-8E_1_M_1979'n 'TRN-8A_1_1979'n 
-		xedu82 xedu84 xedu90 'Q3-10B_1998'n xedu10 xedu16;
-		where 'Q3-10B_1998'n ne .V;
-		run;
-
-	proc freq data=a; tables 'Q3-10B_1998'n; run;
-
-	proc means data=a; var degree: trn:; run;
-
-	proc print data=a (obs=50);
-		var caseid  trn: degree: xedu:;
-		where caseid=174;
-		run;
-
-	proc freq data=a;
-		tables 
-			'Q3-4_1979'n 'TRN-8E_1_M_1979'n 'TRN-8A_1_1979'n 
-			xedu82 xedu84 xedu90 xedu10 xedu16;
-		run;
-
-*i'm going to start with the easy part and recode everyone to their
-highest education starting in 1988, when the consistent question about
-degrees is implemented;
-*creating 'degXX' for highest degree received;
-
-data a; set a;
-	rename
-	'Q3-10B_1988'n = deg88
-	'Q3-10B_1989'n = deg89
-	'Q3-10B_1990'n = deg90
-	'Q3-10B_1991'n = deg91
-	'Q3-10B_1992'n = deg92
-	'Q3-10B_1993'n = deg93
-	'Q3-10B_1994'n = deg94
-	'Q3-10B_1996'n = deg96
-	'Q3-10B_1998'n = deg98
-	'Q3-10B_2000'n = deg00
-	'Q3-10B_2002'n = deg02
-	'Q3-10B_2004'n = deg04
-	'Q3-10B_2006'n = deg06
-	'Q3-10B_2008'n = deg08
-	'Q3-10B_2010'n = deg10
-	'Q3-10B_2012'n = deg12
-	'Q3-10B_2014'n = deg14
-	'Q3-10B_2016'n = deg16;
-	run;
-
-	proc freq data=a;
-		tables deg88 deg94 deg02 deg12 / missing;
-		run;
-	*it appears everyone was asked in 1988, I believe the valid
-	missings are those who hav enot had formal schooling;
-	*checking here;
-	proc print data=a (obs=50);
-		var deg88 xedu79;
-		where deg88 = .V;
-		run;
-	*nope, the valid missings definitely have values for highest
-	grade achieved in 1979;
-
-	***from questionnaire (https://www.nlsinfo.org/sites/nlsinfo.org/
-		files/attachments/121211/NLSY79_1988_Quex.pdf), deg88 = .V
-		means person achieved less than HS degree;
-
-	*figuring out what 'other' degree is;
-	proc freq data=a;
-		tables xedu88;
-		where deg88 = 8;
-		run;
-
-	proc means data=a;
-		var 
-			xedu79
-			xedu80
-			xedu81
-			xedu82
-			xedu83
-			xedu84
-			xedu85
-			xedu86
-			xedu87
-			xedu88;
-		where deg88 = 8;
-		run;
- 
-	proc print data=a;
-		var
-			caseid
-			xedu79
-			xedu80
-			xedu81
-			xedu82
-			xedu83
-			xedu84
-			xedu85
-			xedu86
-			xedu87
-			xedu88;
-		where deg88 = 8;
-		run;
-
-	*I can't, for the life of me, figure out what 'other' is,
-		so I will leave that as it's own group for now and 
-		come back to it after I determine education in the years
-		before 88;
-
-	*making new degXX vars to create education groups;
-	data a; set a;
-		if deg88 = .V then deg88 = 0;
-		if deg88 = 1 then deg88 = 1;
-		if deg88 = 2 then deg88 = 2;
-		if deg88 >=3 and deg88 <8 then deg88 = 3;
-		label deg88 = "highest education by degree 88";
-		run;
-
-		proc format;
-			value degf
-				0 = "no degree"
-				1 = "HS degree or GED"
-				2 = "associate"
-				3 = "bachelors or greater"
-				8 = "other";
-				run;
-
-		data a; set a;
-			format deg88 degf.;
-			run;
-
-			proc freq data=a;
-				tables deg88;
-				run;
-
-	*ok, deg88 is set so now assign new values to the subsequent
-	deg variables;
-
-	data a; set a;
-		array deg (16)
-			deg90
-			deg91
-			deg92
-			deg93
-			deg94
-			deg96
-			deg98
-			deg00
-			deg02
-			deg04
-			deg06
-			deg08
-			deg10
-			deg12
-			deg14
-			deg16
-			;
-		do i = 1 to 16;
-		if deg(i) =.V then deg(i) = deg88;
-		end;
-		run;
-
-		proc freq data=a; tables deg94;
-		run;
-		proc freq data=a; tables deg94; format _all_; run;
-	
-	data a; set a;
-		array deg (17)
-			deg89
-			deg90
-			deg91
-			deg92
-			deg93
-			deg94
-			deg96
-			deg98
-			deg00
-			deg02
-			deg04
-			deg06
-			deg08
-			deg10
-			deg12
-			deg14
-			deg16
-			;
-		do i = 1 to 17;
-		if deg(i) = .V then deg(i) = deg88;
-		if deg(i) >=3 and deg(i) <8 then deg(i) = 3;
-		end;
-		run;
-
-		proc freq data=a; tables deg94; format _all_; run;
-
-*assigning formats and labels;
-		
-	data a; set a;
-		format deg88 degf.;
-		format deg89 degf.;
-		format deg90 degf.;
-		format deg91 degf.;
-		format deg92 degf.;
-		format deg93 degf.;
-		format deg94 degf.;
-		format deg96 degf.;
-		format deg98 degf.;
-		format deg00 degf.;
-		format deg02 degf.;
-		format deg04 degf.;
-		format deg06 degf.;
-		format deg08 degf.;
-		format deg10 degf.;
-		format deg12 degf.;
-		format deg14 degf.;
-		format deg16 degf.;
-		label deg88 = 'highest education by degree 88';
-		label deg89 = 'highest education by degree 89';
-		label deg90 = 'highest education by degree 90';
-		label deg91 = 'highest education by degree 91';
-		label deg92 = 'highest education by degree 92';
-		label deg93 = 'highest education by degree 93';
-		label deg94 = 'highest education by degree 94';
-		label deg96 = 'highest education by degree 96';
-		label deg98 = 'highest education by degree 98';
-		label deg00 = 'highest education by degree 00';
-		label deg02 = 'highest education by degree 02';
-		label deg04 = 'highest education by degree 04';
-		label deg06 = 'highest education by degree 06';
-		label deg08 = 'highest education by degree 08';
-		label deg10 = 'highest education by degree 10';
-		label deg12 = 'highest education by degree 12';
-		label deg14 = 'highest education by degree 14';
-		label deg16 = 'highest education by degree 16';
-		run;
-
-	proc means data=a; var deg88--deg16; run;
-
 	*need to investigate Q3-10D_2008;
 
 * After discussing with Ron on 6/7/19, because of the differences in 
@@ -934,7 +653,6 @@ just to use years of completed education as a linear variable;
 * Renaming for ease of use;
 	data a; set a;
 	rename
-	'HGCREV06_2006'n = educ06
 	'HGCREV79_1979'n = educ79
 	'HGCREV80_1980'n = educ80
 	'HGCREV81_1981'n = educ81
@@ -956,38 +674,15 @@ just to use years of completed education as a linear variable;
 	'HGCREV00_2000'n = educ00
 	'HGCREV02_2002'n = educ02
 	'HGCREV04_2004'n = educ04
+	'HGCREV06_2006'n = educ06
 	'HGCREV08_2008'n = educ08
 	'HGCREV10_2010'n = educ10
 	'HGCREV12_2012'n = educ12
 	'HGCREV14_2014'n = educ14
 	'HGCREV16_2016'n = educ16;
 	run;
-
-	*checking for recode and label/format;
-	proc freq data=a;
-		tables educ88; run;
-
-	*some invalid missings, checking to see if they have values for the survey years
-	before and after;
-	proc print data=a;
-		var caseid educ:;
-		where educ82 = .I;
-		run;
-
-	*many can be easily recoded because they didn't change completed education in the years
-	before and after, checking if this code works;
-	data a; set a;
-		if educ82 = .I and educ81 = educ83 then educ82 = educ81;
-		run;
-
-		proc print data=a;
-			var caseid educ81 educ82 educ83;
-			where caseid = 1766 or caseid = 1778 or caseid = 4683 or caseid = 6282;
-			run;
-
-		*welp, that worked;
 	
-	*ok, can do recodes this week for ones I'm confident about;
+	*checking on invalid missings;
 	proc print data=a;
 		var caseid educ:;
 		where
@@ -1020,8 +715,132 @@ just to use years of completed education as a linear variable;
 			educ16 = .I;
 		run;
 
+	*creating a flag for any missing education variable;
+	data a; set a;
+		if educ06 = .I or
+			educ79 = .I or
+			educ80 = .I or
+			educ81 = .I or
+			educ82 = .I or
+			educ83 = .I or
+			educ84 = .I or
+			educ85 = .I or
+			educ86 = .I or
+			educ87 = .I or
+			educ88 = .I or
+			educ89 = .I or
+			educ90 = .I or
+			educ91 = .I or
+			educ92 = .I or
+			educ93 = .I or
+			educ94 = .I or
+			educ96 = .I or
+			educ98 = .I or
+			educ00 = .I or
+			educ02 = .I or
+			educ04 = .I or
+			educ08 = .I or
+			educ10 = .I or
+			educ12 = .I or
+			educ14 = .I or
+			educ16 = .I
+		then educ_miss = 1;
+		run;
+
 	*can use an array to create a flag for having any missing education data, but subsetting
 		with where command hardcoded was faster;
+
+	*many can be easily recoded because they didn't change completed education in the years
+	before and after, doing that here;
+
+	data z; set a;
+		array educ (26)
+		educ80	educ81	educ82	educ83	educ84	educ85	educ86	educ87	educ88	
+		educ89	educ90	educ91	educ92	educ93	educ94	educ96	educ98	educ00	educ02	educ04	
+		educ06 educ08	educ10	educ12	educ14	educ16;
+		do i = 1 to 26;
+		if educ(i) = .I and educ(i-1) = educ(i+1) then educ(i) = educ(i-1);
+		end;
+		run;
+
+		proc print data=z;
+			var caseid educ81 educ82 educ83;
+			where caseid = 1766 or caseid = 1778 or caseid = 4683 or caseid = 6282;
+			run;
+
+		proc print data=z;
+			var caseid educ:;
+			where educ_miss = 1;
+			run;
+
+	*then there are some who can be confidently recoded despite having 2 or more years of
+		invalid missings (i realize these can probably all be done in one program);
+
+	data z; set z;
+		array educ (26)
+		educ80	educ81	educ82	educ83	educ84	educ85	educ86	educ87	educ88	
+		educ89	educ90	educ91	educ92	educ93	educ94	educ96	educ98	educ00	educ02	educ04	
+		educ06 educ08	educ10	educ12	educ14	educ16;
+		do i = 1 to 26;
+		if educ(i) = .I and educ(i-1) = educ(i+2) then educ(i) = educ(i-1);
+		if educ(i) = .I and educ(i-1) = educ(i+3) then educ(i) = educ(i-1);
+		if educ(i) = .I and educ(i-1) = educ(i+4) then educ(i) = educ(i-1);
+		if educ(i) = .I and educ(i-1) = educ(i+6) then educ(i) = educ(i-1);
+		if educ(i) = .I and educ(i-1) = educ(i+1) then educ(i) = educ(i-1);
+		end;
+		run;
+
+	*there are two individuals who have an invalid missing but there is a logical response
+	e.g. 8th grade in 1980 and 10th grade in 1982, I feel comfortable changing those;
+
+	data z; set z;
+		if caseid = 6718 then educ81 = 9;
+		if caseid = 7394 then educ82 = 12;
+		run;
+
+	*the remaining 16 have invalid missings where completed grades increased in the subsequent
+		interview;
+
+	proc print data=z;
+		var caseid xedu80 educ80 xedu82 educ82 xedu84 educ84 xedu85 educ85 xedu86 educ86 xedu88 
+		educ88 xedu90 educ90 xedu92 educ92;
+		where
+			educ80 = .I or
+			educ81 = .I or
+			educ82 = .I or
+			educ83 = .I or
+			educ84 = .I or
+			educ85 = .I or
+			educ86 = .I or
+			educ87 = .I or
+			educ88 = .I or
+			educ89 = .I or
+			educ90 = .I or
+			educ91 = .I or
+			educ92 = .I;
+		run;
+
+	proc print data=z;
+		var caseid educ80	educ81	educ82	educ83	educ84	educ85	educ86	educ87	educ88	
+		educ89	educ90	educ91	educ92;
+		where 
+		educ80 = .I or
+			educ81 = .I or
+			educ82 = .I or
+			educ83 = .I or
+			educ84 = .I or
+			educ85 = .I or
+			educ86 = .I or
+			educ87 = .I or
+			educ88 = .I or
+			educ89 = .I or
+			educ90 = .I or
+			educ91 = .I or
+			educ92 = .I;
+		run;
+
+	*After reviewing the raw vars as well as the hcg_rev vars, I don't feel comfortable assigning
+		education levels to the remaining respondents, going to leave them as missing for now;
 
 * MARITAL STATUS;
 
