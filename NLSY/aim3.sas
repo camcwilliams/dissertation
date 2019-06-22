@@ -643,12 +643,12 @@ question structure AND the difficulty of understanding how a bachelors
 degree affects 25 year olds and 40 year olds differently, it's best
 just to use years of completed education as a linear variable;
 
-* Working with hgcrev var;
-	proc means data=a; var hgc:; run;
-	proc means data=a; var hgcrev:; run;
-	proc freq data=a; tables hgcrev:; run;
-	proc freq data=a; tables 'hgcrev82_1982'n / missing; run;
-	proc freq data=a; tables 'hgcrev82_1982'n; format _all_; run;
+	/* Working with hgcrev var;
+		proc means data=a; var hgc:; run;
+		proc means data=a; var hgcrev:; run;
+		proc freq data=a; tables hgcrev:; run;
+		proc freq data=a; tables 'hgcrev82_1982'n / missing; run;
+		proc freq data=a; tables 'hgcrev82_1982'n; format _all_; run;*/
 
 * Renaming for ease of use;
 	data a; set a;
@@ -682,6 +682,7 @@ just to use years of completed education as a linear variable;
 	'HGCREV16_2016'n = educ16;
 	run;
 	
+	/*
 	*checking on invalid missings;
 	proc print data=a;
 		var caseid educ:;
@@ -747,13 +748,15 @@ just to use years of completed education as a linear variable;
 		then educ_miss = 1;
 		run;
 
+	*/
+
 	*can use an array to create a flag for having any missing education data, but subsetting
 		with where command hardcoded was faster;
 
 	*many can be easily recoded because they didn't change completed education in the years
 	before and after, doing that here;
 
-	data z; set a;
+	data a; set a;
 		array educ (26)
 		educ80	educ81	educ82	educ83	educ84	educ85	educ86	educ87	educ88	
 		educ89	educ90	educ91	educ92	educ93	educ94	educ96	educ98	educ00	educ02	educ04	
@@ -763,20 +766,20 @@ just to use years of completed education as a linear variable;
 		end;
 		run;
 
-		proc print data=z;
+		/*proc print data=a;
 			var caseid educ81 educ82 educ83;
 			where caseid = 1766 or caseid = 1778 or caseid = 4683 or caseid = 6282;
 			run;
 
-		proc print data=z;
+		proc print data=a;
 			var caseid educ:;
 			where educ_miss = 1;
-			run;
+			run;*/
 
 	*then there are some who can be confidently recoded despite having 2 or more years of
 		invalid missings (i realize these can probably all be done in one program);
 
-	data z; set z;
+	data a; set a;
 		array educ (26)
 		educ80	educ81	educ82	educ83	educ84	educ85	educ86	educ87	educ88	
 		educ89	educ90	educ91	educ92	educ93	educ94	educ96	educ98	educ00	educ02	educ04	
@@ -793,11 +796,12 @@ just to use years of completed education as a linear variable;
 	*there are two individuals who have an invalid missing but there is a logical response
 	e.g. 8th grade in 1980 and 10th grade in 1982, I feel comfortable changing those;
 
-	data z; set z;
+	data a; set a;
 		if caseid = 6718 then educ81 = 9;
 		if caseid = 7394 then educ82 = 12;
 		run;
 
+	/*
 	*the remaining 16 have invalid missings where completed grades increased in the subsequent
 		interview;
 
@@ -841,6 +845,10 @@ just to use years of completed education as a linear variable;
 
 	*After reviewing the raw vars as well as the hcg_rev vars, I don't feel comfortable assigning
 		education levels to the remaining respondents, going to leave them as missing for now;
+	*Could assume they're increasing in 1 year increments and leveling off, but not ready to do
+		that just yet;
+
+	*/
 
 * MARITAL STATUS;
 
