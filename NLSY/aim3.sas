@@ -865,7 +865,7 @@ just to use years of completed education as a linear variable;
 
 * MARITAL STATUS;
 
-*marstat variables are perfect as-is so just renaming;
+*marstat variables groups are good as-is so just renaming;
 data a; set a;
 	rename
 	'MARSTAT-KEY_1979'n = mar79
@@ -916,16 +916,11 @@ data a; set a;
 		if caseid = 992 then mar02 = 1;
 		if caseid = 4663 then mar02 = 3;
 		if caseid = 10375 then mar82 = 1;
+		if caseid = 2412 then mar88 = 1;
+		if caseid = 9986 then mar12 = 1;
 		run;
 
-	proc freq data=a;
-		tables mar82 mar88 mar02 mar12 / missing;
-		run;
-
-	proc print data=a;
-		var caseid mar86 mar88 mar90 mar10 mar12 mar14;
-		where mar88 = .V or mar12 = .R;
-		run;
+	*checked and deleted check code;
 
 
 * HEALTH INSURANCE;
@@ -1006,7 +1001,8 @@ proc print data=a;
 	var caseid tub82--tub16;
 	run;
 
-* LONG FORMAT DATASET;
+
+*** LONG FORMAT DATASET;
 
 * Can probably do this with a macro, but trying individually first to make sure I
 	have the procedure down;
@@ -1024,6 +1020,10 @@ data trantub; set trantub (rename=(col1=tub));
 	run;
 
 * Age;
+
+	%let age = age82 age84 	age85 	age86 	age88 	age90 	age92 	age94 	age96 	
+	age98 	age00 	age02 	age04 age06 age08 age10 age12 age14 age16; 
+
 proc transpose data=a out=tranage;
 	var caseid &age;
 	by caseid;
@@ -1036,8 +1036,8 @@ data tranage; set tranage (rename=(col1=age));
 	run;
 
 * Marital status;
-%let mar = mar79	mar80	mar81	mar82	mar83	mar84	mar85	mar86	mar87	
-mar88	mar89	mar90	mar91	mar92	mar93	mar94	mar96	mar98	mar00	mar02	
+%let mar = mar80	mar82	mar84	mar85	mar86	
+mar88	mar90	mar92	mar94	mar96	mar98	mar00	mar02	
 mar04	mar06	mar08	mar10	mar12	mar14	mar16;
 
 proc transpose data=a out=tranmar;
@@ -1052,8 +1052,8 @@ data tranmar; set tranmar (rename=(col1=mar));
 	run;
 
 * Education;
-%let educ = educ06	educ79	educ80	educ81	educ82	educ83	educ84	educ85	educ86	educ87	
-educ88	educ89	educ90	educ91	educ92	educ93	educ94	educ96	educ98	educ00	educ02	
+%let educ = educ06	educ80	educ82	educ84	educ86	
+educ88	educ90	educ92	educ94	educ96	educ98	educ00	educ02	
 educ04	educ08	educ10	educ12	educ14	educ16;
 
 proc transpose data=a out=traneduc;
@@ -1083,25 +1083,20 @@ data trannumkid; set trannumkid (rename=(col1=numkid));
 	if year = . then delete;
 	run;
 
-	proc print data=trannumkid (obs=80); run;
+* Income;
+%let income = fpl82	fpl84	fpl85	fpl86	fpl88	fpl90	fpl92	fpl94	fpl96	fpl98	
+fpl00	fpl02	fpl04	fpl06	fpl08	fpl10	fpl12	fpl14	fpl16;
 
-	%let age =
-	age82
-	age84
-	age85
-	age86
-	age88
-	age90
-	age92
-	age94
-	age96
-	age98
-	age00
-	age02
-	age04
-	age06
-	age08
-	age10
-	age12
-	age14
-	age16;
+proc transpose data=a out=tranfpl;
+	var caseid &income;
+	by caseid;
+	run;
+
+data tranfpl; set tranfpl (rename=(col1=fpl));
+	if _name_ = "caseid" then delete;
+	year=input(substr(_name_,4),5.);
+	drop _name_ _label_;
+	if year = . then delete;
+	run;
+
+
