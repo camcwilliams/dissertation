@@ -1099,4 +1099,54 @@ data tranfpl; set tranfpl (rename=(col1=fpl));
 	if year = . then delete;
 	run;
 
+* Creating dataset;
+proc sort data=trantub; by caseid year; run;
+proc sort data=tranage; by caseid year; run;
+proc sort data=traneduc; by caseid year; run;
+proc sort data=tranfpl; by caseid year; run;
+proc sort data=tranmar; by caseid year; run;
+proc sort data=trannumkid; by caseid year; run;
 
+data b;
+	merge trantub tranage traneduc tranfpl tranmar trannumkid;
+	by caseid year;
+	run;
+
+* Need to order the observations by survey year;
+data b; set b;
+	if year = 82 then time = 0;
+	if year = 84 then time = 1;
+	if year = 86 then time = 2;
+	if year = 88 then time = 3;
+	if year = 90 then time = 4;
+	if year = 92 then time = 5;
+	if year = 94 then time = 6;
+	if year = 96 then time = 7;
+	if year = 98 then time = 8;
+	if year = 0 then time = 9;
+	if year = 2 then time = 10;
+	if year = 4 then time = 11;
+	if year = 6 then time = 12;
+	if year = 8 then time = 13;
+	if year = 10 then time = 14;
+	if year = 12 then time = 15;
+	if year = 14 then time = 16;
+	if year = 16 then time = 17;
+	run;
+
+proc sort data=b; by caseid time; run;
+
+*deleting observations from 1980 and 1985;
+
+data b; set b;
+	if year = 80 or year = 85 then delete;
+	run;
+
+* Trying a model for kicks;
+
+proc logistic data=b;
+	class time mar / param=glm;
+	model tub(event='1') = time age educ fpl mar numkid
+		/ noint link=cloglog technique=newton;
+	/*estimate time 1 / exp cl ilink;*/
+	run;
