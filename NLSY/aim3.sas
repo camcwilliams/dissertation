@@ -183,6 +183,8 @@ proc freq data=a; tables tub:;
 		run;
 
 	*does not appear to have a sharp change at 2002;
+
+	title;
 	
 
 * NUMBER KIDS (NO PARITY VAR THAT I KNOW OF);
@@ -318,6 +320,9 @@ data a; set a;
 	tnfi_trunc_2016 = income16;
 	run;
 
+	*Commenting out code for determining highest income groups;
+
+	/*
 	proc means data=a; var income:; 
 	ods output summary = i; run;
 
@@ -421,6 +426,8 @@ data a; set a;
 
 	%income;
 
+	*/
+
 	/*proc sql;
 		create table hi_inc as
 		select caseid, max(income82) from a
@@ -468,11 +475,6 @@ data a; set a;
 
 	* FAMILY SIZE;
 
-	proc freq data=a;
-		tables famsize:;
-		run;
-
-	proc contents data=a; run;
 
 	data a; set a;
 		pov = .;
@@ -492,60 +494,6 @@ data a; set a;
 		proc means data=a; var povlev; where povlev <= 1.38; run;
 		proc means data=a; var povlev; where povlev > 1.38; run;
 
-	proc import datafile="C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\famsize_ds.csv"
-		out=fs
-		dbms=csv
-		replace;
-		getnames=yes;
-		run;
-
-		proc print data=fs; run;
-
-		data fs; set fs;
-			if mod(year,2) ne 0 then flag=1;
-			if flag=1 and year ne 1983 then delete;
-			run;
-
-		proc print data=fs noobs;
-			var year;
-			run;
-		proc print data=fs noobs; var first_person; run;
-		proc print data=fs noobs; var each_additional; run;
-
-data test; set a; run;
-
-	%let year = 1982 1983 1984 1986 1988 1990 1992 1994 1996 1998 2000 2002 2004 
-	2006 2008 2010 2012 2014;
-	%let first_person = 4310 4680 4860 5250 5500 5980 6620 6970 7470 7890 8240 
-	8590 8980 9570 10210 10830 10890 11670;
-	%let each_additional = 1380 1540 1680 1800 1900 2040 2260 2460 2560 2720 
-	2820 3020 3140 3260 3480 3740 3820 4060;
-
-
-%macro overthink;
-	%let i = 1;
-	%do %until(not %length(%scan(year,&i)));
-	data test; set test;
-		pov_%scan(&year,&i) = ((famsize_%scan(&year,&i)-1)*(%scan(&each_additional,&i)))+(%scan(&first_person,&i));
-		label pov = "FPL for R family size, %scan(&year,&i)";
-		run;
-	%let i=%eval(&i+1);
-	%end;
-	%mend overthink;
-
-%overthink;
-
-	proc freq data=test;
-		tables pov_:;
-		run;
-
-	proc freq data=a;
-		tables pov;
-		run;
-
-	proc contents data=test; run;
-
-* abandoning the macro for now;
 
 data a; set a;
 	pov82 = ((famsize_1982 - 1)*1380)+4310; label pov82 = 'FPL for Rs family size 1982';
