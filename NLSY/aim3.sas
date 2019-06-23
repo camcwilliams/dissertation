@@ -434,7 +434,7 @@ data a; set a;
 		group by caseid;
 		quit;*/
 
-	data inc; set a;
+	data a; set a;
 		incwin88 = income88;
 		incwin90 = income90;
 		incwin92 = income92;
@@ -475,7 +475,7 @@ data a; set a;
 
 	* FAMILY SIZE;
 
-
+	/*
 	data a; set a;
 		pov = .;
 		pov = ((famsize_1982 - 1)*1380)+4310;
@@ -493,7 +493,7 @@ data a; set a;
 
 		proc means data=a; var povlev; where povlev <= 1.38; run;
 		proc means data=a; var povlev; where povlev > 1.38; run;
-
+	*/
 
 data a; set a;
 	pov82 = ((famsize_1982 - 1)*1380)+4310; label pov82 = 'FPL for Rs family size 1982';
@@ -518,30 +518,33 @@ data a; set a;
 	run;
 
 	data a; set a;
-		fpl82 = income82/pov82; label fpl82 = 'Rs HH % fpl 1982';
-		fpl84 = income84/pov84; label fpl84 = 'Rs HH % fpl 1984';
-		fpl85 = income85/pov85; label fpl85 = 'Rs HH % fpl 1985';
-		fpl86 = income86/pov86; label fpl86 = 'Rs HH % fpl 1986';
-		fpl88 = income88/pov88; label fpl88 = 'Rs HH % fpl 1988';
-		fpl90 = income90/pov90; label fpl90 = 'Rs HH % fpl 1990';
-		fpl92 = income92/pov92; label fpl92 = 'Rs HH % fpl 1992';
-		fpl94 = income94/pov94; label fpl94 = 'Rs HH % fpl 1994';
-		fpl96 = income96/pov96; label fpl96 = 'Rs HH % fpl 1996';
-		fpl98 = income98/pov98; label fpl98 = 'Rs HH % fpl 1998';
-		fpl00 = income00/pov00; label fpl00 = 'Rs HH % fpl 2000';
-		fpl02 = income02/pov02; label fpl02 = 'Rs HH % fpl 2002';
-		fpl04 = income04/pov04; label fpl04 = 'Rs HH % fpl 2004';
-		fpl06 = income06/pov06; label fpl06 = 'Rs HH % fpl 2006';
-		fpl08 = income08/pov08; label fpl08 = 'Rs HH % fpl 2008';
-		fpl10 = income10/pov10; label fpl10 = 'Rs HH % fpl 2010';
-		fpl12 = income12/pov12; label fpl12 = 'Rs HH % fpl 2012';
-		fpl14 = income14/pov14; label fpl14 = 'Rs HH % fpl 2014';
-		fpl16 = income16/pov16; label fpl16 = 'Rs HH % fpl 2016';
+		fpl82 = incwin82/pov82; label fpl82 = 'Rs HH % fpl 1982';
+		fpl84 = incwin84/pov84; label fpl84 = 'Rs HH % fpl 1984';
+		fpl85 = incwin85/pov85; label fpl85 = 'Rs HH % fpl 1985';
+		fpl86 = incwin86/pov86; label fpl86 = 'Rs HH % fpl 1986';
+		fpl88 = incwin88/pov88; label fpl88 = 'Rs HH % fpl 1988';
+		fpl90 = incwin90/pov90; label fpl90 = 'Rs HH % fpl 1990';
+		fpl92 = incwin92/pov92; label fpl92 = 'Rs HH % fpl 1992';
+		fpl94 = incwin94/pov94; label fpl94 = 'Rs HH % fpl 1994';
+		fpl96 = incwin96/pov96; label fpl96 = 'Rs HH % fpl 1996';
+		fpl98 = incwin98/pov98; label fpl98 = 'Rs HH % fpl 1998';
+		fpl00 = incwin00/pov00; label fpl00 = 'Rs HH % fpl 2000';
+		fpl02 = incwin02/pov02; label fpl02 = 'Rs HH % fpl 2002';
+		fpl04 = incwin04/pov04; label fpl04 = 'Rs HH % fpl 2004';
+		fpl06 = incwin06/pov06; label fpl06 = 'Rs HH % fpl 2006';
+		fpl08 = incwin08/pov08; label fpl08 = 'Rs HH % fpl 2008';
+		fpl10 = incwin10/pov10; label fpl10 = 'Rs HH % fpl 2010';
+		fpl12 = incwin12/pov12; label fpl12 = 'Rs HH % fpl 2012';
+		fpl14 = incwin14/pov14; label fpl14 = 'Rs HH % fpl 2014';
+		fpl16 = incwin16/pov16; label fpl16 = 'Rs HH % fpl 2016';
 		run;
 
-	proc freq data=a; tables famsize:; run;
-	proc freq data=a; tables income:; run;
-	proc freq data=a; tables fpl:; run;
+	*checked and deleted check code;
+
+	*** Working on missingness;
+
+	ods html close; ods html;
+	proc contents data=a; run;
 
 	proc means data=a missing; var income:; run;
 
@@ -625,13 +628,17 @@ data a; set a;
 		where income82 = .D;
 		run;
 
-ods html close; ods html;
+	*nice table to assess missingness patterns;
+	proc mi data=a nimpute=0;
+		var incwin82 incwin90 incwin16 educ82 educ90 educ16 numkid82 numkid90 numkid16;
+		ods select misspattern;
+		run;
 
-proc contents data=a; run;
-
-proc freq data=a; tables 'Q3-10B_1998'n; run;
-proc freq data=a; tables 'DEGREE-1A_1_1980'n; run;
-proc freq data=a; tables degree:; run;
+	* In order to appropriately impute, you need to know the form of the final model,
+	including interactions and transformations (%fpl comes to mind), so I am going
+	to move forward with model-building and come back to imputation, see this for 
+	good guidance:
+	https://stats.idre.ucla.edu/sas/seminars/multiple-imputation-in-sas/mi_new_1/;
 
 
 * EDUCATION;
@@ -642,6 +649,12 @@ proc freq data=a; tables degree:; run;
 question structure AND the difficulty of understanding how a bachelors
 degree affects 25 year olds and 40 year olds differently, it's best
 just to use years of completed education as a linear variable;
+
+	/*
+	proc freq data=a; tables 'Q3-10B_1998'n; run;
+	proc freq data=a; tables 'DEGREE-1A_1_1980'n; run;
+	proc freq data=a; tables degree:; run;
+	*/
 
 	/* Working with hgcrev var;
 		proc means data=a; var hgc:; run;
@@ -852,21 +865,6 @@ just to use years of completed education as a linear variable;
 
 * MARITAL STATUS;
 
-proc freq data=a; tables 'MARSTAT-KEY_1982'n / missing; run;
-proc freq data=a; tables marstat:; run;
-
-*these look pretty good as-is, except there are a few non-interview
-missing that should be in there;
-
-proc print data=a;
-	var caseid age82 'MARSTAT-KEY_1982'n tub82;
-	where 'MARSTAT-KEY_1982'n = .N;
-	run;
-
-	*all of these individuals are missing age as well, so some
-	non-interviews were retained in the dataset. will need to come
-	back and check after final sample is determined;
-
 *marstat variables are perfect as-is so just renaming;
 data a; set a;
 	rename
@@ -899,9 +897,35 @@ data a; set a;
 	'MARSTAT-KEY_2016'n = mar16;
 	run;
 
-	proc means data=a; var mar:; run;
+	/*proc means data=a; var mar:; run;
 
-ods html close; ods html;
+	*probing some missing;
+
+	proc print data=a;
+		var caseid mar:;
+		where mar82 = .I or mar88 = .I or mar02 = .I or mar12 = .I;
+		run;
+	*/
+
+	*downloaded additional variables to mar.sas and performed checks there;
+
+	*From marstat-col, numsppt, and relspptr, can identify the marital status of
+	the individual, not sure why these three cases are classified as invalid missings;
+
+	data a; set a;
+		if caseid = 992 then mar02 = 1;
+		if caseid = 4663 then mar02 = 3;
+		if caseid = 10375 then mar82 = 1;
+		run;
+
+	proc freq data=a;
+		tables mar82 mar88 mar02 mar12 / missing;
+		run;
+
+	proc print data=a;
+		var caseid mar86 mar88 mar90 mar10 mar12 mar14;
+		where mar88 = .V or mar12 = .R;
+		run;
 
 
 * HEALTH INSURANCE;
