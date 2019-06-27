@@ -16,10 +16,11 @@ dataset, I think the name literals are the culprit;
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_edu2.sas";
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_ins.sas";
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\new_eduthree.sas";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_samp.sas";
 
 *** Merge datasets created using NLSY programs;
 data work.nlsy;
-	merge new_data new_ster add_ageb add_famsize new_educ new_edutwo new_ins new_eduthree; 
+	merge new_data new_ster add_ageb add_famsize new_educ new_edutwo new_ins new_eduthree nlsy_samp; 
 	by 'CASEID_1979'n; 
 	run;
 data a; set nlsy; run;
@@ -33,6 +34,12 @@ data a; set a;
 data a; set a;
 	rename
 	'CASEID_1979'n = caseid;
+	run;
+
+*** Renaming sampling weight and dividing by 100 to get actual # representing (there are two
+	implied decimal points in sampling weight;
+data a; set a;
+	weight = 'sampweight_1982'n/100;
 	run;
 
 *** Listwise deletion of individuals with missing interviews;
@@ -1025,6 +1032,116 @@ proc print data=a;
 	var caseid tub82--tub16;
 	run;
 
+*** TABLE 1;
+
+*First describing missing;
+
+	*need to make tub var;
+	data missing; set missing;
+		tub82 = 0; if 'Q9-65~000009_1982'n = 11 then tub82 = 1;
+		run;
+
+title 'removed from final sample';
+proc means data=missing;
+	var age82 tub82 'HGCREV82_1982'n /*<education*/ 
+	tnfi_trunc_1982 /*<income*/;
+	where miss=1;
+	weight weight;
+	ods output Summary=means_miss;
+	run;
+
+title 'remained in final sample';
+proc means data=missing;
+	var age82 tub82 'HGCREV82_1982'n /*<education*/ 
+	tnfi_trunc_1982 /*<income*/;
+	where miss=.;
+	weight weight;
+	ods output Summary=means_remain;
+	run;
+
+title 'removed from final sample';
+proc freq data=missing;
+	tables age82 tub82 'HGCREV82_1982'n /*<education*/ 
+	tnfi_trunc_1982 /*<income*/;
+	where miss=1;
+	weight weight;
+	ods output OneWayFreqs=freqs_miss;
+	run;
+
+title 'remained in final sample';
+proc freq data=missing;
+	tables age82 tub82 'HGCREV82_1982'n /*<education*/ 
+	tnfi_trunc_1982 /*<income*/;
+	where miss=.;
+	weight weight;
+	ods output OneWayFreqs=freqs_remain;
+	run;
+
+	proc print data=freqs_remain; run;
+
+data freqs_remain; set freqs_remain;
+	if table = "Table age82" then variable = "Age";
+	if table = "Table tub82" then variable = "Tubal";
+	if table = "Table HGCREV82_1982" then variable = "Education";
+	if table = "Table TNFI_TRUNC_1982" then variable = "Income";
+	if age82 ne . then value = age82;
+	if tub82 ne . then value = tub82;
+	if HGCREV82_1982 ne . then value = HGCREV82_1982;
+	if TNFI_TRUNC_1982 ne . then value = TNFI_TRUNC_1982;
+	Sample = percent;
+	keep variable value Sample frequency;
+	run;
+
+title;
+
+data freqs_miss; set freqs_miss;
+	if table = "Table age82" then variable = "Age";
+	if table = "Table tub82" then variable = "Tubal";
+	if table = "Table HGCREV82_1982" then variable = "Education";
+	if table = "Table TNFI_TRUNC_1982" then variable = "Income";
+	if age82 ne . then value = age82;
+	if tub82 ne . then value = tub82;
+	if HGCREV82_1982 ne . then value = HGCREV82_1982;
+	if TNFI_TRUNC_1982 ne . then value = TNFI_TRUNC_1982;
+	Missing = percent;
+	keep variable value Missing frequency;
+	run;
+
+	proc print data=freqs_miss; run;
+
+proc sort data = freqs_miss; by variable; run;
+proc sort data=freqs_remain; by variable; run;
+
+data missing;
+	merge freqs_miss freqs_remain;
+	by variable value;
+	run;
+
+proc print data=missing; run;
+
+title "Age Distribution of Final Sample vs. Removed Respondents";
+proc sgplot data=missing;
+	xaxis type=discrete;
+	series x=value y=Sample / datalabel = Sample;
+	series x=value y=Missing / datalabel = Missing;
+	where variable = "Age";
+	xaxis label = "Age";
+	yaxis label = "Weighted Percent";
+	run;
+
+
+
+proc sgplot data=freqs_miss;
+	xaxis type = discrete;
+	series x=value y=percent / datalabel;
+	where variable = "Inc";
+	run;
+
+proc sgplot data=freqs_remain;
+	xaxis type = discrete;
+	series x=value y=percent / datalabel;
+	where variable = "Inc";
+	run;
 
 *** LONG FORMAT DATASET;
 
@@ -1165,6 +1282,7 @@ proc sort data=b; by caseid time; run;
 data b; set b;
 	if year = 80 or year = 85 then delete;
 	run;
+
 
 * Trying a model for kicks;
 
