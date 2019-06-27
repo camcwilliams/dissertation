@@ -1077,8 +1077,7 @@ proc freq data=missing;
 	ods output OneWayFreqs=freqs_remain;
 	run;
 
-	proc print data=freqs_remain; run;
-
+title;
 data freqs_remain; set freqs_remain;
 	if table = "Table age82" then variable = "Age";
 	if table = "Table tub82" then variable = "Tubal";
@@ -1088,9 +1087,25 @@ data freqs_remain; set freqs_remain;
 	if tub82 ne . then value = tub82;
 	if HGCREV82_1982 ne . then value = HGCREV82_1982;
 	if TNFI_TRUNC_1982 ne . then value = TNFI_TRUNC_1982;
+	if variable = 'Inc' and value = 1000 then inc_value = '1000-1999';
+	if variable = 'Inc' and value = 2000 then inc_value = '2000-2999';
+	if variable = 'Inc' and value = 3000 then inc_value = '3000-3999';
+	if variable = 'Inc' and value = 4000 then inc_value = '4000-4999';
+	if variable = 'Inc' and value = 5000 then inc_value = '5000-5999';
+	if variable = 'Inc' and value = 6000 then inc_value = '6000-6999';
+	if variable = 'Inc' and value = 7000 then inc_value = '7000-7999';
+	if variable = 'Inc' and value = 8000 then inc_value = '8000-8999';
+	if variable = 'Inc' and value = 9000 then inc_value = '9000-9999';
+	if variable = 'Inc' and value = 10000 then inc_value = '10000-14999';
+	if variable = 'Inc' and value = 15000 then inc_value = '15000-19999';
+	if variable = 'Inc' and value = 20000 then inc_value = '20000-24999';
+	if variable = 'Inc' and value = 25000 then inc_value = '25000-29999';
+	if variable = 'Inc' and value = 50000 then inc_value = '50000+';
 	Sample = percent;
-	keep variable value Sample frequency;
+	keep variable value Sample inc_value frequency;
 	run;
+
+	proc print data=freqs_remain; run;
 
 title;
 
@@ -1103,45 +1118,67 @@ data freqs_miss; set freqs_miss;
 	if tub82 ne . then value = tub82;
 	if HGCREV82_1982 ne . then value = HGCREV82_1982;
 	if TNFI_TRUNC_1982 ne . then value = TNFI_TRUNC_1982;
+	if variable = 'Inc' and value = 1000 then inc_value = '1000-1999';
+	if variable = 'Inc' and value = 2000 then inc_value = '2000-2999';
+	if variable = 'Inc' and value = 3000 then inc_value = '3000-3999';
+	if variable = 'Inc' and value = 4000 then inc_value = '4000-4999';
+	if variable = 'Inc' and value = 5000 then inc_value = '5000-5999';
+	if variable = 'Inc' and value = 6000 then inc_value = '6000-6999';
+	if variable = 'Inc' and value = 7000 then inc_value = '7000-7999';
+	if variable = 'Inc' and value = 8000 then inc_value = '8000-8999';
+	if variable = 'Inc' and value = 9000 then inc_value = '9000-9999';
+	if variable = 'Inc' and value = 10000 then inc_value = '10000-14999';
+	if variable = 'Inc' and value = 15000 then inc_value = '15000-19999';
+	if variable = 'Inc' and value = 20000 then inc_value = '20000-24999';
+	if variable = 'Inc' and value = 25000 then inc_value = '25000-29999';
+	if variable = 'Inc' and value = 50000 then inc_value = '50000+';
 	Missing = percent;
-	keep variable value Missing frequency;
+	keep variable value Missing inc_value frequency;
 	run;
 
 	proc print data=freqs_miss; run;
 
-proc sort data = freqs_miss; by variable; run;
-proc sort data=freqs_remain; by variable; run;
+* In the interest of time, I abandoned graphing and made a table in excel;
+	/*proc sort data = freqs_miss; by variable; run;
+	proc sort data=freqs_remain; by variable; run;
 
-data missing;
-	merge freqs_miss freqs_remain;
-	by variable value;
-	run;
+	data missing;
+		merge freqs_miss freqs_remain;
+		by variable value;
+		run;
 
-proc print data=missing; run;
+	title "Age Distribution of Final Sample vs. Removed Respondents";
+	proc sgplot data=missing;
+		xaxis type=discrete;
+		series x=value y=Sample / datalabel = Sample;
+		series x=value y=Missing / datalabel = Missing;
+		where variable = "Age";
+		xaxis label = "Age";
+		yaxis label = "Weighted Percent";
+		run;
 
-title "Age Distribution of Final Sample vs. Removed Respondents";
-proc sgplot data=missing;
-	xaxis type=discrete;
-	series x=value y=Sample / datalabel = Sample;
-	series x=value y=Missing / datalabel = Missing;
-	where variable = "Age";
-	xaxis label = "Age";
-	yaxis label = "Weighted Percent";
-	run;
+	title "Education Distribution of Final Sample vs. Removed Respondents";
+	proc sgplot data=missing;
+		xaxis type=discrete;
+		series x=value y=Sample / datalabel = Sample;
+		series x=value y=Missing / datalabel = Missing;
+		where variable = "Edu";
+		xaxis label = "Age";
+		yaxis label = "Weighted Percent";
+		run;
 
+	title "Income Distribution of Final Sample vs. Removed Respondents";
+	proc sgplot data=missing;
+		xaxis type=discrete;
+		series x=value y=Sample / datalabel = Sample;
+		series x=value y=Missing / datalabel = Missing;
+		where variable = "Inc";
+		xaxis label = "Age";
+		yaxis label = "Weighted Percent";
+		run;
 
+	*/
 
-proc sgplot data=freqs_miss;
-	xaxis type = discrete;
-	series x=value y=percent / datalabel;
-	where variable = "Inc";
-	run;
-
-proc sgplot data=freqs_remain;
-	xaxis type = discrete;
-	series x=value y=percent / datalabel;
-	where variable = "Inc";
-	run;
 
 *** LONG FORMAT DATASET;
 
