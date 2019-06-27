@@ -61,6 +61,30 @@ data a; set a;
 		'ageatint_2016'n=age16;
 		run;
 
+*making a missing dataset to describe in paper;
+
+data missing; set a;
+	if age82 = .N then miss=1;
+	if age84 = .N then miss=1;
+	if age85 = .N then miss=1;
+	if age86 = .N then miss=1;
+	if age88 = .N then miss=1;
+	if age90 = .N then miss=1;
+	if age92 = .N then miss=1;
+	if age94 = .N then miss=1;
+	if age96 = .N then miss=1;
+	if age98 = .N then miss=1;
+	if age00 = .N then miss=1;
+	if age02 = .N then miss=1;
+	if age04 = .N then miss=1;
+	if age06 = .N then miss=1;
+	if age08 = .N then miss=1;
+	if age10 = .N then miss=1;
+	if age12 = .N then miss=1;
+	if age14 = .N then miss=1;
+	if age16 = .N then miss=1;
+	run;
+
 data a; set a;
 	if age82 = .N then delete;
 	if age84 = .N then delete;
