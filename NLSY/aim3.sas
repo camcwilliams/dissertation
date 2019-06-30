@@ -330,6 +330,7 @@ data a; set a;
 
 data a; set a;
 	rename
+	tnfi_trunc_1979 = income79
 	tnfi_trunc_1982 = income82
 	tnfi_trunc_1984 = income84
 	tnfi_trunc_1985 = income85
@@ -465,7 +466,11 @@ data a; set a;
 		group by caseid;
 		quit;*/
 
+	*Winsorizing(ish) and adding indicator variable to include the regression discontinuity
+	to the model;
+
 	data a; set a;
+		incwin79 = income79;
 		incwin88 = income88;
 		incwin90 = income90;
 		incwin92 = income92;
@@ -481,21 +486,39 @@ data a; set a;
 		incwin12 = income12;
 		incwin14 = income14;
 		incwin16 = income16;
-		if income16 = 922631 then incwin16 = 350001;
-		if income14 = 595986 then incwin14 = 308001;
-		if income12 = 497763 then incwin12 = 290000;
-		if income10 = 440692 then incwin10 = 268001;
-		if income08 = 454737 then incwin08 = 278001;
-		if income06 = 479983 then incwin06 = 273001;
-		if income04 = 408473 then incwin04 = 250001;
-		if income02 = 390662 then incwin02 = 224001;
-		if income00 = 332808 then incwin00 = 182001;
-		if income98 = 244343 then incwin98 = 161001;
-		if income96 = 974100 then incwin96 = 160085;
-		if income94 = 189918 then incwin94 = 155741;
-		if income92 = 839078 then incwin92 = 100001;
-		if income90 = 146942 then incwin90 = 99501;
-		if income88 = 100001 then incwin88 = 99301;
+		incind16 = 0;
+		incind14 = 0;
+		incind12 = 0;
+		incind10 = 0;
+		incind08 = 0;
+		incind06 = 0;
+		incind04 = 0;
+		incind02 = 0;
+		incind00 = 0;
+		incind98 = 0;
+		incind96 = 0;
+		incind94 = 0;
+		incind92 = 0;
+		incind90 = 0;
+		incind88 = 0;
+		incind86 = 0;
+		incind84 = 0;
+		incind82 = 0;	
+		if income16 = 922631 then do; incwin16 = 350001; incind16 = 1; end;
+		if income14 = 595986 then do; incwin14 = 308001; incind14 = 1; end;
+		if income12 = 497763 then do; incwin12 = 290000; incind12 = 1; end;
+		if income10 = 440692 then do; incwin10 = 268001; incind10 = 1; end;
+		if income08 = 454737 then do; incwin08 = 278001; incind08 = 1; end;
+		if income06 = 479983 then do; incwin06 = 273001; incind06 = 1; end;
+		if income04 = 408473 then do; incwin04 = 250001; incind04 = 1; end;
+		if income02 = 390662 then do; incwin02 = 224001; incind02 = 1; end;
+		if income00 = 332808 then do; incwin00 = 182001; incind00 = 1; end;
+		if income98 = 244343 then do; incwin98 = 161001; incind98 = 1; end;
+		if income96 = 974100 then do; incwin96 = 160085; incind96 = 1; end;
+		if income94 = 189918 then do; incwin94 = 155741; incind94 = 1; end;
+		if income92 = 839078 then do; incwin92 = 100001; incind92 = 1; end;
+		if income90 = 146942 then do; incwin90 = 99501; incind90 = 1; end;
+		if income88 = 100001 then do; incwin88 = 99301; incind88 = 1; end;
 		incwin86 = income86;
 		incwin85 = income85;
 		incwin84 = income84;
@@ -503,6 +526,72 @@ data a; set a;
 		run;
 
 		*checked and deleted check code;
+
+*** Working on multiple imputation for income;
+
+	*Need to check on distribution first;
+
+	*First checking on baseline;
+	proc freq data=a;
+		tables incwin79 / missing;
+		run;
+		*there's a lot of missing at baseline, so it may not be the best comparison;
+
+	*Are 1982 missings the same as 1979 missings;
+	proc freq data=a;
+		tables incwin79*incwin82 / missing;
+		where incwin79 = .D or incwin79 = .I or incwin79 = .R;
+		run;
+		*Around 25% of 1979 missings are also missing in 1982;
+
+	*going to do the same thing with formats for ease of interpretation;
+	proc freq data=a;
+		tables income79*income82 / missing norow nocol;
+		run;
+
+	*creating new vars so I can view both histograms in the same frame;
+	data inc; set a;
+		inc79_miss82 = .;
+		if incwin82 = .D or incwin82 = .I or incwin82 = .R then inc79_miss82 = income79;
+		inc79_nonmiss82 = .;
+		if incwin82 ne .D or incwin82 ne .I or incwin82 ne .R then inc79_nonmiss82 = income79;
+		inc79_miss16 = .;
+		if incwin16 = .D or incwin16 = .I or incwin16 = .R then inc79_miss16 = income79;
+		inc79_nonmiss16 = .;
+		if incwin16 ne .D or incwin16 ne .I or incwin16 ne .R then inc79_nonmiss16 = income79;
+		run;
+
+	*1982 missing income data vs complete income data;
+	proc sgplot data=inc;
+		histogram inc79_miss82 / binwidth = 2000 transparency = 0.5;
+		histogram inc79_nonmiss82 / binwidth = 2000 transparency = 0.5;
+		run;
+
+	*2016 missing income data vs complete income data;
+	proc sgplot data=inc;
+		histogram inc79_miss16 / binwidth = 2000 transparency = 0.5;
+		histogram inc79_nonmiss16 / binwidth = 2000 transparency = 0.5;
+		run;
+
+	*Probing correlation and linear reg coefficient;
+	proc corr data=inc pearson spearman kendall hoeffding;
+		var inc79_miss82 inc79_nonmiss82;
+		run;
+
+	*Proc reg keeps running for some reason, so commenting out for now;
+	/*
+	proc reg data=inc;
+		model inc79_nonmiss82 = inc79_miss82;
+		run;
+	*/
+
+	/* Imputation phase;
+	proc mi data=a nimpute=20 out=mi_mvn seed=54321;
+	var;*/
+
+	*Comfortable with MAR approach;
+
+	
 
 	* FAMILY SIZE;
 
