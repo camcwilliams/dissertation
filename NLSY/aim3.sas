@@ -220,9 +220,6 @@ proc freq data=a; tables tub:;
 
 * NUMBER KIDS (NO PARITY VAR THAT I KNOW OF);
 
-proc freq data=a;
-	tables 'numkid00_2000'n; run;
-
 data a; set a;
 	rename
 	'numkid82_1982'n = numkid82
@@ -527,56 +524,7 @@ data a; set a;
 
 		*checked and deleted check code;
 
-*** Working on multiple imputation for income;
 
-	*Need to check on distribution first;
-
-	*First checking on baseline;
-	proc freq data=a;
-		tables incwin79 / missing;
-		run;
-		*there's a lot of missing at baseline, so it may not be the best comparison;
-
-	*Are 1982 missings the same as 1979 missings;
-	proc freq data=a;
-		tables incwin79*incwin82 / missing;
-		where incwin79 = .D or incwin79 = .I or incwin79 = .R;
-		run;
-		*Around 25% of 1979 missings are also missing in 1982;
-
-	*going to do the same thing with formats for ease of interpretation;
-	proc freq data=a;
-		tables income79*income82 / missing norow nocol;
-		run;
-
-	*creating new vars so I can view both histograms in the same frame;
-	data inc; set a;
-		inc79_miss82 = .;
-		if incwin82 = .D or incwin82 = .I or incwin82 = .R then inc79_miss82 = income79;
-		inc79_nonmiss82 = .;
-		if incwin82 ne .D or incwin82 ne .I or incwin82 ne .R then inc79_nonmiss82 = income79;
-		inc79_miss16 = .;
-		if incwin16 = .D or incwin16 = .I or incwin16 = .R then inc79_miss16 = income79;
-		inc79_nonmiss16 = .;
-		if incwin16 ne .D or incwin16 ne .I or incwin16 ne .R then inc79_nonmiss16 = income79;
-		run;
-
-	*1982 missing income data vs complete income data;
-	proc sgplot data=inc;
-		histogram inc79_miss82 / binwidth = 2000 transparency = 0.5;
-		histogram inc79_nonmiss82 / binwidth = 2000 transparency = 0.5;
-		run;
-
-	*2016 missing income data vs complete income data;
-	proc sgplot data=inc;
-		histogram inc79_miss16 / binwidth = 2000 transparency = 0.5;
-		histogram inc79_nonmiss16 / binwidth = 2000 transparency = 0.5;
-		run;
-
-	*Probing correlation and linear reg coefficient;
-	proc corr data=inc pearson spearman kendall hoeffding;
-		var inc79_miss82 inc79_nonmiss82;
-		run;
 
 	*Proc reg keeps running for some reason, so commenting out for now;
 	/*
@@ -1042,11 +990,14 @@ data a; set a;
 
 	*checked and deleted check code;
 
-
 * HEALTH INSURANCE;
 
 *identifying the variables i want;
+
+proc contents data=a; run;
+
 proc means data=a; var q11:; run;
+
 proc freq data=a; tables 'Q11-80B_000003_1990'n; run;
 
 proc freq data=a; tables 'Q11-79_1990'n; run;
@@ -1078,6 +1029,7 @@ proc freq data=a;
 proc freq data=a;
 	tables 'Q11-80B~000001_2000'n*'Q11-80B~000003_2000'n;
 	run;
+	*Yeah.;
 
 proc freq data=a;
 	tables 'Q11-80B~000001_2000'n*'Q11-80B~000006_2000'n;
@@ -1112,14 +1064,85 @@ data a; set a;
 
 	proc freq data=a; tables ins00 / missing; run;
 
-*some years are separate variables for each response, and some appear to be
-one variable for all responses;
+	*some years are separate variables for each response, and some appear to be
+one variable for all responses, so going to have to do these year by year;
 
-proc freq data=a; tables 'Q11-79_2002'n; run;
-
-proc print data=a;
-	var caseid tub82--tub16;
+*checking to see if a few of the years have identical vars;
+proc freq data=a;
+	tables 
+	'Q11-80B_000004_1989'n
+	'Q11-80B_000004_1990'n
+	'Q11-80B_000004_1992'n;
+	format _all_;
 	run;
+
+	proc means data=a;
+		var 
+		'Q11-80B~000001_2012'n
+		'Q11-80B~000002_2012'n
+		'Q11-80B~000003_2012'n
+		'Q11-80B~000004_2012'n
+		'Q11-80B~000006_2012'n
+		'Q11-80B~000007_2012'n
+		'Q11-80B~000008_2012'n
+		'Q11-80B~000009_2012'n
+		'Q11-80B~000010_2012'n
+		'Q11-80B~000012_2012'n
+		'Q11-80B~000001_2014'n
+		'Q11-80B~000002_2014'n
+		'Q11-80B~000003_2014'n
+		'Q11-80B~000004_2014'n
+		'Q11-80B~000005_2014'n
+		'Q11-80B~000006_2014'n
+		'Q11-80B~000007_2014'n
+		;
+		run;
+
+*ok, from the above and the codebooks, it looks like 1989-2000 are identical, 
+	2002-2008 are identical and might only have yes/no
+	to having any plan, 2008-2012 are identical, 2014 is the same
+	as 89-00, and 2016 is it's own bag of tricks;
+
+	*checking whether type of insurance is associated with tubal;
+	data a; set a;
+		incperthous00 = income00/1000; run;
+	proc surveylogistic data=a;
+		class ins00 tub00 race mar00;
+		model tub00 = ins00 incperthous00 educ00 race numkid00 mar00 famsize_2000 
+		/*incperthous00*famsize_2000*/;
+		run;
+
+	proc freq data=a;
+		tables age00;
+		run;
+
+	*** ^^ This is the model that convinces me I don't need health insurance, it is not
+		significant in a model with other important predictors, and it's type 3 p-value is almost
+		1, all at an important age for tubal uptake;
+
+*Imputing missing income and education;
+
+*Probing correlations and determining best model for imputation was done in aim3_imputation.sas
+program, final model is here:;
+
+proc mi data=a nimpute=20 out=mi_mvn seed=54321 round=1;
+var race 'age1b16_2016'n
+incwin79 incwin82	incwin84	incwin86	incwin88	
+incwin90	incwin92	incwin94	incwin96	incwin98	incwin00	
+incwin02	incwin04	incwin06	incwin08	incwin10	incwin12	
+incwin14	incwin16
+educ82	educ84	
+educ86	educ88	educ90	educ92
+educ94	educ96
+tub82 tub84 tub85 tub86 tub88 tub90 tub92 tub94 tub96 tub98 tub00 tub02 
+tub04 tub06 /*tub08 tub10 tub12 tub14 tub16*/
+famsize_1982	famsize_1984	famsize_1986	famsize_1988	
+famsize_1990	famsize_1992	famsize_1994	famsize_1996	famsize_1998	
+famsize_2000	famsize_2002	famsize_2004	famsize_2006	famsize_2008	
+famsize_2010	famsize_2012	famsize_2014	famsize_2016;
+ods output misspattern=imputation_misspattern;
+run;
+*(Had to remove the years where there was almost no variation);
 
 *** TABLE 1;
 
@@ -1269,38 +1292,59 @@ data freqs_miss; set freqs_miss;
 	*/
 
 
+
+
+
 *** LONG FORMAT DATASET;
 
 * Can probably do this with a macro, but trying individually first to make sure I
 	have the procedure down;
 
+* Need to adjust the normal procedures because of the imputation, see p 10 here for example:
+	https://www.sas.com/content/dam/SAS/support/en/sas-global-forum-proceedings/2018/1738-2018.pdf;
+
+proc sort data=mi_mvn; by caseid _imputation_; run;
+
+proc print data=mi_mvn; var caseid _imputation_ tub:; where caseid=4663; run;
+
 * Tubal;
-proc transpose data=a out=trantub;
-	var caseid tub82--tub16;
-	by caseid;
+
+proc transpose data=mi_mvn out=trantub_mi;
+	var caseid _imputation_ tub82--tub16;
+	by caseid _imputation_;
 	run;
 
-data trantub; set trantub (rename=(col1=tub));
+	proc print data=trantub_mi; where caseid=4663 and _imputation_ = 1; run;
+
+data trantub_mi; set trantub_mi (rename=(col1=tub));
+	if _label_ ne . then delete;
+	format year 
 	year=input(substr(_name_,4),5.);
 	drop _name_ _label_;
 	if year = . then delete;
 	run;
+	*Ignore the error, the year output is still usable;
 
 * Age;
 
 	%let age = age82 age84 	age85 	age86 	age88 	age90 	age92 	age94 	age96 	
 	age98 	age00 	age02 	age04 age06 age08 age10 age12 age14 age16; 
 
-proc transpose data=a out=tranage;
-	var caseid &age;
-	by caseid;
+proc transpose data=mi_mvn out=tranage_mi;
+	var caseid _imputation_ &age;
+	by caseid _imputation_;
 	run;
 
-data tranage; set tranage (rename=(col1=age));
+	proc print data=tranage_mi; where caseid=4663 and _imputation_ = 1; run;
+
+data tranage_mi; set tranage_mi (rename=(col1=age));
+	/*if _label_ ne . then delete;*/
 	year=input(substr(_name_,4),5.);
 	drop _name_ _label_;
 	if year = . then delete;
 	run;
+
+	proc print data=tranage_test; where caseid=4663; run;
 
 * Marital status;
 %let mar = mar80	mar82	mar84	mar85	mar86	
