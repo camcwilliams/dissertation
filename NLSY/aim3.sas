@@ -1613,27 +1613,16 @@ proc sort data=traninc; by caseid _imputation_ year; run;
 proc sort data=tranmar; by caseid _imputation_ year; run;
 proc sort data=trannumkid; by caseid _imputation_ year; run;
 proc sort data=tranfamsize; by caseid _imputation_ year; run;
-
-*still need to figure out the permanent variables;
-proc sort data=tranrace; by caseid _imputation_; run;
+proc sort data=tranrace; by caseid _imputation_ year; run;
 proc sort data=tranage1b; by caseid _imputation_ year; run;
-proc sort data=tranmeno; by caseid _imputation_ year; run;
+proc sort data=trancustomwt; by caseid _imputation_ year; run;
+/*proc sort data=tranmeno; by caseid _imputation_ year; run;*/
 
-data test_tran;
-	merge tranrace tranage;
-	by caseid _imputation_;
-	run;
-
-	proc print data=test_tran (obs=50); run;
-	*there are only 19 imputations for some reason;
-
-	proc print data=tranrace; var caseid _imputation_ race; where caseid = 2; run;
 
 data all_transposed;
 	merge trantub tranage traneduc traninc tranmar trannumkid tranfamsize
-	/*tranrace tranage1b tranmeno*/;
+	tranrace tranage1b trancustomwt;
 	by caseid _imputation_ year;
-	drop _name_;
 	run;
 
 * Need to order the observations by survey year;
@@ -1664,16 +1653,77 @@ data all_transposed; set all_transposed;
 	if year = 80 or year = 85 then delete;
 	run;
 	
-ods html close; ods html;
 
-*getting all caseids to get custom weights;
-proc export data=all_tranposed 
+*** Analysis;
 
-* Trying a model for kicks;
+proc sort data=all_transposed; by _imputation_; run;
 
-proc logistic data=b;
-	class time mar / param=glm;
-	model tub(event='1') = time age educ fpl mar numkid
-		/ noint link=cloglog technique=newton;
+* First doing just time, unadjusted;
+
+proc surveylogistic data=all_transposed;
+	class time / param=glm;
+	weight customwt;
+	model tub(event='1') = time / noint link=cloglog technique=newton;
+	by _imputation_;
 	/*estimate time 1 / exp cl ilink;*/
+	ods output ParameterEstimates=unadj_pe_mvn;
 	run;
+
+proc mianalyze parms(classvar=classval0)=unadj_pe_mvn;
+	class time;
+	modeleffects time;
+	ods output ParameterEstimates=unadj_pe_final;
+	run;
+	*not outputting confidence limits because values are exactly the same for
+	all imputations;
+
+data unadj_estimates; set unadj_pe_final;
+	yr1982 = exp(-exp(Estimate));
+	keep time Estimate stderr yr1982; 
+	run;
+
+proc print data=unadj_estimates; run;
+
+
+* Adjusted;
+
+proc surveylogistic data=all_transposed;
+	class time mar (ref="0") / param=glm;
+	weight customwt;
+	effect spl_age = spline(age / naturalcubic basis=tpf(noint)
+									knotmethod=percentiles(5) details);
+	model tub(event='1') = time spl_age age1b educ famsize incwin mar numkid
+	race incwin*famsize / noint link=cloglog technique=newton;
+	by _imputation_;
+	/*estimate time 1 / exp cl ilink;*/
+	ods output ParameterEstimates=pe_mvn;
+	run;
+
+	proc contents data=pe_mvn; run;
+	proc print data=pe_mvn (obs=100); run;
+
+proc mianalyze parms(classvar=classval0)=pe_mvn;
+	class time mar;
+	modeleffects time spl_age age1b educ famsize incwin mar numkid race
+	incwin*famsize;
+	ods output ParameterEstimates=pe_final;
+	run;
+
+proc contents data=pe_final; run;
+proc print data=pe_final; run;
+
+data estimates; set pe_final;
+	yr1982 = exp(-exp(Estimate));
+	lcl1982 = exp(-exp(LCLMean));
+	ucl1982 = exp(-exp(UCLMean));
+	run;
+
+data age_estimates; set pe_final;
+	age23 = exp(-exp(23*Estimate)); 
+	age30 = exp(-exp(30*Estimate));
+	age35 = exp(-exp(35*Estimate));
+	age40 = exp(-exp(40*Estimate));
+	where parm="spl_age"; run;
+
+proc sort data=estimates; by time; run;
+proc print data=age_estimates; run;
