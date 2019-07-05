@@ -616,6 +616,7 @@ data a; set a;
 
 	*checked and deleted check code;
 
+/*
 	*** Working on missingness;
 
 	ods html close; ods html;
@@ -714,7 +715,7 @@ data a; set a;
 	to move forward with model-building and come back to imputation, see this for 
 	good guidance:
 	https://stats.idre.ucla.edu/sas/seminars/multiple-imputation-in-sas/mi_new_1/;
-
+*/
 
 * EDUCATION;
 
@@ -998,7 +999,9 @@ data a; set a;
 	*checked and deleted check code;
 
 * HEALTH INSURANCE;
+	*Not using health insurance, so commenting out;
 
+/*
 *identifying the variables i want;
 
 proc contents data=a; run;
@@ -1116,7 +1119,7 @@ proc freq data=a;
 	proc surveylogistic data=a;
 		class ins00 tub00 race mar00;
 		model tub00 = ins00 incperthous00 educ00 race numkid00 mar00 famsize_2000 
-		/*incperthous00*famsize_2000*/;
+		incperthous00*famsize_2000;
 		run;
 
 	proc freq data=a;
@@ -1126,6 +1129,31 @@ proc freq data=a;
 	*** ^^ This is the model that convinces me I don't need health insurance, it is not
 		significant in a model with other important predictors, and it's type 3 p-value is almost
 		1, all at an important age for tubal uptake;
+
+*/
+
+* Adding custom weights;
+
+	/*
+	*creating final list of cases to submit to custom weight program
+	(https://www.nlsinfo.org/weights/nlsy79);
+
+	data print; set a;
+		keep caseid;
+		run;
+
+	proc export data=print 
+		outfile="C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\caseids.xlsx"
+		dbms=xlsx;
+		run;
+
+	*/
+
+*custom weights calculated and dataset created, combining with other datasets here;
+data a;
+	merge a custom_weights;
+	by caseid;
+	run;
 
 *Imputing missing income and education;
 
@@ -1300,8 +1328,6 @@ data freqs_miss; set freqs_miss;
 
 
 
-
-
 *** LONG FORMAT DATASET;
 
 * Can probably do this with a macro, but trying individually first to make sure I
@@ -1315,17 +1341,18 @@ data freqs_miss; set freqs_miss;
 * Tubal;
 
 *first need to change tub variables to be missing after a person has a tubal;
-
-data test3; set mi_mvn;
-	array tub (18)
-	tub82 tub84 tub85 tub86 tub88 tub90 tub92 
-	tub94 tub96 tub98 tub00 tub02 tub04 tub06 
-	tub08 tub10 tub12 tub14;
-	do i = 1 to 18;
-	if tub(i) = 1 or tub(i) = . then tub(i+1) = .;
-	end;
-	run;
-*this array is throwing an error i can't decipher, so moving forward with hard code;
+	/*
+	data mi_mvn; set mi_mvn;
+		array tub (18)
+		tub82 tub84 tub85 tub86 tub88 tub90 tub92 
+		tub94 tub96 tub98 tub00 tub02 tub04 tub06 
+		tub08 tub10 tub12 tub14;
+		do i = 1 to 18;
+		if tub(i) = 1 or tub(i) = . then tub(i+1) = .;
+		end;
+		run;
+	*/
+	*this array is throwing an error i can't decipher, so moving forward with hard code;
 
 data mi_mvn; set mi_mvn;
 	if tub82 = 1 then tub84 = .;
@@ -1347,48 +1374,148 @@ data mi_mvn; set mi_mvn;
 	if tub14 = 1 or tub14 = . then tub16 = .;
 	run;
 
-	proc print data=test3 (obs=100); var caseid _imputation_ tub:; where _imputation_ =15; run;	
+	/*proc print data=mi_mvn (obs=50); var caseid _imputation_ tub:; where _imputation_ =15; run;*/
 
-/*data mi_mvn; set mi_mvn;
-	if meno = age then tub(i) = .;
-	run;*/
+data mi_mvn; set mi_mvn;
+	array age (19)
+	age82 age84 age85 age86 age88 age90 age92 age94 age96 	
+	age98 age00 age02 age04 age06 age08 age10 age12 age14 age16;
+	array tub (19)
+	tub82 tub84 tub85 tub86 tub88 tub90 tub92 
+	tub94 tub96 tub98 tub00 tub02 tub04 tub06 
+	tub08 tub10 tub12 tub14 tub16;
+	do i = 1 to 19;
+	if age(i) >= meno then tub(i) = .;
+	end;
+	run;
 
-proc transpose data=mi_mvn out=trantub_mi;
+	/*proc print data=test (obs=100); 
+		var caseid _imputation_ tub10 tub12 tub14 meno age10 age12 age14; 
+		where _imputation_ = 12 and (meno > tub10 or meno > tub12 or meno > tub14);
+		run;
+
+		*Hot damn, it worked!;
+	*/
+
+*making a permanent var for each year so I can transpose them. I'm sure there's a
+more efficient way but haven't been able to identify one yet;
+
+data mi_mvn; set mi_mvn;
+	array age_array (19)
+	age82 age84 age85 age86 age88 age90 age92 age94 age96 	
+	age98 age00 age02 age04 age06 age08 age10 age12 age14 age16;
+	array race_array (19)
+	race82 race84 race85 race86 race88 race90 race92 race94 race96 
+	race98 race00 race02 race04 race06 race08 race10 race12 race14 race16;
+	array age1b_array (19)
+	age1b82 age1b84 age1b85 age1b86 age1b88 age1b90 age1b92 age1b94 age1b96 
+	age1b98 age1b00 age1b02 age1b04 age1b06 age1b08 age1b10 age1b12 age1b14 
+	age1b16;
+	array customwt_array (19)
+	custom_wt82 custom_wt84 custom_wt85 custom_wt86 custom_wt88 custom_wt90 
+	custom_wt92 custom_wt94 custom_wt96 custom_wt98 custom_wt00 custom_wt02 
+	custom_wt04 custom_wt06 custom_wt08 custom_wt10 custom_wt12 custom_wt14 
+	custom_wt16;
+	do i = 1 to 19;
+	if age_array(i) ne . then race_array(i) = race;
+	if age_array(i) ne . then age1b_array(i) = 'age1b16_2016'n;
+	if age_array(i) ne . then customwt_array(i) = custom_wt;
+	end;
+	run;
+
+	*checked and deleted check code;
+
+%let race_new = race82 race84 race85 race86 race88 race90 race92 race94 race96 
+	race98 race00 race02 race04 race06 race08 race10 race12 race14 race16;
+%let age1b_new = age1b82 age1b84 age1b85 age1b86 age1b88 age1b90 age1b92 age1b94 age1b96 
+	age1b98 age1b00 age1b02 age1b04 age1b06 age1b08 age1b10 age1b12 age1b14 
+	age1b16;
+%let customwt_new = custom_wt82 custom_wt84 custom_wt85 custom_wt86 custom_wt88 custom_wt90 
+	custom_wt92 custom_wt94 custom_wt96 custom_wt98 custom_wt00 custom_wt02 
+	custom_wt04 custom_wt06 custom_wt08 custom_wt10 custom_wt12 custom_wt14 
+	custom_wt16;
+
+*transposing permanent variables first;
+proc transpose data=mi_mvn out=tranrace;
+	var caseid _imputation_ &race_new;
+	by caseid _imputation_;
+	run;	
+
+data tranrace; set tranrace (rename=(col1=race));
+	if _label_ ne . then delete;
+	year=input(substr(_name_,5),5.);
+	drop _name_ _label_;
+	if year = . then delete;
+	run;
+
+proc transpose data=mi_mvn out=tranage1b;
+	var caseid _imputation_ &age1b_new;
+	by caseid _imputation_;
+	run;	
+
+data tranage1b; set tranage1b (rename=(col1=age1b));
+	if _label_ ne . then delete;
+	year=input(substr(_name_,6),5.);
+	drop _name_ _label_;
+	if year = . then delete;
+	run;
+
+proc transpose data=mi_mvn out=trancustomwt;
+	var caseid _imputation_ &customwt_new;
+	by caseid _imputation_;
+	run;	
+
+data trancustomwt; set trancustomwt (rename=(col1=customwt));
+	if _label_ ne . then delete;
+	year=input(substr(_name_,10),5.);
+	drop _name_ _label_;
+	if year = . then delete;
+	run;
+
+*now transposing yearly vars;
+proc transpose data=mi_mvn out=trantub;
 	var caseid _imputation_ tub82--tub16;
 	by caseid _imputation_;
 	run;
 
-	proc print data=trantub_mi; where caseid=4663 and _imputation_ = 1; run;
+	/*proc print data=trantub_mi; where caseid=4663 and _imputation_ = 1; run;*/
 
-data trantub_mi; set trantub_mi (rename=(col1=tub));
+data trantub; set trantub (rename=(col1=tub));
 	if _label_ ne . then delete;
-	format year 
 	year=input(substr(_name_,4),5.);
 	drop _name_ _label_;
 	if year = . then delete;
 	run;
 	*Ignore the error, the year output is still usable;
 
+* Age at menopause;
+
+proc transpose data=mi_mvn out=tranmeno;
+	var caseid _imputation_ meno;
+	var caseid _imputation_;
+	run;
+
+data tranmeno; set tranmeno (rename=(col1=meno_age));
+	if _name_ = "caseid" or _name_ = "_Imputation_" then delete;
+	drop _label_;
+	run;
+
 * Age;
 
 	%let age = age82 age84 	age85 	age86 	age88 	age90 	age92 	age94 	age96 	
 	age98 	age00 	age02 	age04 age06 age08 age10 age12 age14 age16; 
 
-proc transpose data=mi_mvn out=tranage_mi;
+proc transpose data=mi_mvn out=tranage;
 	var caseid _imputation_ &age;
 	by caseid _imputation_;
 	run;
 
-	proc print data=tranage_mi; where caseid=4663 and _imputation_ = 1; run;
-
-data tranage_mi; set tranage_mi (rename=(col1=age));
+data tranage; set tranage (rename=(col1=age));
 	/*if _label_ ne . then delete;*/
 	year=input(substr(_name_,4),5.);
 	drop _name_ _label_;
 	if year = . then delete;
 	run;
-
-	proc print data=tranage_test; where caseid=4663; run;
 
 * Marital status;
 %let mar = mar80	mar82	mar84	mar85	mar86	
@@ -1405,16 +1532,6 @@ data tranmar; set tranmar (rename=(col1=mar));
 	drop _name_ _label_;
 	if year = . then delete;
 	run;
-
-	proc contents data=tranmar; run;
-	proc contents data=tranage_mi; run;
-	proc print data=tranmar (obs=100); where caseid=4663; run;
-	proc print data=tranmar (obs=100); where year=82; run;
-
-	proc freq data=tranmar; run;
-	proc freq data=traneduc; run;
-	proc means data=tranmar; var year; run;
-	proc means data=traneduc; var year; run;
 	
 
 * Education;
@@ -1458,21 +1575,18 @@ proc transpose data=mi_mvn out=traninc;
 	by caseid _imputation_;
 	run;
 
-data traninc; set traninc (rename=(col1=fpl));
+data traninc; set traninc (rename=(col1=incwin));
 	year=input(substr(_name_,7),5.);
 	drop _name_ _label_;
 	if year = . then delete;
 	run;
 
-	*forgot to change column name, so;
-	data traninc; set traninc;
-		rename fpl=incwin;
-		run;
-
+/*
 *checking that there are values for all imputations for variables I didn't include in the
 	imputation model;
 proc print data=mi_mvn; var caseid famsize_2000 _imputation_; where caseid=4663; run;
 	*confirmed;
+*/
 
 %let famsize = famsize_1982	famsize_1984 famsize_1986	famsize_1988	famsize_1990	
 famsize_1992	famsize_1994	famsize_1996	famsize_1998	famsize_2000	famsize_2002	
@@ -1492,16 +1606,34 @@ data tranfamsize; set tranfamsize (rename=(col1=famsize));
 	
 
 * Creating dataset;
-proc sort data=trantub_mi; by caseid _imputation_ year; run;
-proc sort data=tranage_mi; by caseid _imputation_ year; run;
+proc sort data=trantub; by caseid _imputation_ year; run;
+proc sort data=tranage; by caseid _imputation_ year; run;
 proc sort data=traneduc; by caseid _imputation_ year; run;
 proc sort data=traninc; by caseid _imputation_ year; run;
 proc sort data=tranmar; by caseid _imputation_ year; run;
 proc sort data=trannumkid; by caseid _imputation_ year; run;
+proc sort data=tranfamsize; by caseid _imputation_ year; run;
+
+*still need to figure out the permanent variables;
+proc sort data=tranrace; by caseid _imputation_; run;
+proc sort data=tranage1b; by caseid _imputation_ year; run;
+proc sort data=tranmeno; by caseid _imputation_ year; run;
+
+data test_tran;
+	merge tranrace tranage;
+	by caseid _imputation_;
+	run;
+
+	proc print data=test_tran (obs=50); run;
+	*there are only 19 imputations for some reason;
+
+	proc print data=tranrace; var caseid _imputation_ race; where caseid = 2; run;
 
 data all_transposed;
-	merge trantub_mi tranage_mi traneduc traninc tranmar trannumkid;
+	merge trantub tranage traneduc traninc tranmar trannumkid tranfamsize
+	/*tranrace tranage1b tranmeno*/;
 	by caseid _imputation_ year;
+	drop _name_;
 	run;
 
 * Need to order the observations by survey year;
@@ -1531,62 +1663,11 @@ data all_transposed; set all_transposed;
 data all_transposed; set all_transposed;
 	if year = 80 or year = 85 then delete;
 	run;
-
-*creating age at first birth and race dataset for merging;
-
-proc transpose data=mi_mvn out=tranrace;
-	var caseid _imputation_ race;
-	by caseid _imputation_;
-	run;
-
-	proc print data=tranrace (obs=50); where caseid=4663; run;
-
-data tranrace; set tranrace (rename=(col1=race));
-	if _name_ = "caseid" or _name_ = "_Imputation_" then delete;
-	drop _label_;
-	run;
-
-proc transpose data=mi_mvn out=tranage1b;
-	var caseid _imputation_ 'age1b16_2016'n;
-	by caseid _imputation_;
-	run;
-
-	proc print data=tranage1b (obs=50); where caseid=4663; run;
-
-data tranage1b; set tranage1b (rename=(col1=age1b));
-	if _name_ = "caseid" or _name_ = "_Imputation_" then delete;
-	drop _label_;
-	run;
-
-data mi_long; 
-	merge all_transposed tranage1b tranrace;
-	by caseid _imputation_;
-	drop _name_;
-	run;
-
-	proc contents data=mi_long; run;
-
-	proc print data=mi_long (obs=150); where caseid=4663; run;
-
-*** Need to change tubal to set Rs to missing after reporting a tubal;
-proc sort data=mi_long; by caseid _imputation_ time; run;
-
-data test; set mi_long;
-	if year = 82 and tub = 1 then do;
-		if time > 0 then tub = .; end;
-	if year = 84 and tub = 1 then do;
-		if time > 1 then tub = .; end;
-	run;
-
-	proc print data=test; where year=82 and tub = 1 and _imputation_ > 18; run;
-
-	proc print data=test2 (obs=200); 
-		var caseid _imputation_ time year tub; 
-		where caseid = 5339 or caseid = 6209 or caseid = 11752 and _imputation_ > 18; 
-		run;
-
-data test2; set mi_long;
 	
+ods html close; ods html;
+
+*getting all caseids to get custom weights;
+proc export data=all_tranposed 
 
 * Trying a model for kicks;
 
