@@ -18,6 +18,8 @@ dataset, I think the name literals are the culprit;
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\new_eduthree.sas";
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_samp.sas";
 %include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\new_menopause.sas";
+%include "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY\nlsy_custom_weights.sas";
+
 
 *** Merge datasets created using NLSY programs;
 data work.nlsy;
@@ -1285,6 +1287,11 @@ data freqs_miss; set freqs_miss;
 
 	proc print data=freqs_miss; run;
 
+
+
+
+
+
 * In the interest of time, I abandoned graphing and made a table in excel;
 	/*proc sort data = freqs_miss; by variable; run;
 	proc sort data=freqs_remain; by variable; run;
@@ -1434,6 +1441,8 @@ data mi_mvn; set mi_mvn;
 	custom_wt92 custom_wt94 custom_wt96 custom_wt98 custom_wt00 custom_wt02 
 	custom_wt04 custom_wt06 custom_wt08 custom_wt10 custom_wt12 custom_wt14 
 	custom_wt16;
+
+proc sort data=mi_mvn; by caseid _imputation_; run;
 
 *transposing permanent variables first;
 proc transpose data=mi_mvn out=tranrace;
@@ -1677,9 +1686,14 @@ proc mianalyze parms(classvar=classval0)=unadj_pe_mvn;
 	*not outputting confidence limits because values are exactly the same for
 	all imputations;
 
+*What proportion of respondents are having a tubal each year?;
+proc freq data=all_transposed;
+	where _imputation_ = 12;
+	tables tub*time;
+	run;
+
 data unadj_estimates; set unadj_pe_final;
-	yr1982 = exp(-exp(Estimate));
-	keep time Estimate stderr yr1982; 
+	unadj_e = exp(-exp(Estimate));
 	run;
 
 proc print data=unadj_estimates; run;
@@ -1717,6 +1731,146 @@ data estimates; set pe_final;
 	lcl1982 = exp(-exp(LCLMean));
 	ucl1982 = exp(-exp(UCLMean));
 	run;
+
+data age_estimates; set pe_final;
+	age23 = exp(-exp(23*Estimate)); 
+	age30 = exp(-exp(30*Estimate));
+	age35 = exp(-exp(35*Estimate));
+	age40 = exp(-exp(40*Estimate));
+	where parm="spl_age"; run;
+
+proc sort data=estimates; by time; run;
+proc print data=age_estimates; run;
+
+*the probabilities are way too high, checking to see if it's the missings i added
+to the tub var;
+
+proc print data=all_transposed (obs=100);
+	where tub = 1 or tub = .;
+	run;
+
+data test_missingtub; set all_transposed;
+	if tub = . then delete;
+	run;
+
+	proc freq data=test_missingtub; tables tub; run;
+
+
+	proc surveylogistic data=test_missingtub;
+		class time mar (ref="0") / param=glm;
+		weight customwt;
+		effect spl_age = spline(age / naturalcubic basis=tpf(noint)
+										knotmethod=percentiles(5) details);
+		model tub(event='1') = time spl_age age1b educ famsize incwin mar numkid
+		race incwin*famsize / noint link=cloglog technique=newton;
+		by _imputation_;
+		/*estimate time 1 / exp cl ilink;*/
+		ods output ParameterEstimates=pe_test_missingtub;
+		run;
+
+		proc contents data=pe_mvn; run;
+		proc print data=pe_mvn (obs=100); run;
+
+	proc mianalyze parms(classvar=classval0)=pe_test_missingtub;
+		class time mar;
+		modeleffects time spl_age age1b educ famsize incwin mar numkid race
+		incwin*famsize;
+		ods output ParameterEstimates=pe_final_test_missingtub;
+		run;
+
+	proc contents data=pe_final; run;
+	proc print data=pe_final; run;
+
+	data estimates_test_missingtub; set pe_final_test_missingtub;
+		yr1982 = exp(-exp(Estimate));
+		lcl1982 = exp(-exp(LCLMean));
+		ucl1982 = exp(-exp(UCLMean));
+		run;
+
+		proc print data=estimates_test_missingtub; run;
+
+
+*After talking to Ron, need to include intercept,
+	tried both ways and after adding intercept, must use ref parameterization
+	to avoid separation;
+
+proc surveylogistic data=all_transposed;
+	class time (ref="0") mar (ref="0") / param=ref;
+	weight customwt;
+	effect spl_age = spline(age / naturalcubic basis=tpf(noint)
+									knotmethod=percentiles(5) details);
+	model tub(event='1') = time spl_age age1b educ famsize incwin mar numkid
+	race incwin*famsize / noint link=cloglog technique=newton;
+	by _imputation_;
+	/*estimate time 1 / exp cl ilink;*/
+	ods output ParameterEstimates=ref_mvn;
+	run;
+
+	proc contents data=ref_mvn; run;
+	proc print data=ref_mvn (obs=100); run;
+
+proc mianalyze parms(classvar=classval0)=ref_mvn;
+	class time mar;
+	modeleffects time spl_age age1b educ famsize incwin mar numkid race
+	incwin*famsize;
+	ods output ParameterEstimates=ref_final;
+	run;
+
+proc contents data=pe_final; run;
+proc print data=pe_final; run;
+
+data ref_estimates; set ref_final;
+	P = exp(-exp(Estimate));
+	lcl = exp(-exp(LCLMean));
+	ucl = exp(-exp(UCLMean));
+	run;
+
+	proc print data=ref_estimates; run;
+
+data age_estimates; set pe_final;
+	age23 = exp(-exp(23*Estimate)); 
+	age30 = exp(-exp(30*Estimate));
+	age35 = exp(-exp(35*Estimate));
+	age40 = exp(-exp(40*Estimate));
+	where parm="spl_age"; run;
+
+proc sort data=estimates; by time; run;
+proc print data=age_estimates; run;
+
+*trying with intercept;
+
+proc surveylogistic data=all_transposed;
+	class time (ref="0") mar (ref="0") / param=ref;
+	weight customwt;
+	effect spl_age = spline(age / naturalcubic basis=tpf(noint)
+									knotmethod=percentiles(5) details);
+	model tub(event='1') = time spl_age age1b educ famsize incwin mar numkid
+	race incwin*famsize / link=cloglog technique=newton;
+	by _imputation_;
+	/*estimate time 1 / exp cl ilink;*/
+	ods output ParameterEstimates=int_mvn;
+	run;
+
+	proc contents data=int_mvn; run;
+	proc print data=int_mvn (obs=100); run;
+
+proc mianalyze parms(classvar=classval0)=int_mvn;
+	class time mar;
+	modeleffects time spl_age age1b educ famsize incwin mar numkid race
+	incwin*famsize;
+	ods output ParameterEstimates=int_final;
+	run;
+
+proc contents data=pe_final; run;
+proc print data=pe_final; run;
+
+data estimates; set int_final;
+	P = exp(-exp(Estimate));
+	lcl = exp(-exp(LCLMean));
+	ucl = exp(-exp(UCLMean));
+	run;
+
+	proc print data=estimates; run;
 
 data age_estimates; set pe_final;
 	age23 = exp(-exp(23*Estimate)); 
