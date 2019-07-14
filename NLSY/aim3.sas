@@ -1292,44 +1292,36 @@ program, final model is here:;
 
 proc mi data=a nimpute=20 out=mi_mvn seed=54321 round=1;
 class tub82 tub84 tub85 tub86 tub88 tub90 tub92 tub94 tub96 tub98 tub00 tub02 
-tub04 tub06 race
-/*mar80	mar82	mar84	mar85	mar86	
-mar88	mar90	mar92	mar94	mar96	mar98	mar00	mar02	
-mar04	mar06	mar08	mar10	mar12	mar14	mar16*/;
+tub04 tub06 race;
 var race 'age1b16_2016'n
 incwin79 incwin82	incwin84	incwin86	incwin88	
 incwin90	incwin92	incwin94	incwin96	incwin98	incwin00	
 incwin02	incwin04	incwin06	incwin08	incwin10	incwin12	
 incwin14	incwin16
-/*mar80	mar82	mar84	mar85	mar86	
-mar88	mar90	mar92	mar94	mar96	mar98	mar00	mar02	
-mar04	mar06	mar08	mar10	mar12	mar14	mar16*/
 age82 age84 	age85 	age86 	age88 	age90 	age92 	age94 	age96 	
 age98 	age00 	age02 	age04 age06 age08 age10 age12 age14 age16
 educ82	educ84	
 educ86	educ88	educ90	educ92
 educ94	educ96
 tub82 tub84 tub85 tub86 tub88 tub90 tub92 tub94 tub96 tub98 tub00 tub02 
-tub04 tub06 /*tub08 tub10 tub12 tub14 tub16*/
-/*incind82	incind84	incind86	incind88	incind90	incind92	
-incind94	incind96	incind98	incind00	incind02	incind04	
-incind06	incind08	incind10	incind12	incind14	incind16*/
+tub04 tub06
 famsize_1982	famsize_1984	famsize_1986	famsize_1988	
 famsize_1990	famsize_1992	famsize_1994	famsize_1996	famsize_1998	
 famsize_2000	famsize_2002	famsize_2004	famsize_2006	famsize_2008	
 famsize_2010	famsize_2012	famsize_2014	famsize_2016;
 fcs regpmm;
 run;
-*(Had to remove the years where there was almost no variation in tub, all marital status
+*(Had to remove the years (>2008)where there was almost no variation in tub, all marital status
 variables, and the income discontinuity variables, was getting an error that education
 and income variables were linear combinations of other variables, and these were the fix);
 */
 
+/*
 *saving mi_mvn to a permanent dataset since it took well over 30 minutes to run;
 libname ditto "C:\Users\Christine McWilliams\Box Sync\Education\Dissertation\AnalyticFiles\NLSY";
 
 data ditto.mi_mvn; set work.mi_mvn; run;
-
+*/
 
 
 
