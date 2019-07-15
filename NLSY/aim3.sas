@@ -212,14 +212,27 @@ proc freq data=a; tables tub:;
 		if Percent > 50 then delete;
 		run;
 
-	title 'ever tubal by survey year';
+	data t; set t;
+		year_2d = input(substr(Table,10),5.);
+		if year_2d >= 82 then year = cats("19",year_2d);
+		if year_2d >= 10 and year_2d <=16 then year = cats("20",year_2d);
+		if year_2d >= 0 and year_2d <= 8 then year = cats("200",year_2d);
+		run;
+
+
+		proc print data=t; run;
+
+
+	title;
 	proc sgplot data=t;
-		scatter x=Table y=Percent;
+		scatter x=year y=Percent;
 		run;
 
 	*does not appear to have a sharp change at 2002;
 
 	title;
+
+	proc freq data=a; tables age82*tub82; run;
 
 *menopause age;
 
@@ -702,8 +715,10 @@ data a; set a;
 	
 	proc sgplot data=incmissing;
 		series x=year y=percent / group=miss datalabel;
-		where miss ne . ;
+		where miss ne . and miss ne 0;
 		run;
+
+	proc print data=incmissing; run;
 
 	proc print data=a (obs=50);
 		var income:;
@@ -1210,6 +1225,8 @@ proc freq data=missing;
 	ods output OneWayFreqs=freqs_remain;
 	run;
 
+	
+
 title;
 data freqs_remain; set freqs_remain;
 	if table = "Table age82" then variable = "Age";
@@ -1271,6 +1288,33 @@ data freqs_miss; set freqs_miss;
 
 	proc print data=freqs_miss; run;
 
+
+*Table 1 using values from 1982 and 2016;
+	proc freq data=a;
+		tables mar82 mar16 race;
+		ods output OneWayFreqs=freqs_tab1;
+		run;
+	proc means data=a;
+		var age82 age16 'age1b16_2016'n educ82 educ16 incwin82 incwin16 famsize_1982 
+		famsize_2016 numkid82 numkid16;
+		ods output summary=means_tab1;
+		run;
+
+	proc print data=freqs_tab1; run;
+	proc print data=means_tab1; run;
+
+	data a; set a;
+		if 'age1b16_2016'n = -998 then 'age1b16_2016'n = 0;
+		run;
+
+	proc freq data=a;
+		tables 'age1b16_2016'n;
+		run;
+
+	proc means data=a;
+		var 'age1b16_2016'n;
+		where 'age1b16_2016'n ne 0;
+		run;
 
 ***********
 END DESCRIPTIVES
@@ -1705,11 +1749,14 @@ data all_transposed; set all_transposed;
 	if year = 16 then time = 17;
 	run;
 
-*deleting observations from 1980 and 1985;
+*deleting observations from 1980 and 1985 and unnecessary/inappropriate ages;
 
 data all_transposed; set all_transposed;
 	if year = 80 or year = 85 then delete;
+	if age < 23 or age >49 then delete;
 	run;
+
+	proc contents data=a; run;
 	
 
 *** Analysis;
@@ -1746,7 +1793,30 @@ data unadj_age_pe; set unadj_age_pe;
 	keep age Estimate Stderr p_age lcl_age ucl_age;
 	run;	
 
-	proc print data=unadj_age_pe; run;
+	proc means data=unadj_age_pe; var age; run;
+
+	proc sgplot data=unadj_age_pe;
+		band x=age lower=lcl_age upper=ucl_age;
+		series x=age y=P_age / datalabel=p_age;
+		where age ne " " and age ne "49";
+		run;
+	
+data unadj_age_pe; set unadj_age_pe;
+	num_events_per_thousand = 1000-(1000*p_age);
+	lcl_events_per_thousand = 1000-(1000*lcl_age);
+	ucl_events_per_thousand = 1000-(1000*ucl_age);
+	label num_events_per_thousand = "2-year risk of tubal ligation per 1000";
+	run;
+
+	proc sgplot data=unadj_age_pe;
+		band x=age lower=lcl_events_per_thousand upper=ucl_events_per_thousand / 
+		legendLabel="95% CI";
+		series x=age y=num_events_per_thousand / datalabel=num_events_per_thousand;
+		format num_events_per_thousand 5.;
+		where age ne " " and age ne "49";
+		xaxis label="Age";
+		yaxis label="Tubal Ligation (per 1000)";
+		run;
 
 
 * Next, age unadjusted with weights;
@@ -1774,6 +1844,8 @@ data unadj_age_wt_pe; set unadj_age_wt_pe;
 	run;	
 
 	proc print data=unadj_age_wt_pe; run;
+
+
 
 
 * Age unadjusted with weights, outlier weights removed;
@@ -1833,24 +1905,107 @@ data age1pe; set age1pe;
 	proc print data=age1pe; run;
 
 
-* Age plus all covariates;
+* Age plus all covariates, no weights;
+
+	proc sort data=all_transposed; by _imputation_; run;
 
 proc surveylogistic data=all_transposed;
-	class age /*mar*/ race / param=ref;
+	class age mar race / param=glm;
 	/*weight customwt;*/
-	model tub(event='1') = age educ famsize incwin /*mar*/ numkid
-	race /*incind*/ / link=cloglog;
+	model tub(event='1') = age educ famsize incwin age1b incind numkid
+	race incwin*famsize / link=cloglog;
 	by _imputation_;
 	ods output ParameterEstimates=all_linear;
 	run;
 
+	proc means data=all_transposed; var age; run;
 	/*proc print data=all_linear (obs=5); run;
 	proc contents data=all_linear; run;*/
 
 proc mianalyze parms(classvar=ClassVal0)=all_linear;
-	class age /*mar*/ race;
-	modeleffects intercept age educ famsize incwin /*mar*/ numkid
-	race /*incind*/;
+	class age mar race;
+	modeleffects intercept age educ famsize incwin age1b incind numkid
+	race incwin*famsize;
+	ods output ParameterEstimates=all_linear_pe;
+	run;
+
+data all_linear_pe; set all_linear_pe;
+	P_age = 1-(exp(-exp(Estimate)));
+	lcl_age = 1-(exp(-exp(estimate-stderr)));
+	ucl_age = 1-(exp(-exp(estimate+stderr)));
+	keep parm age Estimate P_age lcl_age ucl_age;
+	run;	
+
+	proc print data=all_linear_pe; run;
+
+	/*
+	data all_linear_pe; set all_linear_pe;
+		per_thous = 1000*p_age;
+		per_thouslcl = 1000*lcl_age;
+		per_thouseucl = 1000*ucl_age;
+		run;
+
+		proc print data=all_linear_pe; run;
+
+		proc sgplot data=all_linear_pe;
+			band x=age lower=lcl_age upper=ucl_age;
+			series x=age y=P_age / datalabel=p_age;
+			where parm="age";
+			run;*/
+
+*Graphing events per one thousand;
+data all_linear_pe; set all_linear_pe;
+	num_events_per_thousand = 1000-(1000*p_age);
+	lcl_events_per_thousand = 1000-(1000*lcl_age);
+	ucl_events_per_thousand = 1000-(1000*ucl_age);
+	label num_events_per_thousand = "2-year risk of tubal ligation per 1000";
+	run;
+
+	proc sgplot data=all_linear_pe;
+		band x=age lower=lcl_events_per_thousand upper=ucl_events_per_thousand;
+		series x=age y=num_events_per_thousand / datalabel=num_events_per_thousand;
+		format num_events_per_thousand 5.;
+		where parm="age";
+		run;
+
+	proc sgplot data=all_linear_pe;
+		band x=age lower=lcl_events_per_thousand upper=ucl_events_per_thousand / 
+		legendLabel="95% CI";
+		series x=age y=num_events_per_thousand / datalabel=num_events_per_thousand;
+		format num_events_per_thousand 5.;
+		where age ne " " and age ne "49";
+		xaxis label="Age";
+		yaxis label="Tubal Ligation (per 1000)";
+		run;
+
+
+
+
+* Age plus all covariates, now with weights;
+
+proc means data=all_transposed; var customwt; run;
+
+data all_transposed; set all_transposed;
+	if customwt > 2000000 then customwt = 2000000;
+	run;
+
+data all_transposed; set all_transposed;
+	if customwt > 2000000 then delete;
+	run;
+
+proc surveylogistic data=all_transposed;
+	class age mar race / param=glm;
+	weight customwt;
+	model tub(event='1') = age educ famsize incwin age1b incind numkid
+	race incwin*famsize / link=cloglog;
+	by _imputation_;
+	ods output ParameterEstimates=all_linear;
+	run;
+
+proc mianalyze parms(classvar=ClassVal0)=all_linear;
+	class age mar race;
+	modeleffects intercept age educ famsize incwin age1b incind numkid
+	race incwin*famsize;
 	ods output ParameterEstimates=all_linear_pe;
 	run;
 
@@ -1876,7 +2031,6 @@ data all_linear_pe; set all_linear_pe;
 		series x=age y=P_age / datalabel=p_age;
 		where parm="age";
 		run;
-*^^ This one is looking ok now;
 
 *Graphing events per one thousand;
 data all_linear_pe; set all_linear_pe;
@@ -1890,183 +2044,4 @@ data all_linear_pe; set all_linear_pe;
 		series x=age y=num_events_per_thousand / datalabel=num_events_per_thousand;
 		format num_events_per_thousand 5.;
 		where parm="age";
-		run;
-
-
-*What about interaction?;
-data all_linear_pe; set all_linear_pe;
-	p_age_12educ = 1-exp(-exp(estimate+(-0.031179*12)));
-	p_age_16educ = 1-exp(-exp(estimate+(-0.031179*16)));
-	p_age_20educ = 1-exp(-exp(estimate+(-0.031179*20)));
-	run;	
-
-	proc sgplot data=all_linear_pe;
-		/*band x=age lower=lcl_events_per_thousand upper=ucl_events_per_thousand;*/
-		series x=age y=p_age_12educ / datalabel=p_age_12educ;
-		series x=age y=p_age_16educ / datalabel=p_age_16educ;
-		series x=age y=p_age_20educ / datalabel=p_age_20educ;
-		where parm="age";
-		run;
-		*As suspected, just 3 parallel lines;
-
-* Trying interaction;
-
-proc surveylogistic data=all_transposed;
-	class age /*mar*/ race / param=ref;
-	/*weight customwt;*/
-	model tub(event='1') = age age1b educ famsize incwin /*mar*/ numkid
-	race age*age1b /*incind*/ / link=cloglog;
-	by _imputation_;
-	ods output ParameterEstimates=all_linear;
-	run;
-
-proc mianalyze parms(classvar=ClassVal0)=all_linear;
-	class age /*mar*/ race;
-	modeleffects intercept age age1b educ famsize incwin /*mar*/ numkid
-	race age*age1b /*incind*/;
-	ods output ParameterEstimates=all_linear_pe;
-	run;
-
-	proc print data=all_linear_pe; run;
-
-proc sort data=all_linear_pe; by age; run;
-proc contents data=all_linear_pe; run;
-
-
-
-data all_linear_pe; set all_linear_pe;
-	if parm = "age" or parm = "age1b" or parm="age1b*age" then del = 1;
-	if del ne 1 then delete;
-	keep estimate stderr age parm;
-	run;
-
-	proc print data=all_linear_pe; run;
-
-proc sort data=all_linear_pe; by age; run;
-
-** START HERE;
-
-proc transpose data=all_linear_pe out=tran_int;
-	by age;
-	run;
-
-	proc print data=tran_int; run;
-
-	data tran_int; set tran_int;
-		if age = . and _name_ = "Estimate" then _label_ = "age1b_main";
-		rename col1 = age_estimate col2 = age_by_age1b_estimate;
-		run;
-
-data tran_int; set tran_int;
-	P_age_15 = 1-(exp(-exp(age_Estimate+(15*age_by_age1b_estimate)+-0.001535)));	
-	P_age_20 = 1-(exp(-exp(age_Estimate+(20*age_by_age1b_estimate)+-0.001535)));
-	P_age_25 = 1-(exp(-exp(age_Estimate+(25*age_by_age1b_estimate)+-0.001535)));
-	P_age_30 = 1-(exp(-exp(age_Estimate+(30*age_by_age1b_estimate)+-0.001535)));
-	P_age_35 = 1-(exp(-exp(age_Estimate+(35*age_by_age1b_estimate)+-0.001535)));
-	run;
-
-	proc print data=tran_int; run;
-
-	proc sgplot data=tran_int;
-		series x=age y=P_age_15 / datalabel=P_age_15;
-		series x=age y=P_age_20 / datalabel=P_age_20;
-		series x=age y=P_age_25 / datalabel=P_age_25;
-		series x=age y=P_age_30 / datalabel=P_age_30;
-		series x=age y=P_age_35 / datalabel=P_age_35;
-		yaxis label="Probability"
-		values=(0.96 0.97 0.98 0.99 1.0);
-		where _name_="Estimate";
-		run;
-
-
-
-
-
-* Differences are very small, and I would bet confidence intervals are huge, I'm going
-to categorize age1b;
-
-data all_transposed; set all_transposed;
-	age1b_cat = 0;
-	if age1b < 20 then age1b_cat = 1;
-	if age1b <= 20 and age1b < 25 then age1b_cat = 2;
-	if age1b >= 25 then age1b_cat = 3;
-	run;
-
-	proc freq data=all_transposed; tables age1b_cat; run;
-
-	proc means data=all_transposed;
-		var age1b;
-		run;
-		*oh man, that is not right;
-
-proc means data=a; var 'age1b16_2016'n; run;
-	*-998 is no births;
-
-proc sgplot;
-	histogram age1b; run;
-
-data all_transposed; set all_transposed;
-	if age1b = -998 then age1b_cat = 0;
-	if age1b >0 and age1b < 20 then age1b_cat = 1;
-	if age1b >= 20 and age1b < 25 then age1b_cat = 2;
-	if age1b >= 25 then age1b_cat = 3;
-	run;
-
-	proc freq data=all_transposed; tables age1b_cat; run;
-
-
-
-proc surveylogistic data=all_transposed;
-	class age /*mar*/ race age1b_cat / param=glm;
-	/*weight customwt;*/
-	model tub(event='1') = age educ famsize incwin /*mar*/ numkid
-	race age1b_cat age*age1b_cat /*incind*/ / link=cloglog;
-	by _imputation_;
-	ods output ParameterEstimates=all_linear;
-	run;
-
-proc mianalyze parms(classvar=ClassVal0)=all_linear;
-	class age /*mar*/ race age1b_cat;
-	modeleffects intercept age educ famsize incwin /*mar*/ numkid
-	race age1b_cat age*age1b_cat /*incind*/;
-	ods output ParameterEstimates=all_linear_pe;
-	run;
-
-proc sort data=all_linear_pe; by age; run;
-proc contents data=all_linear_pe; run;
-
-data all_linear_pe; set all_linear_pe;
-	keep estimate stderr age parm;
-	if age = . then delete;
-	run;
-
-	proc print data=all_linear_pe; run;
-
-proc transpose data=all_linear_pe out=tran_int;
-	by age;
-	run;
-
-	proc print data=tran_int; run;
-
-	data tran_int; set tran_int;
-		rename col1 = age_estimate col2 = age_by_age1b_estimate;
-		run;
-
-data tran_int; set tran_int;
-	P_age_15 = 1-(exp(-exp(age_Estimate+(15*age_by_age1b_estimate))));	
-	P_age_20 = 1-(exp(-exp(age_Estimate+(20*age_by_age1b_estimate))));
-	P_age_25 = 1-(exp(-exp(age_Estimate+(25*age_by_age1b_estimate))));
-	P_age_30 = 1-(exp(-exp(age_Estimate+(30*age_by_age1b_estimate))));
-	P_age_35 = 1-(exp(-exp(age_Estimate+(35*age_by_age1b_estimate))));
-	run;
-
-	proc print data=tran_int; run;
-
-	proc sgplot data=tran_int;
-		series x=age y=P_age_15 / datalabel=P_age_15;
-		series x=age y=P_age_20 / datalabel=P_age_20;
-		series x=age y=P_age_25 / datalabel=P_age_25;
-		series x=age y=P_age_30 / datalabel=P_age_30;
-		series x=age y=P_age_35 / datalabel=P_age_35;
-		where _name_="Estimate";
 		run;
