@@ -1056,16 +1056,20 @@ proc surveylogistic data=a;
 
 data e_doc; set e2;
 	drop estimate stderr df tvalue alpha lower upper;
-	if stmtno=1 then earlybirth = "15-19";
-	if stmtno=2 then earlybirth = "20-24";
+	if stmtno=1 then earlybirth = "15-19 vs 25+/0";
+	if stmtno=2 then earlybirth = "20-24 vs 25+/0";
 	ORR=round(ExpEstimate,.01);
 	LCLR=round(LowerExp,.01);
 	UCLR=round(UpperExp,.01);
 	Label2=substr(Label,1,2);
+	label earlybirth = "Age at First Birth Group";
 	run;
 
-title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
-title2 "By Age & Age at First Birth";
+	proc print data=e_doc; run;
+
+
+/*title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
+title2 "By Age & Age at First Birth";*/
 proc sgplot data=e_doc;
 	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth 
 	transparency=.5;
@@ -1075,6 +1079,17 @@ proc sgplot data=e_doc;
 	xaxis label="Age";
 	yaxis label="Odds Ratio"
 	type=log logbase=e logstyle=linear values=(0.1 0.5 1 2 3 5);
+	run;
+
+proc sgplot data=e_doc;
+	where label2 = "30" or label2 = "35" or label2 = "40" or label2 = "44";
+	scatter x=Label2 y=ORR / group=earlybirth datalabel=ORR 
+	yerrorupper=UCLR yerrorlower=LCLR;
+	format probr 3.2;
+	xaxis label="Age";
+	yaxis label="Odds Ratio"
+	type=log logbase=e logstyle=linear 
+	values=(0.1 0.5 1 2 3 5);
 	run;
 
 *Fill attributes:
@@ -1304,7 +1319,7 @@ proc sgplot data=e_docnoster;
 	%mend;
 
 %macro laterbirth;
-%do x=23 %to 42 %by 1;
+%do x=26 %to 42 %by 1;
 	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
 		spl*earlybirth [1,3 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,3] rwant [1,3]
 		mard [1,1] curr_ins [1,4],
@@ -1342,6 +1357,7 @@ data e_doc; set e2;
 	LCLR=round(lowermu,.01);
 	UCLR=round(uppermu,.01);
 	Label2=substr(Label,1,2);
+	label earlybirth = "Age at First Birth Group";
 	run;
 
 /*title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
@@ -1354,7 +1370,7 @@ proc sgplot data=e_doc;
 	/*groupdisplay=overlay*/;
 	/*refline 1 / axis=y label="OR=1.0";*/
 	xaxis label="Age";
-	yaxis label="Probability"
+	yaxis label="Predicted Probability"
 	/*type=log logbase=e logstyle=linear*/ values=(0 0.1 0.2 0.3 0.4 0.5);
 	run;
 
@@ -1386,7 +1402,7 @@ proc sgplot data=e_doc;
 	%mend;
 
 %macro laterbirth;
-%do x=23 %to 42 %by 1;
+%do x=26 %to 42 %by 1;
 	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
 		spl*earlybirth [1,3 &x] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,3]
 		mard [1,3] curr_ins [1,2],
@@ -1424,6 +1440,7 @@ data e_doc; set e2;
 	LCLR=round(lowermu,.01);
 	UCLR=round(uppermu,.01);
 	Label2=substr(Label,1,2);
+	label earlybirth = "Age at First Birth Group";
 	run;
 
 /*title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
@@ -1436,9 +1453,94 @@ proc sgplot data=e_doc;
 	/*groupdisplay=overlay*/;
 	/*refline 1 / axis=y label="OR=1.0";*/
 	xaxis label="Age";
-	yaxis label="Probability"
+	yaxis label="Predicted Probability"
 	/*type=log logbase=e logstyle=linear*/ values=(0 0.1 0.2 0.3 0.4 0.5);
 	run;
+
+
+*### SECOND DRAFT ESTIMATES, SPECIFYING COVARIATES ###;
+
+*** HS degree, NHB, low income, 2 kids, does not more kids, never been married, Medicaid
+	(i.e. same as the one directly above but changing to not wanting more kids);
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth teens" intercept 1 spl [1,&x] earlybirth [1,1] 
+		spl*earlybirth [1,1 &x] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,2]
+		mard [1,3] curr_ins [1,2],
+	%end;
+	"44, 1st birth teens" intercept 1 spl [1,44] earlybirth [1,1] 
+		spl*earlybirth [1,1 44] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,2]
+		mard [1,3] curr_ins [1,2]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth 20-24" intercept 1 spl [1,&x] earlybirth [1,2] 
+		spl*earlybirth [1,2 &x] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,2]
+		mard [1,3] curr_ins [1,2],
+	%end;
+	"44, 1st birth 20-24" intercept 1 spl [1,44] earlybirth [1,2] 
+		spl*earlybirth [1,2 44] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,2]
+		mard [1,3] curr_ins [1,2]
+	%mend;
+
+%macro laterbirth;
+%do x=26 %to 42 %by 1;
+	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
+		spl*earlybirth [1,3 &x] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,2]
+		mard [1,3] curr_ins [1,2],
+	%end;
+	"44, 1st birth >24/0" intercept 1 spl [1,44] earlybirth [1,3] 
+		spl*earlybirth [1,3 44] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,2]
+		mard [1,3] curr_ins [1,2]
+	%mend;
+
+proc surveylogistic data=a;
+	class doc edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model doc = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	output out=doc pred=pred1;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %laterbirth / exp cl ilink;
+	ods output Estimates=e2;
+	run;
+
+data e_doc; set e2;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	if stmtno=3 then earlybirth = ">24/0";
+	PROBR=round(mu,.01);
+	LCLR=round(lowermu,.01);
+	UCLR=round(uppermu,.01);
+	Label2=substr(Label,1,2);
+	label earlybirth = "Age at First Birth Group";
+	run;
+
+/*title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
+title2 "By Age & Age at First Birth";*/
+	title;
+proc sgplot data=e_doc;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth 
+	transparency=.5;
+	series x=Label2 y=probr / group=earlybirth datalabel=probr
+	/*groupdisplay=overlay*/;
+	/*refline 1 / axis=y label="OR=1.0";*/
+	xaxis label="Age";
+	yaxis label="Predicted Probability"
+	/*type=log logbase=e logstyle=linear*/ values=(0 0.1 0.2 0.3 0.4 0.5);
+	run;
+
 
 
 *### SECOND DRAFT ESTIMATES, SPECIFYING COVARIATES ###;
@@ -1468,7 +1570,7 @@ proc sgplot data=e_doc;
 	%mend;
 
 %macro laterbirth;
-%do x=23 %to 42 %by 1;
+%do x=26 %to 42 %by 1;
 	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
 		spl*earlybirth [1,3 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
 		mard [1,3] curr_ins [1,4],
@@ -1506,6 +1608,7 @@ data e_doc; set e2;
 	LCLR=round(lowermu,.01);
 	UCLR=round(uppermu,.01);
 	Label2=substr(Label,1,2);
+	label earlybirth = "Age at First Birth Group";
 	run;
 
 /*title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
@@ -1518,7 +1621,7 @@ proc sgplot data=e_doc;
 	/*groupdisplay=overlay*/;
 	/*refline 1 / axis=y label="OR=1.0";*/
 	xaxis label="Age";
-	yaxis label="Probability"
+	yaxis label="Predicted Probability"
 	/*type=log logbase=e logstyle=linear*/ values=(0 0.1 0.2 0.3 0.4 0.5);
 	run;
 
@@ -1549,7 +1652,7 @@ proc sgplot data=e_doc;
 	%mend;
 
 %macro laterbirth;
-%do x=23 %to 42 %by 1;
+%do x=26 %to 43 %by 1;
 	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
 		spl*earlybirth [1,3 &x] edud [1,2] hisprace2 [1,4] pov [1,3] parityd [1,1] rwant [1,3]
 		mard [1,3] curr_ins [1,4],
@@ -1627,7 +1730,7 @@ proc sgplot data=e_doc;
 	%mend;
 
 %macro laterbirth;
-%do x=23 %to 42 %by 1;
+%do x=26 %to 42 %by 1;
 	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
 		spl*earlybirth [1,3 &x],
 	%end;
@@ -1636,10 +1739,10 @@ proc sgplot data=e_doc;
 	%mend;
 
 proc surveylogistic data=a;
-	class doc edud 
-	earlybirth hisprace2 pov
-	parityd rwant
-	mard curr_ins / param=effect;
+	class doc edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=effect;
 	weight weightvar;
 	strata stratvar;
 	cluster panelvar;
@@ -1678,93 +1781,3 @@ proc sgplot data=e_doc;
 	yaxis label="Probability"
 	/*type=log logbase=e logstyle=linear*/ values=(0 0.1 0.2 0.3 0.4 0.5);
 	run;
-
-
-
-*### SECOND DRAFT ESTIMATES, ORs with 4-cat early birth ###;
-
-
-	proc freq data=a; tables earlybirth; format earlybirth _all_; run;
-
-	data a; set a;
-		age1b = earlybirth;
-		if parityd = 0 then age1b = 0;
-		run;
-
-		proc freq data=a; tables age1b; run;
-
-
-%macro teen;
-%do x=23 %to 43 %by 1;
-	"&x, 15-19 vs 20-24" intercept 0 spl [0,&x] age1b [1,2] [-1,3] 
-		spl*age1b [1,2 &x] [-1,3 &x],
-	%end;
-	"44, 15-19 vs >24/0" intercept 0 spl [0,44] age1b [1,2] [-1,3] 
-		spl*age1b [1,2 44] [-1,3 44]
-	%mend;
-
-%macro earlytwenties;
-%do x=23 %to 43 %by 1;
-	"&x, 25+ vs 20-24" intercept 0 spl [0,&x] age1b [1,4] [-1,3] 
-		spl*age1b [1,4 &x] [-1,3 &x],
-	%end;
-	"44, 25+ vs 20-24" intercept 0 spl [0,44] age1b [1,4] [-1,3] 
-		spl*age1b [1,4 44] [-1,3 44]
-	%mend;
-
-%macro nobirths;
-%do x=23 %to 43 %by 1;
-	"&x, 0 births vs 20-24" intercept 0 spl [0,&x] age1b [1,1] [-1,3] 
-		spl*age1b [1,1 &x] [-1,3 &x],
-	%end;
-	"44, 0 births vs >24/0" intercept 0 spl [0,44] age1b [1,1] [-1,3] 
-		spl*age1b [1,1 44] [-1,3 44]
-	%mend;
-
-
-proc surveylogistic data=a;
-	class doc edud(ref="hs degree or ged") 
-	age1b (ref="1") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
-	/*parityd(ref="0")*/ rwant(ref="YES")
-	mard(ref="never been married") curr_ins / param=ref;
-	weight weightvar;
-	strata stratvar;
-	cluster panelvar;
-	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
-								knotmethod=percentiles(5) details);
-	model doc = spl edud age1b hisprace2 pov parityd rwant mard
-	curr_ins spl*age1b;
-	output out=doc pred=pred1;
-	estimate %teen / exp cl;
-	estimate %earlytwenties / exp cl;
-	estimate %nobirths / exp cl;
-	ods output Estimates=e2;
-	run;
-
-	proc print data=e2; run;
-			
-
-data e_doc; set e2;
-	drop estimate stderr df tvalue alpha lower upper;
-	if stmtno=1 then age1b = "15-19 vs 20-24";
-	if stmtno=2 then age1b = "25+ vs 20-24";
-	if stmtno=3 then age1b = "0 births vs 20-24";
-	ORR=round(ExpEstimate,.01);
-	LCLR=round(LowerExp,.01);
-	UCLR=round(UpperExp,.01);
-	Label2=substr(Label,1,2);
-	run;
-
-title1 "Use of Contraceptives That Do Not Require a Healthcare Provider";
-title2 "By Age & Age at First Birth";
-proc sgplot data=e_doc;
-	band x=Label2 lower=LCLR upper=UCLR / group=age1b 
-	transparency=.5;
-	series x=Label2 y=ORR / group=age1b datalabel=ORR
-	/*groupdisplay=overlay*/;
-	refline 1 / axis=y label="OR=1.0";
-	xaxis label="Age";
-	yaxis label="Odds Ratio"
-	type=log logbase=e logstyle=linear values=(0.1 0.5 1 2 3 5);
-	run;
-
