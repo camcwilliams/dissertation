@@ -1177,3 +1177,577 @@ proc sgplot data=e_early;
 	/*type=log logbase=e logstyle=linear*/
 	values=(0 0.1 0.2 0.25);
 	run;
+
+
+*### SECOND DRAFT ESTIMATES, SPECIFYING COVARIATES ###;
+
+*** Bachelor's degree, white, high income, 2 kids, wants more kids, married, private insurance;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth teens" intercept 1 spl [1,&x] earlybirth [1,1] 
+		spl*earlybirth [1,1 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,3] rwant [1,3]
+		mard [1,1] curr_ins [1,4],
+	%end;
+	"44, 1st birth teens" intercept 1 spl [1,44] earlybirth [1,1] 
+		spl*earlybirth [1,1 44] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,3] rwant [1,3]
+		mard [1,1] curr_ins [1,4]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth 20-24" intercept 1 spl [1,&x] earlybirth [1,2] 
+		spl*earlybirth [1,2 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,3] rwant [1,3]
+		mard [1,1] curr_ins [1,4],
+	%end;
+	"44, 1st birth 20-24" intercept 1 spl [1,44] earlybirth [1,2] 
+		spl*earlybirth [1,2 44] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,3] rwant [1,3]
+		mard [1,1] curr_ins [1,4]
+	%mend;
+
+%macro laterbirth;
+%do x=23 %to 42 %by 1;
+	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
+		spl*earlybirth [1,3 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,3] rwant [1,3]
+		mard [1,1] curr_ins [1,4],
+	%end;
+	"44, 1st birth >24/0" intercept 1 spl [1,44] earlybirth [1,3] 
+		spl*earlybirth [1,3 44] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,3] rwant [1,3]
+		mard [1,1] curr_ins [1,4]
+	%mend;
+
+proc surveylogistic data=a;
+	class iud(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %laterbirth / exp cl ilink;
+	ods output Estimates=e;
+	run;
+
+	/*proc print data=e; run;*/
+
+
+data e_early; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	if stmtno=3 then earlybirth = ">24/0";
+	PROBR=round(mu,.0001);
+	LCLR=round(lowermu,.0001);
+	UCLR=round(uppermu,.0001);
+	Label2=substr(Label,1,2);
+	run;
+
+	/*title "IUD Use by Age & Age at First Birth";*/
+	title;
+proc sgplot data=e_early;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+	transparency = .5;
+	series x=Label2 y=probr / group=earlybirth datalabel=probr;
+	format probr 3.2;
+	/*groupdisplay=overlay*/;
+	/*refline 1 / axis=y label="OR=1.0";*/
+	xaxis label="Age";
+	yaxis label="Probability"
+	/*type=log logbase=e logstyle=linear*/
+	values=(0 0.1 0.2 0.3 0.4 0.5 0.6);
+	run;
+
+
+
+
+*######;
+
+*** HS degree, NHB, low income, 2 kids, wants more kids, never been married, Medicaid;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth teens" intercept 1 spl [1,&x] earlybirth [1,1] 
+		spl*earlybirth [1,1 &x] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,3]
+		mard [1,3] curr_ins [1,2],
+	%end;
+	"44, 1st birth teens" intercept 1 spl [1,44] earlybirth [1,1] 
+		spl*earlybirth [1,1 44] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,3]
+		mard [1,3] curr_ins [1,2]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth 20-24" intercept 1 spl [1,&x] earlybirth [1,2] 
+		spl*earlybirth [1,2 &x] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,3]
+		mard [1,3] curr_ins [1,2],
+	%end;
+	"44, 1st birth 20-24" intercept 1 spl [1,44] earlybirth [1,2] 
+		spl*earlybirth [1,2 44] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,3]
+		mard [1,3] curr_ins [1,2]
+	%mend;
+
+%macro laterbirth;
+%do x=23 %to 42 %by 1;
+	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
+		spl*earlybirth [1,3 &x] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,3]
+		mard [1,3] curr_ins [1,2],
+	%end;
+	"44, 1st birth >24/0" intercept 1 spl [1,44] earlybirth [1,3] 
+		spl*earlybirth [1,3 44] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,3]
+		mard [1,3] curr_ins [1,2]
+	%mend;
+
+
+proc surveylogistic data=a;
+	class iud(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %laterbirth / exp cl ilink;
+	ods output Estimates=e;
+	run;
+
+	/*proc print data=e; run;*/
+
+
+data e_early; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	if stmtno=3 then earlybirth = ">24/0";
+	PROBR=round(mu,.0001);
+	LCLR=round(lowermu,.0001);
+	UCLR=round(uppermu,.0001);
+	Label2=substr(Label,1,2);
+	run;
+
+	/*title "IUD Use by Age & Age at First Birth";*/
+	title;
+proc sgplot data=e_early;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+	transparency = .5;
+	series x=Label2 y=probr / group=earlybirth datalabel=probr;
+	format probr 3.2;
+	/*groupdisplay=overlay*/;
+	/*refline 1 / axis=y label="OR=1.0";*/
+	xaxis label="Age";
+	yaxis label="Probability"
+	/*type=log logbase=e logstyle=linear*/
+	values=(0 0.1 0.2 0.3);
+	run;
+
+
+*######;
+
+*** Bachelor's degree, white, high income, 0 kids, wants more kids, never been married, private insurance;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth teens" intercept 1 spl [1,&x] earlybirth [1,1] 
+		spl*earlybirth [1,1 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
+		mard [1,3] curr_ins [1,4],
+	%end;
+	"44, 1st birth teens" intercept 1 spl [1,44] earlybirth [1,1] 
+		spl*earlybirth [1,1 44] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
+		mard [1,3] curr_ins [1,4]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth 20-24" intercept 1 spl [1,&x] earlybirth [1,2] 
+		spl*earlybirth [1,2 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
+		mard [1,3] curr_ins [1,4],
+	%end;
+	"44, 1st birth 20-24" intercept 1 spl [1,44] earlybirth [1,2] 
+		spl*earlybirth [1,2 44] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
+		mard [1,3] curr_ins [1,4]
+	%mend;
+
+%macro laterbirth;
+%do x=23 %to 42 %by 1;
+	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
+		spl*earlybirth [1,3 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
+		mard [1,3] curr_ins [1,4],
+	%end;
+	"44, 1st birth >24/0" intercept 1 spl [1,44] earlybirth [1,3] 
+		spl*earlybirth [1,3 44] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
+		mard [1,3] curr_ins [1,4]
+	%mend;
+
+proc surveylogistic data=a;
+	class iud(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %laterbirth / exp cl ilink;
+	ods output Estimates=e;
+	run;
+
+	/*proc print data=e; run;*/
+
+
+data e_early; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	if stmtno=3 then earlybirth = ">24/0";
+	PROBR=round(mu,.0001);
+	LCLR=round(lowermu,.0001);
+	UCLR=round(uppermu,.0001);
+	Label2=substr(Label,1,2);
+	run;
+
+	/*title "IUD Use by Age & Age at First Birth";*/
+	title;
+proc sgplot data=e_early;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+	transparency = .5;
+	series x=Label2 y=probr / group=earlybirth datalabel=probr;
+	format probr 3.2;
+	/*groupdisplay=overlay*/;
+	/*refline 1 / axis=y label="OR=1.0";*/
+	xaxis label="Age";
+	yaxis label="Probability"
+	/*type=log logbase=e logstyle=linear*/
+	values=(0 0.1 0.2 0.3 0.4);
+	run;
+
+
+*### CHECKING ONE WITH EFFECT CODING ###;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth teens" intercept 1 spl [1,&x] earlybirth [1,1] 
+		spl*earlybirth [1,1 &x],
+	%end;
+	"44, 1st birth teens" intercept 1 spl [1,44] earlybirth [1,1] 
+		spl*earlybirth [1,1 44]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth 20-24" intercept 1 spl [1,&x] earlybirth [1,2] 
+		spl*earlybirth [1,2 &x],
+	%end;
+	"44, 1st birth 20-24" intercept 1 spl [1,44] earlybirth [1,2] 
+		spl*earlybirth [1,2 44]
+	%mend;
+
+%macro laterbirth;
+%do x=23 %to 42 %by 1;
+	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
+		spl*earlybirth [1,3 &x],
+	%end;
+	"44, 1st birth >24/0" intercept 1 spl [1,44] earlybirth [1,3] 
+		spl*earlybirth [1,3 44]
+	%mend;
+
+
+proc surveylogistic data=a;
+	class iud(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=effect;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %laterbirth / exp cl ilink;
+	ods output Estimates=e;
+	run;
+
+	/*proc print data=e; run;*/
+
+
+data e_early; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	if stmtno=3 then earlybirth = ">24/0";
+	PROBR=round(mu,.0001);
+	LCLR=round(lowermu,.0001);
+	UCLR=round(uppermu,.0001);
+	Label2=substr(Label,1,2);
+	run;
+
+	/*title "IUD Use by Age & Age at First Birth";*/
+	title;
+proc sgplot data=e_early;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+	transparency = .5;
+	series x=Label2 y=probr / group=earlybirth datalabel=probr;
+	format probr 3.2;
+	/*groupdisplay=overlay*/;
+	/*refline 1 / axis=y label="OR=1.0";*/
+	xaxis label="Age";
+	yaxis label="Probability"
+	/*type=log logbase=e logstyle=linear*/
+	values=(0 0.1 0.2 0.3 0.4 0.5 0.6);
+	run;
+
+
+*### UNADJUSTED ###;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth teens" intercept 1 spl [1,&x] earlybirth [1,1] 
+		spl*earlybirth [1,1 &x],
+	%end;
+	"44, 1st birth teens" intercept 1 spl [1,44] earlybirth [1,1] 
+		spl*earlybirth [1,1 44]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth 20-24" intercept 1 spl [1,&x] earlybirth [1,2] 
+		spl*earlybirth [1,2 &x],
+	%end;
+	"44, 1st birth 20-24" intercept 1 spl [1,44] earlybirth [1,2] 
+		spl*earlybirth [1,2 44]
+	%mend;
+
+%macro laterbirth;
+%do x=23 %to 42 %by 1;
+	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
+		spl*earlybirth [1,3 &x],
+	%end;
+	"44, 1st birth >24/0" intercept 1 spl [1,44] earlybirth [1,3] 
+		spl*earlybirth [1,3 44]
+	%mend;
+
+
+proc surveylogistic data=a;
+	class iud(ref=first)
+	earlybirth (ref=">24 or no live births") / param=effect;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl earlybirth spl*earlybirth;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %laterbirth / exp cl ilink;
+	ods output Estimates=e;
+	run;
+
+	/*proc print data=e; run;*/
+
+
+data e_early; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	if stmtno=3 then earlybirth = ">24/0";
+	PROBR=round(mu,.0001);
+	LCLR=round(lowermu,.0001);
+	UCLR=round(uppermu,.0001);
+	Label2=substr(Label,1,2);
+	run;
+
+	/*title "IUD Use by Age & Age at First Birth";*/
+	title;
+proc sgplot data=e_early;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+	transparency = .5;
+	series x=Label2 y=probr / group=earlybirth datalabel=probr;
+	format probr 3.2;
+	/*groupdisplay=overlay*/;
+	/*refline 1 / axis=y label="OR=1.0";*/
+	xaxis label="Age";
+	yaxis label="Probability"
+	/*type=log logbase=e logstyle=linear*/
+	values=(0 0.1 0.2 0.3 0.4 0.5 0.6);
+	run;
+
+
+
+*### SECOND DRAFT ESTIMATES, ORs ###;
+
+*** All compared to 25+;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 15-19 vs 25+" intercept 0 spl [0,&x] age1b [1,2] [-1,4] 
+		spl*age1b [1,2 &x] [-1,4 &x],
+	%end;
+	"44, 15-19 vs 25+" intercept 0 spl [0,44] age1b [1,2] [-1,4] 
+		spl*age1b [1,2 44] [-1,4 44]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 20-24 vs 25+" intercept 0 spl [0,&x] age1b [1,2] [-1,4] 
+		spl*age1b [1,2 &x] [-1,4 &x],
+	%end;
+	"44, 20-24 vs 25+" intercept 0 spl [0,44] age1b [1,2] [-1,4] 
+		spl*age1b [1,2 44] [-1,4 44]
+	%mend;
+
+%macro nobirths;
+%do x=23 %to 43 %by 1;
+	"&x, 0 births vs 25+" intercept 0 spl [0,&x] age1b [1,1] [-1,4] 
+		spl*age1b [1,1 &x] [-1,4 &x],
+	%end;
+	"44, 0 births vs 25+" intercept 0 spl [0,44] age1b [1,1] [-1,4] 
+		spl*age1b [1,1 44] [-1,4 44]
+	%mend;
+
+proc surveylogistic data=a;
+	where rscrage > 29;
+	class iud(ref=first) edud(ref="hs degree or ged") 
+	age1b (ref="1") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=effect;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl edud age1b hisprace2 pov parityd rwant mard
+	curr_ins spl*age1b;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %nobirths / exp cl ilink;
+	ods output Estimates=e;
+	run;
+
+	/*proc print data=e; run;*/
+
+
+data e_early; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then age1b = "15-19 vs 25+";
+	if stmtno=2 then age1b = "20-24 vs 25+";
+	if stmtno=3 then age1b = "0 births vs 25+";
+	PROBR=round(mu,.0001);
+	LCLR=round(lowermu,.0001);
+	UCLR=round(uppermu,.0001);
+	Label2=substr(Label,1,2);
+	run;
+
+	/*title "IUD Use by Age & Age at First Birth";*/
+	title;
+proc sgplot data=e_early;
+	/*band x=Label2 lower=LCLR upper=UCLR / group=age1b
+	transparency = .5;*/
+	scatter x=Label2 y=probr / group=age1b datalabel=probr yerrorupper=UCLR yerrorlower=LCLR;
+	format probr 3.2;
+	/*groupdisplay=overlay*/;
+	/*refline 1 / axis=y label="OR=1.0";*/
+	xaxis label="Age";
+	yaxis label="OR"
+	type=log logbase=e logstyle=linear
+	/*values=(0 0.1 0.2 0.3 0.4 0.5 0.6)*/;
+	run;
+
+
+*### SECOND DRAFT ESTIMATES, ORs ###;
+
+*** All compared to 15-19;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 20-24 vs 15-19" intercept 0 spl [0,&x] age1b [1,3] [-1,2] 
+		spl*age1b [1,3 &x] [-1,2 &x],
+	%end;
+	"44, 20-24 vs 15-19" intercept 0 spl [0,44] age1b [1,3] [-1,2] 
+		spl*age1b [1,3 44] [-1,2 44]
+	%mend;
+
+%macro older;
+%do x=23 %to 43 %by 1;
+	"&x, 25+ vs 15-19" intercept 0 spl [0,&x] age1b [1,4] [-1,2] 
+		spl*age1b [1,4 &x] [-1,2 &x],
+	%end;
+	"44, 25+ vs 15-19" intercept 0 spl [0,44] age1b [1,4] [-1,2] 
+		spl*age1b [1,4 44] [-1,2 44]
+	%mend;
+
+%macro nobirths;
+%do x=23 %to 43 %by 1;
+	"&x, 0 births vs 15-19" intercept 0 spl [0,&x] age1b [1,1] [-1,2] 
+		spl*age1b [1,1 &x] [-1,2 &x],
+	%end;
+	"44, 0 births vs 15-19" intercept 0 spl [0,44] age1b [1,1] [-1,2] 
+		spl*age1b [1,1 44] [-1,2 44]
+	%mend;
+
+proc surveylogistic data=a;
+	where rscrage > 29;
+	class iud(ref=first) edud(ref="hs degree or ged") 
+	age1b (ref="1") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=effect;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model iud = spl edud age1b hisprace2 pov parityd rwant mard
+	curr_ins spl*age1b;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %older / exp cl ilink;
+	estimate %nobirths / exp cl ilink;
+	ods output Estimates=e;
+	run;
+
+	/*proc print data=e; run;*/
+
+
+data e_early; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then age1b = "20-24 vs teen";
+	if stmtno=2 then age1b = "25+ vs teen";
+	if stmtno=3 then age1b = "0 births vs teen";
+	PROBR=round(mu,.0001);
+	LCLR=round(lowermu,.0001);
+	UCLR=round(uppermu,.0001);
+	Label2=substr(Label,1,2);
+	run;
+
+	/*title "IUD Use by Age & Age at First Birth";*/
+	title;
+proc sgplot data=e_early;
+	/*band x=Label2 lower=LCLR upper=UCLR / group=age1b
+	transparency = .5;*/
+	scatter x=Label2 y=probr / group=age1b datalabel=probr yerrorupper=UCLR yerrorlower=LCLR;
+	format probr 3.2;
+	/*groupdisplay=overlay*/;
+	/*refline 1 / axis=y label="OR=1.0";*/
+	xaxis label="Age";
+	yaxis label="OR"
+	type=log logbase=e logstyle=linear
+	values=(0.1 0.5 1 2 3 5);
+	run;
+
+
