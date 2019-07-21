@@ -1354,40 +1354,41 @@ proc sgplot data=e_early;
 
 *######;
 
-*** Bachelor's degree, white, high income, 0 kids, wants more kids, never been married, private insurance;
+*** associate, Hisp, mid income, 2 kids, does not more kids, married, uninsured;
 
 %macro teen;
 %do x=23 %to 43 %by 1;
 	"&x, 1st birth teens" intercept 1 spl [1,&x] earlybirth [1,1] 
-		spl*earlybirth [1,1 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
-		mard [1,3] curr_ins [1,4],
+		spl*earlybirth [1,1 &x] edud [1,4] hisprace2 [1,1] pov [1,2] parityd [1,3] rwant [1,2]
+		mard [1,1] curr_ins [1,1],
 	%end;
 	"44, 1st birth teens" intercept 1 spl [1,44] earlybirth [1,1] 
-		spl*earlybirth [1,1 44] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
-		mard [1,3] curr_ins [1,4]
+		spl*earlybirth [1,1 44] edud [1,4] hisprace2 [1,1] pov [1,2] parityd [1,3] rwant [1,2]
+		mard [1,1] curr_ins [1,1]
 	%mend;
 
 %macro earlytwenties;
 %do x=23 %to 43 %by 1;
 	"&x, 1st birth 20-24" intercept 1 spl [1,&x] earlybirth [1,2] 
-		spl*earlybirth [1,2 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
-		mard [1,3] curr_ins [1,4],
+		spl*earlybirth [1,2 &x] edud [1,4] hisprace2 [1,1] pov [1,2] parityd [1,3] rwant [1,2]
+		mard [1,1] curr_ins [1,1],
 	%end;
 	"44, 1st birth 20-24" intercept 1 spl [1,44] earlybirth [1,2] 
-		spl*earlybirth [1,2 44] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
-		mard [1,3] curr_ins [1,4]
+		spl*earlybirth [1,2 44] edud [1,4] hisprace2 [1,1] pov [1,2] parityd [1,3] rwant [1,2]
+		mard [1,1] curr_ins [1,1]
 	%mend;
 
 %macro laterbirth;
 %do x=23 %to 42 %by 1;
 	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
-		spl*earlybirth [1,3 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
-		mard [1,3] curr_ins [1,4],
+		spl*earlybirth [1,3 &x] edud [1,4] hisprace2 [1,1] pov [1,2] parityd [1,3] rwant [1,2]
+		mard [1,1] curr_ins [1,1],
 	%end;
 	"44, 1st birth >24/0" intercept 1 spl [1,44] earlybirth [1,3] 
-		spl*earlybirth [1,3 44] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,3]
-		mard [1,3] curr_ins [1,4]
+		spl*earlybirth [1,3 44] edud [1,4] hisprace2 [1,1] pov [1,2] parityd [1,3] rwant [1,2]
+		mard [1,1] curr_ins [1,1]
 	%mend;
+
 
 proc surveylogistic data=a;
 	class iud(ref=first) edud(ref="hs degree or ged") 
@@ -1433,11 +1434,11 @@ proc sgplot data=e_early;
 	xaxis label="Age";
 	yaxis label="Probability"
 	/*type=log logbase=e logstyle=linear*/
-	values=(0 0.1 0.2 0.3 0.4);
+	values=(0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8);
 	run;
 
 
-*### CHECKING ONE WITH EFFECT CODING ###;
+*### EFFECT CODING ###;
 
 %macro teen;
 %do x=23 %to 43 %by 1;
@@ -1498,6 +1499,7 @@ data e_early; set e;
 	UCLR=round(uppermu,.0001);
 	Label2=substr(Label,1,2);
 	run;
+
 
 	/*title "IUD Use by Age & Age at First Birth";*/
 	title;

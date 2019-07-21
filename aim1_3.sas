@@ -1504,6 +1504,14 @@ data e_early; set e;
 	Label2=substr(Label,1,2);
 	run;
 
+	proc print data=e_early; run;
+
+	data test; set e_early;
+		rename label2 = age;
+		CI = cats('(',lclr,', ',uclr,')');
+		drop label probt expestimate lowerexp upperexp lclr uclr;
+		run;
+
 title1 "Tubal Ligation Use by Age & Age at First Birth";
 proc sgplot data=e_early;
 	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
@@ -1576,7 +1584,7 @@ proc sgplot data=e_tubnovas;
 *** FINAL MODEL WITH INTERACTION, PROBABILITIES ***
 ***************************************************;
 
-** Macros for estimating age effects within each age at first birth group;
+* ### EFFECT PARAMETERIZATION ###;
 
 %macro teen;
 %do x=23 %to 43 %by 1;
@@ -1609,7 +1617,7 @@ proc surveylogistic data=a;
 	class tub(ref=first) edud(ref="hs degree or ged") 
 	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
 	parityd(ref="0") rwant(ref="YES")
-	mard(ref="never been married") curr_ins / param=ref;
+	mard(ref="never been married") curr_ins / param=effect;
 	weight weightvar;
 	strata stratvar;
 	cluster panelvar;
@@ -1623,54 +1631,56 @@ proc surveylogistic data=a;
 	ods output Estimates=e;
 	run;
 
-	/*proc print data=e; run;*/
+	** checked that keeping the reference values in there doesn't override the effect
+	parameterization statement;
 
+	data e_early; set e;
+		drop estimate stderr df tvalue alpha lower upper;
+		if stmtno=1 then earlybirth = "15-19";
+		if stmtno=2 then earlybirth = "20-24";
+		if stmtno=3 then earlybirth = ">24/0";
+		PROBR=round(mu,.01);
+		LCLR=round(lowermu,.01);
+		UCLR=round(uppermu,.01);
+		Label2=substr(Label,1,2);
+		label earlybirth = "Age at First Birth Group";
+		run;
 
-data e_early; set e;
-	drop estimate stderr df tvalue alpha lower upper;
-	if stmtno=1 then earlybirth = "15-19";
-	if stmtno=2 then earlybirth = "20-24";
-	if stmtno=3 then earlybirth = ">24/0";
-	PROBR=round(mu,.01);
-	LCLR=round(lowermu,.01);
-	UCLR=round(uppermu,.01);
-	Label2=substr(Label,1,2);
-	run;
+		/*title1 "Tubal Ligation Use by Age & Age at First Birth";*/
+			*removing title so I can create an appropriate caption in Word;
+			title;
+		proc sgplot data=e_early;
+			band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+			transparency = .5;
+			series x=Label2 y=probr / group=earlybirth datalabel=probr
+			/*groupdisplay=overlay*/;
+			/*refline 1 / axis=y label="OR=1.0";*/
+			xaxis label="Age";
+			yaxis label="Predicted Probability"
+			/*type=log logbase=e logstyle=linear*/
+			values=(0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8);
+			run;
 
-/*title1 "Tubal Ligation Use by Age & Age at First Birth";*/
-	*removing title so I can create an appropriate caption in Word;
-	title;
-proc sgplot data=e_early;
-	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
-	transparency = .5;
-	series x=Label2 y=probr / group=earlybirth datalabel=probr
-	/*groupdisplay=overlay*/;
-	/*refline 1 / axis=y label="OR=1.0";*/
-	xaxis label="Age";
-	yaxis label="Probability"
-	/*type=log logbase=e logstyle=linear*/
-	values=(0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8);
-	run;
-
-*Again repeating this analysis after removing vasectomies
+*Repeating this analysis after removing vasectomies
 	to see if increasing vasectomies among the most
 	affluent women is changing the results;
 
 data a; set a;
+	tubnovas = tub;
 	if bc=2 then tub=.;
 	run;
 
 proc surveylogistic data=a;
-	class tub(ref=first) edud(ref="hs degree or ged") 
+	class tubnovas(ref=first) edud(ref="hs degree or ged") 
 	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
 	parityd(ref="0") rwant(ref="YES")
-	mard(ref="never been married") curr_ins / param=ref;
+	mard(ref="never been married") curr_ins / param=effect;
 	weight weightvar;
 	strata stratvar;
 	cluster panelvar;
 	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
 								knotmethod=percentiles(5) details);
-	model tub = spl edud earlybirth hisprace2 pov parityd rwant mard
+	model tubnovas = spl edud earlybirth hisprace2 pov parityd rwant mard
 	curr_ins spl*earlybirth;
 	estimate %teen / exp cl ilink;
 	estimate %earlytwenties / exp cl ilink;
@@ -1688,10 +1698,11 @@ data e_tubnovas; set e_tubnovas;
 	LCLR=round(lowermu,.01);
 	UCLR=round(uppermu,.01);
 	Label2=substr(Label,1,2);
+	label earlybirth = "Age at First Birth Group";
 	run;
 
-title1 "Tubal Ligation Use by Age & Age at First Birth";
-title2 "Vasectomies Removed";
+/*title1 "Tubal Ligation Use by Age & Age at First Birth";
+title2 "Vasectomies Removed";*/
 proc sgplot data=e_tubnovas;
 	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
 	transparency = .5;
@@ -1699,10 +1710,14 @@ proc sgplot data=e_tubnovas;
 	/*groupdisplay=overlay*/;
 	/*refline 1 / axis=y label="OR=1.0";*/
 	xaxis label="Age";
-	yaxis label="Probability"
+	yaxis label="Predicted Probability"
 	/*type=log logbase=e logstyle=linear*/
 	values=(0 0.1 0.2 0.3 0.4 0.5 0.6 0.7);
 	run;
+
+
+
+
 
 ** Doing one model with tubal & vasectomy (all permanent methods) included;
 
@@ -1718,7 +1733,7 @@ data a; set a;
 	class tubvas(ref=first) edud(ref="hs degree or ged") 
 	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
 	parityd(ref="0") rwant(ref="YES")
-	mard(ref="never been married") curr_ins / param=ref;
+	mard(ref="never been married") curr_ins / param=effect;
 	weight weightvar;
 	strata stratvar;
 	cluster panelvar;
@@ -1744,9 +1759,10 @@ data e_early; set e;
 	LCLR=round(lowermu,.01);
 	UCLR=round(uppermu,.01);
 	Label2=substr(Label,1,2);
+	label earlybirth = "Age at First Birth Group";
 	run;
 
-title1 "Tubal ligation & vasectomy by age & age at first birth";
+title;
 proc sgplot data=e_early;
 	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
 	transparency = .5;
@@ -1754,7 +1770,339 @@ proc sgplot data=e_early;
 	/*groupdisplay=overlay*/;
 	/*refline 1 / axis=y label="OR=1.0";*/
 	xaxis label="Age";
-	yaxis label="Probability"
+	yaxis label="Predicted Probability"
 	/*type=log logbase=e logstyle=linear*/
 	values=(0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8);
 	run;
+
+
+
+
+*### SECOND DRAFT ESTIMATES, SPECIFYING COVARIATES ###;
+
+
+*** Bachelor's degree, white, high income, 0 kids, doesn't want more kids, never been married, private insurance;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth teens" intercept 1 spl [1,&x] earlybirth [1,1] 
+		spl*earlybirth [1,1 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,2]
+		mard [1,3] curr_ins [1,4],
+	%end;
+	"44, 1st birth teens" intercept 1 spl [1,44] earlybirth [1,1] 
+		spl*earlybirth [1,1 44] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,2]
+		mard [1,3] curr_ins [1,4]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth 20-24" intercept 1 spl [1,&x] earlybirth [1,2] 
+		spl*earlybirth [1,2 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,2]
+		mard [1,3] curr_ins [1,4],
+	%end;
+	"44, 1st birth 20-24" intercept 1 spl [1,44] earlybirth [1,2] 
+		spl*earlybirth [1,2 44] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,2]
+		mard [1,3] curr_ins [1,4]
+	%mend;
+
+%macro laterbirth;
+%do x=26 %to 42 %by 1;
+	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
+		spl*earlybirth [1,3 &x] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,2]
+		mard [1,3] curr_ins [1,4],
+	%end;
+	"44, 1st birth >24/0" intercept 1 spl [1,44] earlybirth [1,3] 
+		spl*earlybirth [1,3 44] edud [1,1] hisprace2 [1,4] pov [1,2] parityd [1,1] rwant [1,2]
+		mard [1,3] curr_ins [1,4]
+	%mend;
+
+
+proc surveylogistic data=a;
+	class tub(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tub = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %laterbirth / exp cl ilink;
+	ods output Estimates=e;
+	run;
+
+	/*proc print data=e; run;*/
+
+
+data e_early; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	if stmtno=3 then earlybirth = ">24/0";
+	PROBR=round(mu,.01);
+	LCLR=round(lowermu,.01);
+	UCLR=round(uppermu,.01);
+	Label2=substr(Label,1,2);
+	label earlybirth = "Age at First Birth Group";
+	run;
+
+/*title1 "Tubal Ligation Use by Age & Age at First Birth";*/
+	*removing title so I can create an appropriate caption in Word;
+	title;
+proc sgplot data=e_early;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+	transparency = .5;
+	series x=Label2 y=probr / group=earlybirth datalabel=probr
+	/*groupdisplay=overlay*/;
+	/*refline 1 / axis=y label="OR=1.0";*/
+	xaxis label="Age";
+	yaxis label="Predicted Probability"
+	/*type=log logbase=e logstyle=linear*/
+	values=(0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8);
+	run;
+
+
+*** HS degree, NHB, low income, 2 kids, does not more kids, never been married, Medicaid
+	(did the same one but with wanting more kids in the other aims, don't think that's
+	appropriate here);
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth teens" intercept 1 spl [1,&x] earlybirth [1,1] 
+		spl*earlybirth [1,1 &x] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,2]
+		mard [1,3] curr_ins [1,2],
+	%end;
+	"44, 1st birth teens" intercept 1 spl [1,44] earlybirth [1,1] 
+		spl*earlybirth [1,1 44] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,2]
+		mard [1,3] curr_ins [1,2]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth 20-24" intercept 1 spl [1,&x] earlybirth [1,2] 
+		spl*earlybirth [1,2 &x] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,2]
+		mard [1,3] curr_ins [1,2],
+	%end;
+	"44, 1st birth 20-24" intercept 1 spl [1,44] earlybirth [1,2] 
+		spl*earlybirth [1,2 44] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,2]
+		mard [1,3] curr_ins [1,2]
+	%mend;
+
+%macro laterbirth;
+%do x=23 %to 42 %by 1;
+	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
+		spl*earlybirth [1,3 &x] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,2]
+		mard [1,3] curr_ins [1,2],
+	%end;
+	"44, 1st birth >24/0" intercept 1 spl [1,44] earlybirth [1,3] 
+		spl*earlybirth [1,3 44] edud [1,2] hisprace2 [1,2] pov [1,3] parityd [1,3] rwant [1,2]
+		mard [1,3] curr_ins [1,2]
+	%mend;
+
+
+proc surveylogistic data=a;
+	class tub(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tub = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %laterbirth / exp cl ilink;
+	ods output Estimates=e;
+	run;
+
+	/*proc print data=e; run;*/
+
+
+data e_early; set e;
+	drop estimate stderr df tvalue alpha lower upper;
+	if stmtno=1 then earlybirth = "15-19";
+	if stmtno=2 then earlybirth = "20-24";
+	if stmtno=3 then earlybirth = ">24/0";
+	PROBR=round(mu,.01);
+	LCLR=round(lowermu,.01);
+	UCLR=round(uppermu,.01);
+	Label2=substr(Label,1,2);
+	label earlybirth = "Age at First Birth Group";
+	run;
+
+/*title1 "Tubal Ligation Use by Age & Age at First Birth";*/
+	*removing title so I can create an appropriate caption in Word;
+	title;
+proc sgplot data=e_early;
+	band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+	transparency = .5;
+	series x=Label2 y=probr / group=earlybirth datalabel=probr
+	/*groupdisplay=overlay*/;
+	/*refline 1 / axis=y label="OR=1.0";*/
+	xaxis label="Age";
+	yaxis label="Predicted Probability"
+	/*type=log logbase=e logstyle=linear*/
+	/*values=(0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8)*/;
+	run;
+
+
+
+*** associate, Hisp, mid income, 2 kids, does not more kids, married, uninsured;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth teens" intercept 1 spl [1,&x] earlybirth [1,1] 
+		spl*earlybirth [1,1 &x] edud [1,4] hisprace2 [1,1] pov [1,2] parityd [1,3] rwant [1,2]
+		mard [1,1] curr_ins [1,1],
+	%end;
+	"44, 1st birth teens" intercept 1 spl [1,44] earlybirth [1,1] 
+		spl*earlybirth [1,1 44] edud [1,4] hisprace2 [1,1] pov [1,2] parityd [1,3] rwant [1,2]
+		mard [1,1] curr_ins [1,1]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth 20-24" intercept 1 spl [1,&x] earlybirth [1,2] 
+		spl*earlybirth [1,2 &x] edud [1,4] hisprace2 [1,1] pov [1,2] parityd [1,3] rwant [1,2]
+		mard [1,1] curr_ins [1,1],
+	%end;
+	"44, 1st birth 20-24" intercept 1 spl [1,44] earlybirth [1,2] 
+		spl*earlybirth [1,2 44] edud [1,4] hisprace2 [1,1] pov [1,2] parityd [1,3] rwant [1,2]
+		mard [1,1] curr_ins [1,1]
+	%mend;
+
+%macro laterbirth;
+%do x=23 %to 42 %by 1;
+	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
+		spl*earlybirth [1,3 &x] edud [1,4] hisprace2 [1,1] pov [1,2] parityd [1,3] rwant [1,2]
+		mard [1,1] curr_ins [1,1],
+	%end;
+	"44, 1st birth >24/0" intercept 1 spl [1,44] earlybirth [1,3] 
+		spl*earlybirth [1,3 44] edud [1,4] hisprace2 [1,1] pov [1,2] parityd [1,3] rwant [1,2]
+		mard [1,1] curr_ins [1,1]
+	%mend;
+
+
+proc surveylogistic data=a;
+	class tub(ref=first) edud(ref="hs degree or ged") 
+	earlybirth (ref=">24 or no live births") hisprace2(ref="NON-HISPANIC WHITE, SINGLE RACE") pov(ref="<=138%") 
+	parityd(ref="0") rwant(ref="YES")
+	mard(ref="never been married") curr_ins / param=ref;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tub = spl edud earlybirth hisprace2 pov parityd rwant mard
+	curr_ins spl*earlybirth;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %laterbirth / exp cl ilink;
+	ods output Estimates=e;
+	run;
+
+
+	data e_early; set e;
+		drop estimate stderr df tvalue alpha lower upper;
+		if stmtno=1 then earlybirth = "15-19";
+		if stmtno=2 then earlybirth = "20-24";
+		if stmtno=3 then earlybirth = ">24/0";
+		PROBR=round(mu,.01);
+		LCLR=round(lowermu,.01);
+		UCLR=round(uppermu,.01);
+		Label2=substr(Label,1,2);
+		label earlybirth = "Age at First Birth Group";
+		run;
+
+
+		proc sgplot data=e_early;
+			band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+			transparency = .5;
+			series x=Label2 y=probr / group=earlybirth datalabel=probr
+			/*groupdisplay=overlay*/;
+			/*refline 1 / axis=y label="OR=1.0";*/
+			xaxis label="Age";
+			yaxis label="Predicted Probability"
+			/*type=log logbase=e logstyle=linear*/
+			/*values=(0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8)*/;
+			run;
+
+
+*### UNADJUSTED ###;
+
+%macro teen;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth teens" intercept 1 spl [1,&x] earlybirth [1,1] 
+		spl*earlybirth [1,1 &x],
+	%end;
+	"44, 1st birth teens" intercept 1 spl [1,44] earlybirth [1,1] 
+		spl*earlybirth [1,1 44]
+	%mend;
+
+%macro earlytwenties;
+%do x=23 %to 43 %by 1;
+	"&x, 1st birth 20-24" intercept 1 spl [1,&x] earlybirth [1,2] 
+		spl*earlybirth [1,2 &x],
+	%end;
+	"44, 1st birth 20-24" intercept 1 spl [1,44] earlybirth [1,2] 
+		spl*earlybirth [1,2 44]
+	%mend;
+
+%macro laterbirth;
+%do x=23 %to 42 %by 1;
+	"&x, 1st birth >24/0" intercept 1 spl [1,&x] earlybirth [1,3] 
+		spl*earlybirth [1,3 &x],
+	%end;
+	"44, 1st birth >24/0" intercept 1 spl [1,44] earlybirth [1,3] 
+		spl*earlybirth [1,3 44]
+	%mend;
+
+
+
+proc surveylogistic data=a;
+	class tub(ref=first)
+	earlybirth (ref=">24 or no live births") / param=effect;
+	weight weightvar;
+	strata stratvar;
+	cluster panelvar;
+	effect spl=spline(rscrage / naturalcubic basis=tpf(noint)
+								knotmethod=percentiles(5) details);
+	model tub = spl earlybirth spl*earlybirth;
+	estimate %teen / exp cl ilink;
+	estimate %earlytwenties / exp cl ilink;
+	estimate %laterbirth / exp cl ilink;
+	ods output Estimates=e;
+	run;
+
+
+	data e_early; set e;
+		drop estimate stderr df tvalue alpha lower upper;
+		if stmtno=1 then earlybirth = "15-19";
+		if stmtno=2 then earlybirth = "20-24";
+		if stmtno=3 then earlybirth = ">24/0";
+		PROBR=round(mu,.01);
+		LCLR=round(lowermu,.01);
+		UCLR=round(uppermu,.01);
+		Label2=substr(Label,1,2);
+		label earlybirth = "Age at First Birth Group";
+		run;
+
+
+		proc sgplot data=e_early;
+			band x=Label2 lower=LCLR upper=UCLR / group=earlybirth
+			transparency = .5;
+			series x=Label2 y=probr / group=earlybirth datalabel=probr
+			/*groupdisplay=overlay*/;
+			/*refline 1 / axis=y label="OR=1.0";*/
+			xaxis label="Age";
+			yaxis label="Predicted Probability"
+			/*type=log logbase=e logstyle=linear*/
+			/*values=(0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8)*/;
+			run;
